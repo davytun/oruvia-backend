@@ -1,7 +1,14 @@
-import { ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import type { NestExpressApplication } from '@nestjs/platform-express';
 import helmet from 'helmet';
+import { AllExceptionsFilter } from './common/filters/all-exceptions.filter.js';
+import { LoggingInterceptor } from './common/interceptors/logging.interceptor.js';
+import { ResponseEnvelopeInterceptor } from './common/interceptors/response-envelope.interceptor.js';
+import {
+  REQUEST_ID_HEADER,
+  requestIdMiddleware,
+} from './common/middleware/request-id.middleware.js';
+import { createValidationPipe } from './common/pipes/validation.pipe.js';
 import type { Env } from './config/env.validation.js';
 
 export const API_PREFIX = 'api/v1';
@@ -19,6 +26,9 @@ export function configureApp(app: NestExpressApplication): void {
 
   app.setGlobalPrefix(API_PREFIX);
 
+  // Registered first so every later stage (including body-parser failures)
+  // already has a request ID.
+  app.use(requestIdMiddleware);
   app.use(helmet());
 
   app.useBodyParser('json', { limit: BODY_LIMIT });
@@ -30,16 +40,20 @@ export function configureApp(app: NestExpressApplication): void {
     .map((origin) => origin.trim())
     .filter(Boolean);
   if (corsOrigins.length > 0) {
-    app.enableCors({ origin: corsOrigins });
+    app.enableCors({
+      origin: corsOrigins,
+      exposedHeaders: [REQUEST_ID_HEADER],
+    });
   }
 
-  app.useGlobalPipes(
-    new ValidationPipe({
-      whitelist: true,
-      forbidNonWhitelisted: true,
-      transform: true,
-    }),
+  // Outermost first: the logging interceptor times the whole handler, the
+  // envelope wraps the result. Errors bypass both and go to the filter.
+  app.useGlobalInterceptors(
+    new LoggingInterceptor(),
+    new ResponseEnvelopeInterceptor(),
   );
+  app.useGlobalPipes(createValidationPipe());
+  app.useGlobalFilters(new AllExceptionsFilter());
 
   // Lets Nest close the HTTP server and the DB pool on SIGTERM/SIGINT.
   app.enableShutdownHooks();

@@ -30,5 +30,5 @@ Future decisions and work. None of this is implemented in Phase 1.
 - [ ] CI pipeline (lint, build, unit, e2e)
 - [ ] Deployment target, `trust proxy` setting, TLS/`DB_SSL` for the managed database
 - [ ] Production migration process (run `migration:run` as a release step)
-- [ ] Remove the scaffold `AppController`/`AppService` ("Hello World")
+- [x] Remove the scaffold `AppController`/`AppService` ("Hello World")
 - [ ] Swagger/OpenAPI setup (`@nestjs/swagger` is installed)

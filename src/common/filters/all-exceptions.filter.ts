@@ -1,0 +1,164 @@
+import {
+  ArgumentsHost,
+  Catch,
+  ExceptionFilter,
+  HttpException,
+  HttpStatus,
+  Logger,
+} from '@nestjs/common';
+import type { Request, Response } from 'express';
+import type {
+  ApiErrorDetail,
+  ApiErrorResponse,
+} from '../interfaces/api-response.interface.js';
+import { getRequestId } from '../middleware/request-id.middleware.js';
+
+interface NormalizedError {
+  statusCode: number;
+  code: string;
+  message: string;
+  details?: ApiErrorDetail[];
+}
+
+const INTERNAL_MESSAGE = 'Internal server error';
+
+// Nest's Express adapter rewrites body-parser `SyntaxError`s (invalid JSON) and
+// `URIError`s into `BadRequestException(error.message)`, discarding the type.
+// V8's JSON messages can quote part of the request body, so these are replaced
+// with a fixed message before being returned or logged.
+const PARSE_FAILURE_MESSAGE = /\bJSON\b|URI malformed/;
+
+/** `HttpStatus.NOT_FOUND` -> `NOT_FOUND`. */
+function defaultCode(statusCode: number): string {
+  return HttpStatus[statusCode] ?? 'ERROR';
+}
+
+/** `PAYLOAD_TOO_LARGE` -> `Payload too large`. */
+function statusPhrase(statusCode: number): string {
+  const phrase = defaultCode(statusCode).toLowerCase().replaceAll('_', ' ');
+  return phrase.charAt(0).toUpperCase() + phrase.slice(1);
+}
+
+/**
+ * Errors raised by Express middleware (e.g. body-parser's 413) are
+ * `http-errors` objects rather than Nest exceptions. Only their status is
+ * trusted; a fixed message is used instead of the original.
+ */
+function fromHttpError(exception: unknown): NormalizedError | undefined {
+  if (typeof exception !== 'object' || exception === null) return undefined;
+  const { status, statusCode } = exception as Record<string, unknown>;
+  const code = typeof statusCode === 'number' ? statusCode : status;
+  if (typeof code !== 'number' || code < 400 || code > 499) return undefined;
+
+  return {
+    statusCode: code,
+    code: defaultCode(code),
+    message: statusPhrase(code),
+  };
+}
+
+function fromHttpException(exception: HttpException): NormalizedError {
+  const statusCode = exception.getStatus();
+  const response = exception.getResponse();
+
+  if (typeof response === 'string') {
+    return { statusCode, code: defaultCode(statusCode), message: response };
+  }
+
+  const body = response as Record<string, unknown>;
+  const message = Array.isArray(body.message)
+    ? body.message.join('; ')
+    : typeof body.message === 'string'
+      ? body.message
+      : exception.message;
+
+  if (
+    statusCode === HttpStatus.BAD_REQUEST &&
+    typeof body.code !== 'string' &&
+    PARSE_FAILURE_MESSAGE.test(message)
+  ) {
+    return {
+      statusCode,
+      code: 'MALFORMED_REQUEST',
+      message: 'Malformed request',
+    };
+  }
+
+  return {
+    statusCode,
+    code: typeof body.code === 'string' ? body.code : defaultCode(statusCode),
+    message,
+    details: Array.isArray(body.details)
+      ? (body.details as ApiErrorDetail[])
+      : undefined,
+  };
+}
+
+/**
+ * The single place where errors are turned into HTTP responses and logged.
+ *
+ * - `HttpException`s keep their status; a `code` (and `details`) in the
+ *   exception body is passed through, otherwise the code derives from the status.
+ * - Anything else becomes a generic 500 with no internal information; the real
+ *   error and stack are logged server-side only.
+ * - Logs carry method, path (never the query string), status, code and request
+ *   ID. Request bodies, headers and cookies are never logged.
+ */
+@Catch()
+export class AllExceptionsFilter implements ExceptionFilter {
+  private readonly logger = new Logger('ExceptionFilter');
+
+  catch(exception: unknown, host: ArgumentsHost): void {
+    const http = host.switchToHttp();
+    const req = http.getRequest<Request>();
+    const res = http.getResponse<Response>();
+    const requestId = getRequestId(res);
+
+    const error: NormalizedError =
+      exception instanceof HttpException
+        ? fromHttpException(exception)
+        : (fromHttpError(exception) ?? {
+            statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+            code: defaultCode(HttpStatus.INTERNAL_SERVER_ERROR),
+            message: INTERNAL_MESSAGE,
+          });
+
+    this.log(exception, error, req, requestId);
+
+    if (res.headersSent) return;
+
+    const body: ApiErrorResponse = {
+      success: false,
+      statusCode: error.statusCode,
+      code: error.code,
+      message: error.message,
+      ...(error.details ? { details: error.details } : {}),
+      requestId,
+      timestamp: new Date().toISOString(),
+    };
+    res.status(error.statusCode).json(body);
+  }
+
+  private log(
+    exception: unknown,
+    error: NormalizedError,
+    req: Request,
+    requestId: string,
+  ): void {
+    const summary = `[${requestId}] ${req.method} ${req.path} -> ${error.statusCode} ${error.code}`;
+
+    if (error.statusCode < 500) {
+      this.logger.warn(`${summary}: ${error.message}`);
+      return;
+    }
+
+    // For 5xx, surface the underlying cause (e.g. the failed DB driver error).
+    const cause =
+      exception instanceof HttpException && exception.cause
+        ? exception.cause
+        : exception;
+    const detail = cause instanceof Error ? cause.message : String(cause);
+    const stack = cause instanceof Error ? cause.stack : undefined;
+    this.logger.error(`${summary}: ${detail}`, stack);
+  }
+}

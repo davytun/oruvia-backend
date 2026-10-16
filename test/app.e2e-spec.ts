@@ -26,16 +26,26 @@ describe('App (e2e)', () => {
     return request(app.getHttpServer())
       .get('/api/v1/health')
       .expect(200)
-      .expect({ status: 'ok', database: 'up' });
+      .expect(({ body, headers }) => {
+        expect(body).toEqual({
+          success: true,
+          data: { status: 'ok', database: 'up' },
+          requestId: headers['x-request-id'],
+        });
+      });
   });
 
   it('returns the standard error format for unknown routes', () => {
     return request(app.getHttpServer())
       .get('/api/v1/does-not-exist')
       .expect(404)
-      .expect(({ body }) => {
-        expect(body).toMatchObject({ statusCode: 404, error: 'Not Found' });
-        expect(body.message).toBeDefined();
+      .expect(({ body, headers }) => {
+        expect(body).toMatchObject({
+          success: false,
+          statusCode: 404,
+          code: 'NOT_FOUND',
+          requestId: headers['x-request-id'],
+        });
       });
   });
 });

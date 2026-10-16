@@ -16,9 +16,8 @@ describe('HealthController', () => {
   });
 
   it('responds 503 without leaking the underlying error', async () => {
-    const controller = build(() =>
-      Promise.reject(new Error('password authentication failed')),
-    );
+    const failure = new Error('password authentication failed');
+    const controller = build(() => Promise.reject(failure));
 
     const error = await controller.check().catch((e: unknown) => e);
 
@@ -26,5 +25,7 @@ describe('HealthController', () => {
     expect((error as ServiceUnavailableException).message).toBe(
       'Database unavailable',
     );
+    // Kept for the global exception filter to log server-side.
+    expect((error as ServiceUnavailableException).cause).toBe(failure);
   });
 });
