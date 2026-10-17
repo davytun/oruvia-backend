@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Logger as NestLogger, Module, OnApplicationShutdown } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { validateEnv } from './config/env.validation.js';
 import { APP_GUARD } from '@nestjs/core';
@@ -7,11 +7,13 @@ import type { Env } from './config/env.validation.js';
 import { ConfigService } from '@nestjs/config';
 import { DatabaseModule } from './database/database.module.js';
 import { HealthModule } from './health/health.module.js';
+import { LoggingModule } from './logging/logging.module.js';
 import { MailModule } from './mail/mail.module.js';
 import { SeekersModule } from './seekers/seekers.module.js';
 
 @Module({
   imports: [
+    LoggingModule,
     ConfigModule.forRoot({
       isGlobal: true,
       cache: true,
@@ -47,4 +49,13 @@ import { SeekersModule } from './seekers/seekers.module.js';
     },
   ],
 })
-export class AppModule {}
+export class AppModule implements OnApplicationShutdown {
+  private readonly logger = new NestLogger('AppLifecycle');
+
+  onApplicationShutdown(signal?: string): void {
+    this.logger.log(
+      { signal: signal ?? 'MANUAL' },
+      `Application shutdown initiated via signal: ${signal ?? 'MANUAL'}`,
+    );
+  }
+}

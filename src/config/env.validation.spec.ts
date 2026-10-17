@@ -13,6 +13,7 @@ describe('validateEnv', () => {
     expect(env).toMatchObject({
       NODE_ENV: 'development',
       PORT: 3000,
+      LOG_LEVEL: 'info',
       CORS_ORIGINS: '',
       DB_HOST: 'localhost',
       DB_PORT: 5432,
@@ -22,6 +23,17 @@ describe('validateEnv', () => {
       EMAIL_PROVIDER: 'console',
       EMAIL_FROM: 'noreply@oruvia.com',
     });
+  });
+
+  it('accepts valid custom LOG_LEVEL values', () => {
+    const env = validateEnv({ ...required, LOG_LEVEL: 'debug' });
+    expect(env.LOG_LEVEL).toBe('debug');
+  });
+
+  it('rejects invalid LOG_LEVEL values', () => {
+    expect(() =>
+      validateEnv({ ...required, LOG_LEVEL: 'verbose_invalid' }),
+    ).toThrow(/LOG_LEVEL/);
   });
 
   it('coerces numeric and boolean strings', () => {

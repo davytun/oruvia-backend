@@ -3,6 +3,7 @@ import Joi from 'joi';
 export interface Env {
   NODE_ENV: 'development' | 'test' | 'production';
   PORT: number;
+  LOG_LEVEL: 'debug' | 'info' | 'warn' | 'error' | 'fatal' | 'silent';
   /** Comma-separated list of allowed browser origins. Empty disables CORS. */
   CORS_ORIGINS: string;
   DB_HOST: string;
@@ -29,6 +30,9 @@ const envSchema = Joi.object<Env, true>({
     .valid('development', 'test', 'production')
     .default('development'),
   PORT: Joi.number().port().default(3000),
+  LOG_LEVEL: Joi.string()
+    .valid('debug', 'info', 'warn', 'error', 'fatal', 'silent')
+    .default('info'),
   CORS_ORIGINS: Joi.string().allow('').default(''),
 
   DB_HOST: Joi.string().default('localhost'),
