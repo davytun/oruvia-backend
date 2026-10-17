@@ -1,5 +1,6 @@
 import { ConfigService } from '@nestjs/config';
 import type { NestExpressApplication } from '@nestjs/platform-express';
+import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import helmet from 'helmet';
 import { AllExceptionsFilter } from './common/filters/all-exceptions.filter.js';
 import { LoggingInterceptor } from './common/interceptors/logging.interceptor.js';
@@ -17,6 +18,44 @@ export const API_PREFIX = 'api/v1';
 // will use multipart and get their own limits when that feature exists.
 const BODY_LIMIT = '100kb';
 
+export function setupSwagger(app: NestExpressApplication): void {
+  const swaggerConfig = new DocumentBuilder()
+    .setTitle('Oruvia Backend API')
+    .setDescription(
+      'Developer API documentation for the Oruvia housing platform. Features isolated multi-role authentication (Seekers module), secure JWT lifecycle with session invalidation, HMAC-SHA256 verification codes, Nodemailer & React Email delivery, and health checks.',
+    )
+    .setVersion('1.0')
+    .addBearerAuth(
+      {
+        type: 'http',
+        scheme: 'bearer',
+        bearerFormat: 'JWT',
+        name: 'Authorization',
+        description: 'Enter your Seeker Bearer access token',
+        in: 'header',
+      },
+      'JWT-auth',
+    )
+    .addTag(
+      'Seekers Authentication',
+      'Registration, login, email verification, password management, and profile access for seekers',
+    )
+    .addTag(
+      'Health',
+      'Application liveness and PostgreSQL connectivity check',
+    )
+    .build();
+
+  const document = SwaggerModule.createDocument(app, swaggerConfig);
+  SwaggerModule.setup('docs', app, document, {
+    customSiteTitle: 'Oruvia API Documentation',
+    swaggerOptions: {
+      persistAuthorization: true,
+      displayRequestDuration: true,
+    },
+  });
+}
+
 /**
  * Application-wide settings shared by `main.ts` and the e2e tests so both run
  * the app exactly as it is configured in production.
@@ -29,7 +68,28 @@ export function configureApp(app: NestExpressApplication): void {
   // Registered first so every later stage (including body-parser failures)
   // already has a request ID.
   app.use(requestIdMiddleware);
-  app.use(helmet());
+  app.use(
+    helmet({
+      contentSecurityPolicy: {
+        directives: {
+          defaultSrc: [`'self'`],
+          styleSrc: [`'self'`, `'unsafe-inline'`],
+          imgSrc: [`'self'`, 'data:', 'https:'],
+          scriptSrc: [`'self'`, `'unsafe-inline'`, `'unsafe-eval'`],
+        },
+      },
+    }),
+  );
+
+  // Prevent client IP spoofing via forged X-Forwarded-For headers.
+  // Explicitly false by default; enable only with specific trusted hop counts or CIDRs.
+  const trustProxy = config.get<string>('TRUST_PROXY', { infer: true })?.trim();
+  if (trustProxy) {
+    const hops = Number(trustProxy);
+    app.set('trust proxy', Number.isNaN(hops) ? trustProxy : hops);
+  } else {
+    app.set('trust proxy', false);
+  }
 
   app.useBodyParser('json', { limit: BODY_LIMIT });
   app.useBodyParser('urlencoded', { limit: BODY_LIMIT, extended: true });
@@ -54,6 +114,9 @@ export function configureApp(app: NestExpressApplication): void {
   );
   app.useGlobalPipes(createValidationPipe());
   app.useGlobalFilters(new AllExceptionsFilter());
+
+  // Configure interactive OpenAPI documentation (/docs)
+  setupSwagger(app);
 
   // Lets Nest close the HTTP server and the DB pool on SIGTERM/SIGINT.
   app.enableShutdownHooks();
