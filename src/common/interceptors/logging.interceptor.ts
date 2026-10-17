@@ -10,9 +10,9 @@ import { tap, type Observable } from 'rxjs';
 import { getRequestId } from '../middleware/request-id.middleware.js';
 
 /**
- * Logs one line per successfully handled request with its duration. Failed
- * requests are logged once by `AllExceptionsFilter`, so nothing is duplicated.
- * Only method, path (no query string), status and request ID are recorded.
+ * Logs exactly one completion line per successfully handled request with its duration.
+ * Failed requests are logged once by `AllExceptionsFilter`, preventing duplicate records.
+ * Only method, sanitized path (no query string), status, duration, client IP, and request ID are recorded.
  */
 @Injectable()
 export class LoggingInterceptor implements NestInterceptor {
@@ -24,14 +24,21 @@ export class LoggingInterceptor implements NestInterceptor {
     const http = context.switchToHttp();
     const req = http.getRequest<Request>();
     const res = http.getResponse<Response>();
-    const startedAt = performance.now();
+    const startTime =
+      (req as Request & { _startTime?: number })._startTime ??
+      performance.now();
 
     return next.handle().pipe(
       tap(() => {
-        const ms = Math.round(performance.now() - startedAt);
-        this.logger.log(
-          `[${getRequestId(res)}] ${req.method} ${req.path} ${res.statusCode} ${ms}ms`,
-        );
+        const ms = Math.round(performance.now() - startTime);
+        const requestId = getRequestId(res);
+        const method = req.method;
+        const path = req.path || (req.url ? req.url.split('?')[0] : '/');
+        const statusCode = res.statusCode;
+        const clientIp = req.ip ?? req.socket?.remoteAddress ?? 'unknown';
+
+        const summary = `[${requestId}] ${method} ${path} ${statusCode} ${ms}ms`;
+        this.logger.log(summary);
       }),
     );
   }

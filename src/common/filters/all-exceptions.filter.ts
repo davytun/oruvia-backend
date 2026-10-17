@@ -152,7 +152,16 @@ export class AllExceptionsFilter implements ExceptionFilter {
     req: Request,
     requestId: string,
   ): void {
-    const summary = `[${requestId}] ${req.method} ${req.path} -> ${error.statusCode} ${error.code}`;
+    const method = req.method;
+    const path = req.path || (req.url ? req.url.split('?')[0] : '/');
+    const clientIp = req.ip ?? req.socket?.remoteAddress ?? 'unknown';
+    const startTime = (req as Request & { _startTime?: number })._startTime;
+    const durationMs =
+      startTime !== undefined
+        ? Math.round(performance.now() - startTime)
+        : undefined;
+
+    const summary = `[${requestId}] ${req.method} ${path} -> ${error.statusCode} ${error.code}`;
 
     if (error.statusCode < 500) {
       this.logger.warn(`${summary}: ${error.message}`);

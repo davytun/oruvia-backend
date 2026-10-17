@@ -183,7 +183,32 @@ pnpm build
 
 ## 7. Security Best Practices for Contributors
 
-1. **Never Log Sensitive Information:** Passwords, tokens, verification codes, reset codes, and SMTP credentials must never be written to application logs.
+1. **Never Log Sensitive Information:** Passwords, tokens, verification codes, reset codes, and SMTP credentials must never be written to application logs. Automatic redaction via Pino is configured as defense-in-depth, but source code must avoid logging raw credentials.
 2. **Prevent Account Enumeration:** Public endpoints for password resets and verification code resends must always return a consistent, generic success response regardless of whether the account exists in the database.
 3. **Safe DTO Serialization:** Always expose entities using explicit serializer methods (e.g. `SeekersService.toProfile()`) rather than returning raw TypeORM entities, ensuring internal hashes and audit columns never reach clients.
 4. **Atomic Delivery Guarantee:** Outbound messages must only be registered as delivered after transport operations resolve successfully.
+
+---
+
+## 8. Structured Logging & Observability
+
+Oruvia utilizes **Pino** through `nestjs-pino` as its foundational logging engine, guaranteeing high throughput, minimal overhead, and non-blocking asynchronous I/O.
+
+### Lifecycle & Single Log Principle
+- **Success Requests:** Successfully handled HTTP requests emit exactly one completion log via `LoggingInterceptor` capturing method, sanitized path (excluding query parameters), response status code, duration in milliseconds, client IP, and request ID.
+- **Failed Requests:** Exceptions and error responses bypass normal interceptor flow and are logged exactly once by `AllExceptionsFilter`. Client errors (4xx) are logged at `warn` level; internal server errors (5xx) are logged at `error` level with full server-side stack traces.
+- **Zero Duplication:** `autoLogging: false` is configured in `pinoHttp` to avoid redundant logs from multiple Express middleware and interceptor stages.
+
+### Sensitive Data Redaction
+Pino is configured with strict field redaction rules. The following paths are automatically sanitized and replaced with `[REDACTED]`:
+- Passwords & password hashes (`password`, `passwordHash`, `password_hash`)
+- Tokens & session versions (`token`, `accessToken`, `refreshToken`, `tokenVersion`, `token_version`)
+- Verification & reset codes (`code`, `verificationCode`, `resetCode`)
+- Sensitive headers (`authorization`, `cookie`, `set-cookie`)
+- Secrets & database passwords (`JWT_SECRET`, `SMTP_PASS`, `DB_PASSWORD`)
+- SQL error parameters are stripped before serialization to prevent sensitive query parameters from leaking into logs.
+
+### Production vs Development Formatting
+- **Production (`NODE_ENV=production`):** Emits structured single-line JSON with ISO-8601 timestamps, log level labels (`info`, `warn`, `error`), `service: "oruvia-backend"`, and `environment`.
+- **Development (`NODE_ENV=development`):** Pipes to `pino-pretty` with colored output, human-readable timestamps, and clear context prefixes.
+

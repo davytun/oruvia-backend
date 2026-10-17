@@ -12,6 +12,8 @@ import {
 import { createValidationPipe } from './common/pipes/validation.pipe.js';
 import type { Env } from './config/env.validation.js';
 
+import { Logger } from 'nestjs-pino';
+
 export const API_PREFIX = 'api/v1';
 
 // Express's default, made explicit. JSON bodies here are small; file uploads
@@ -62,6 +64,16 @@ export function setupSwagger(app: NestExpressApplication): void {
  */
 export function configureApp(app: NestExpressApplication): void {
   const config = app.get<ConfigService<Env, true>>(ConfigService);
+
+  // Wire Pino structured logger if present in application context
+  try {
+    const logger = app.get(Logger);
+    if (logger) {
+      app.useLogger(logger);
+    }
+  } catch {
+    // When running in bare test harnesses without LoggerModule, preserve default logger
+  }
 
   app.setGlobalPrefix(API_PREFIX);
 
