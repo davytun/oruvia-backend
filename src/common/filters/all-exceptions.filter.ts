@@ -66,11 +66,18 @@ function fromHttpException(exception: HttpException): NormalizedError {
   }
 
   const body = response as Record<string, unknown>;
-  const message = Array.isArray(body.message)
+  let message = Array.isArray(body.message)
     ? body.message.join('; ')
     : typeof body.message === 'string'
       ? body.message
       : exception.message;
+
+  if (
+    statusCode === HttpStatus.TOO_MANY_REQUESTS &&
+    message.includes('ThrottlerException')
+  ) {
+    message = 'Too many requests, please try again later.';
+  }
 
   if (
     statusCode === HttpStatus.BAD_REQUEST &&
