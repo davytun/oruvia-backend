@@ -11,7 +11,7 @@ import type { JwtService } from '@nestjs/jwt';
 import bcrypt from 'bcrypt';
 import crypto from 'node:crypto';
 import type { DataSource, Repository } from 'typeorm';
-import type { MailService } from '../mail/mail.service.js';
+import type { MailService } from '../../mail/mail.service.js';
 import type { SeekerUser } from './entities/seeker-user.entity.js';
 import type { SeekerVerificationCode } from './entities/seeker-verification-code.entity.js';
 import { SeekersService } from './seekers.service.js';

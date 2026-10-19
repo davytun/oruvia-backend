@@ -4,7 +4,7 @@ import { PassportStrategy } from '@nestjs/passport';
 import { InjectRepository } from '@nestjs/typeorm';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { Repository } from 'typeorm';
-import type { Env } from '../../config/env.validation.js';
+import type { Env } from '../../../config/env.validation.js';
 import { SeekerUser } from '../entities/seeker-user.entity.js';
 import type { SeekerJwtPayload } from '../interfaces/jwt-payload.interface.js';
 

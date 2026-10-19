@@ -14,22 +14,22 @@ import { InjectRepository } from '@nestjs/typeorm';
 import bcrypt from 'bcrypt';
 import crypto from 'node:crypto';
 import { DataSource, IsNull, MoreThan, Repository } from 'typeorm';
-import type { Env } from '../config/env.validation.js';
-import { MailService } from '../mail/mail.service.js';
-import type { ChangeLandlordPasswordDto } from './dto/change-password.dto.js';
-import type { ForgotLandlordPasswordDto } from './dto/forgot-password.dto.js';
-import type { LoginLandlordDto } from './dto/login-landlord.dto.js';
-import type { RegisterLandlordDto } from './dto/register-landlord.dto.js';
-import type { ResendLandlordVerificationCodeDto } from './dto/resend-verification-code.dto.js';
-import type { ResetLandlordPasswordDto } from './dto/reset-password.dto.js';
-import type { VerifyLandlordEmailDto } from './dto/verify-email.dto.js';
-import { LandlordUser } from './entities/landlord-user.entity.js';
+import type { Env } from '../../config/env.validation.js';
+import { MailService } from '../../mail/mail.service.js';
+import type { ChangeAgentPasswordDto } from './dto/change-password.dto.js';
+import type { ForgotAgentPasswordDto } from './dto/forgot-password.dto.js';
+import type { LoginAgentDto } from './dto/login-agent.dto.js';
+import type { RegisterAgentDto } from './dto/register-agent.dto.js';
+import type { ResendAgentVerificationCodeDto } from './dto/resend-verification-code.dto.js';
+import type { ResetAgentPasswordDto } from './dto/reset-password.dto.js';
+import type { VerifyAgentEmailDto } from './dto/verify-email.dto.js';
+import { AgentUser } from './entities/agent-user.entity.js';
 import {
-  LandlordVerificationCode,
+  AgentVerificationCode,
   type VerificationCodePurpose,
-} from './entities/landlord-verification-code.entity.js';
-import type { LandlordJwtPayload } from './interfaces/jwt-payload.interface.js';
-import type { LandlordProfile } from './interfaces/landlord-profile.interface.js';
+} from './entities/agent-verification-code.entity.js';
+import type { AgentJwtPayload } from './interfaces/jwt-payload.interface.js';
+import type { AgentProfile } from './interfaces/agent-profile.interface.js';
 
 const PASSWORD_SALT_ROUNDS = 10;
 const CODE_EXPIRY_MS = 15 * 60 * 1000; // 15 minutes
@@ -41,14 +41,14 @@ const DUMMY_BCRYPT_HASH =
   '$2b$10$abcdefghijklmnopqrstuuABCDEFGHIJKLMNOPQRSTUVWXYZ123456';
 
 @Injectable()
-export class LandlordsService {
+export class AgentsService {
   private readonly hmacKey: string;
 
   constructor(
-    @InjectRepository(LandlordUser)
-    private readonly landlordRepository: Repository<LandlordUser>,
-    @InjectRepository(LandlordVerificationCode)
-    private readonly codeRepository: Repository<LandlordVerificationCode>,
+    @InjectRepository(AgentUser)
+    private readonly agentRepository: Repository<AgentUser>,
+    @InjectRepository(AgentVerificationCode)
+    private readonly codeRepository: Repository<AgentVerificationCode>,
     private readonly jwtService: JwtService,
     private readonly mailService: MailService,
     private readonly dataSource: DataSource,
@@ -57,15 +57,15 @@ export class LandlordsService {
     this.hmacKey = this.config.getOrThrow<string>('JWT_SECRET');
   }
 
-  toProfile(landlord: LandlordUser): LandlordProfile {
+  toProfile(agent: AgentUser): AgentProfile {
     return {
-      id: landlord.id,
-      fullName: landlord.fullName,
-      email: landlord.email,
-      isEmailVerified: landlord.isEmailVerified,
-      emailVerifiedAt: landlord.emailVerifiedAt,
-      createdAt: landlord.createdAt,
-      updatedAt: landlord.updatedAt,
+      id: agent.id,
+      fullName: agent.fullName,
+      email: agent.email,
+      isEmailVerified: agent.isEmailVerified,
+      emailVerifiedAt: agent.emailVerifiedAt,
+      createdAt: agent.createdAt,
+      updatedAt: agent.updatedAt,
     };
   }
 
@@ -116,14 +116,14 @@ export class LandlordsService {
   }
 
   private async createAndSendCode(
-    landlordId: string,
+    agentId: string,
     email: string,
     purpose: VerificationCodePurpose,
   ): Promise<void> {
     // Check account-based cooldown to prevent email inbox flooding abuse
     const recentCode = await this.codeRepository.findOne({
       where: {
-        landlordId,
+        agentId,
         purpose,
         createdAt: MoreThan(new Date(Date.now() - CODE_COOLDOWN_MS)),
       },
@@ -141,7 +141,7 @@ export class LandlordsService {
 
     // Invalidate existing unused codes for this purpose
     await this.codeRepository.update(
-      { landlordId, purpose, usedAt: IsNull() },
+      { agentId, purpose, usedAt: IsNull() },
       { usedAt: new Date() },
     );
 
@@ -150,7 +150,7 @@ export class LandlordsService {
     const expiresAt = new Date(Date.now() + CODE_EXPIRY_MS);
 
     const codeRecord = this.codeRepository.create({
-      landlordId,
+      agentId,
       codeHash,
       purpose,
       expiresAt,
@@ -160,16 +160,16 @@ export class LandlordsService {
     await this.codeRepository.save(codeRecord);
 
     if (purpose === 'EMAIL_VERIFICATION') {
-      await this.mailService.sendVerificationCode(email, code, 'landlord');
+      await this.mailService.sendVerificationCode(email, code, 'agent');
     } else {
-      await this.mailService.sendPasswordResetCode(email, code, 'landlord');
+      await this.mailService.sendPasswordResetCode(email, code, 'agent');
     }
   }
 
-  async register(dto: RegisterLandlordDto): Promise<LandlordProfile> {
+  async register(dto: RegisterAgentDto): Promise<AgentProfile> {
     const email = this.normalizeEmail(dto.email);
 
-    const existing = await this.landlordRepository.findOne({ where: { email } });
+    const existing = await this.agentRepository.findOne({ where: { email } });
     if (existing) {
       throw new ConflictException({
         code: 'EMAIL_ALREADY_REGISTERED',
@@ -178,7 +178,7 @@ export class LandlordsService {
     }
 
     const passwordHash = await bcrypt.hash(dto.password, PASSWORD_SALT_ROUNDS);
-    const landlord = this.landlordRepository.create({
+    const agent = this.agentRepository.create({
       fullName: dto.fullName.trim(),
       email,
       passwordHash,
@@ -186,7 +186,7 @@ export class LandlordsService {
     });
 
     try {
-      await this.landlordRepository.save(landlord);
+      await this.agentRepository.save(agent);
     } catch (error: any) {
       if (error?.code === '23505') {
         throw new ConflictException({
@@ -197,29 +197,25 @@ export class LandlordsService {
       throw error;
     }
 
-    await this.createAndSendCode(
-      landlord.id,
-      landlord.email,
-      'EMAIL_VERIFICATION',
-    );
+    await this.createAndSendCode(agent.id, agent.email, 'EMAIL_VERIFICATION');
 
-    return this.toProfile(landlord);
+    return this.toProfile(agent);
   }
 
   async verifyEmail(
-    dto: VerifyLandlordEmailDto,
-  ): Promise<{ message: string; landlord: LandlordProfile }> {
+    dto: VerifyAgentEmailDto,
+  ): Promise<{ message: string; agent: AgentProfile }> {
     const email = this.normalizeEmail(dto.email);
-    const landlord = await this.landlordRepository.findOne({ where: { email } });
+    const agent = await this.agentRepository.findOne({ where: { email } });
 
-    if (!landlord) {
+    if (!agent) {
       throw new NotFoundException({
-        code: 'LANDLORD_NOT_FOUND',
-        message: 'Landlord account not found',
+        code: 'AGENT_NOT_FOUND',
+        message: 'Agent account not found',
       });
     }
 
-    if (landlord.isEmailVerified) {
+    if (agent.isEmailVerified) {
       throw new BadRequestException({
         code: 'EMAIL_ALREADY_VERIFIED',
         message: 'Email is already verified',
@@ -228,9 +224,9 @@ export class LandlordsService {
 
     // Atomic transaction with row-level lock prevents race conditions on attempts & consumption
     return await this.dataSource.transaction(async (manager) => {
-      const activeCode = await manager.findOne(LandlordVerificationCode, {
+      const activeCode = await manager.findOne(AgentVerificationCode, {
         where: {
-          landlordId: landlord.id,
+          agentId: agent.id,
           purpose: 'EMAIL_VERIFICATION',
           usedAt: IsNull(),
         },
@@ -273,30 +269,26 @@ export class LandlordsService {
       activeCode.usedAt = new Date();
       await manager.save(activeCode);
 
-      landlord.isEmailVerified = true;
-      landlord.emailVerifiedAt = new Date();
-      await manager.save(landlord);
+      agent.isEmailVerified = true;
+      agent.emailVerifiedAt = new Date();
+      await manager.save(agent);
 
       return {
         message: 'Email verified successfully',
-        landlord: this.toProfile(landlord),
+        agent: this.toProfile(agent),
       };
     });
   }
 
   async resendVerificationCode(
-    dto: ResendLandlordVerificationCodeDto,
+    dto: ResendAgentVerificationCodeDto,
   ): Promise<{ message: string }> {
     const email = this.normalizeEmail(dto.email);
-    const landlord = await this.landlordRepository.findOne({ where: { email } });
+    const agent = await this.agentRepository.findOne({ where: { email } });
 
     // Timing-safe: return generic message regardless of existence or verification status
-    if (landlord && !landlord.isEmailVerified) {
-      await this.createAndSendCode(
-        landlord.id,
-        landlord.email,
-        'EMAIL_VERIFICATION',
-      );
+    if (agent && !agent.isEmailVerified) {
+      await this.createAndSendCode(agent.id, agent.email, 'EMAIL_VERIFICATION');
     }
 
     return {
@@ -306,13 +298,13 @@ export class LandlordsService {
   }
 
   async login(
-    dto: LoginLandlordDto,
-  ): Promise<{ accessToken: string; landlord: LandlordProfile }> {
+    dto: LoginAgentDto,
+  ): Promise<{ accessToken: string; agent: AgentProfile }> {
     const email = this.normalizeEmail(dto.email);
-    const landlord = await this.landlordRepository.findOne({ where: { email } });
+    const agent = await this.agentRepository.findOne({ where: { email } });
 
     // Timing-safe credential check to eliminate email enumeration timing attacks
-    if (!landlord) {
+    if (!agent) {
       await bcrypt.compare(dto.password, DUMMY_BCRYPT_HASH);
       throw new UnauthorizedException({
         code: 'INVALID_CREDENTIALS',
@@ -320,7 +312,7 @@ export class LandlordsService {
       });
     }
 
-    const isMatch = await bcrypt.compare(dto.password, landlord.passwordHash);
+    const isMatch = await bcrypt.compare(dto.password, agent.passwordHash);
     if (!isMatch) {
       throw new UnauthorizedException({
         code: 'INVALID_CREDENTIALS',
@@ -328,7 +320,7 @@ export class LandlordsService {
       });
     }
 
-    if (!landlord.isEmailVerified) {
+    if (!agent.isEmailVerified) {
       throw new ForbiddenException({
         code: 'EMAIL_NOT_VERIFIED',
         message:
@@ -336,39 +328,39 @@ export class LandlordsService {
       });
     }
 
-    const payload: LandlordJwtPayload = {
-      sub: landlord.id,
-      email: landlord.email,
-      tokenVersion: landlord.tokenVersion,
-      accountType: 'landlord',
+    const payload: AgentJwtPayload = {
+      sub: agent.id,
+      email: agent.email,
+      tokenVersion: agent.tokenVersion,
+      accountType: 'agent',
     };
 
     const accessToken = await this.jwtService.signAsync(payload);
 
     return {
       accessToken,
-      landlord: this.toProfile(landlord),
+      agent: this.toProfile(agent),
     };
   }
 
   async changePassword(
-    landlordId: string,
-    dto: ChangeLandlordPasswordDto,
+    agentId: string,
+    dto: ChangeAgentPasswordDto,
   ): Promise<{ message: string }> {
-    const landlord = await this.landlordRepository.findOne({
-      where: { id: landlordId },
+    const agent = await this.agentRepository.findOne({
+      where: { id: agentId },
     });
 
-    if (!landlord) {
+    if (!agent) {
       throw new NotFoundException({
-        code: 'LANDLORD_NOT_FOUND',
-        message: 'Landlord account not found',
+        code: 'AGENT_NOT_FOUND',
+        message: 'Agent account not found',
       });
     }
 
     const isMatch = await bcrypt.compare(
       dto.currentPassword,
-      landlord.passwordHash,
+      agent.passwordHash,
     );
     if (!isMatch) {
       throw new BadRequestException({
@@ -384,28 +376,24 @@ export class LandlordsService {
       });
     }
 
-    landlord.passwordHash = await bcrypt.hash(
+    agent.passwordHash = await bcrypt.hash(
       dto.newPassword,
       PASSWORD_SALT_ROUNDS,
     );
     // Invalidate existing sessions/tokens
-    landlord.tokenVersion += 1;
-    await this.landlordRepository.save(landlord);
+    agent.tokenVersion += 1;
+    await this.agentRepository.save(agent);
 
     return { message: 'Password changed successfully' };
   }
 
-  async forgotPassword(dto: ForgotLandlordPasswordDto): Promise<{ message: string }> {
+  async forgotPassword(dto: ForgotAgentPasswordDto): Promise<{ message: string }> {
     const email = this.normalizeEmail(dto.email);
-    const landlord = await this.landlordRepository.findOne({ where: { email } });
+    const agent = await this.agentRepository.findOne({ where: { email } });
 
     // Do not disclose whether email exists
-    if (landlord) {
-      await this.createAndSendCode(
-        landlord.id,
-        landlord.email,
-        'PASSWORD_RESET',
-      );
+    if (agent) {
+      await this.createAndSendCode(agent.id, agent.email, 'PASSWORD_RESET');
     }
 
     return {
@@ -414,11 +402,11 @@ export class LandlordsService {
     };
   }
 
-  async resetPassword(dto: ResetLandlordPasswordDto): Promise<{ message: string }> {
+  async resetPassword(dto: ResetAgentPasswordDto): Promise<{ message: string }> {
     const email = this.normalizeEmail(dto.email);
-    const landlord = await this.landlordRepository.findOne({ where: { email } });
+    const agent = await this.agentRepository.findOne({ where: { email } });
 
-    if (!landlord) {
+    if (!agent) {
       throw new BadRequestException({
         code: 'INVALID_RESET_CODE',
         message: 'Invalid or expired password reset code',
@@ -432,9 +420,9 @@ export class LandlordsService {
 
     // Atomic transaction with row-level lock prevents race conditions on attempts & consumption
     return await this.dataSource.transaction(async (manager) => {
-      const activeCode = await manager.findOne(LandlordVerificationCode, {
+      const activeCode = await manager.findOne(AgentVerificationCode, {
         where: {
-          landlordId: landlord.id,
+          agentId: agent.id,
           purpose: 'PASSWORD_RESET',
           usedAt: IsNull(),
         },
@@ -476,9 +464,9 @@ export class LandlordsService {
       activeCode.usedAt = new Date();
       await manager.save(activeCode);
 
-      landlord.passwordHash = newPasswordHash;
-      landlord.tokenVersion += 1; // Invalidate all existing tokens
-      await manager.save(landlord);
+      agent.passwordHash = newPasswordHash;
+      agent.tokenVersion += 1; // Invalidate all existing tokens
+      await manager.save(agent);
 
       return { message: 'Password reset successfully' };
     });

@@ -3,7 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import type { Env } from '../config/env.validation.js';
+import type { Env } from '../../config/env.validation.js';
 import { SeekerUser } from './entities/seeker-user.entity.js';
 import { SeekerVerificationCode } from './entities/seeker-verification-code.entity.js';
 import { SeekerJwtAuthGuard } from './guards/seeker-jwt-auth.guard.js';
@@ -35,3 +35,4 @@ import { SeekerJwtStrategy } from './strategies/seeker-jwt.strategy.js';
   exports: [SeekersService, SeekerJwtAuthGuard],
 })
 export class SeekersModule {}
+export { SeekersModule as SeekerModule };

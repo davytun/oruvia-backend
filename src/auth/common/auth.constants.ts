@@ -1,0 +1,5 @@
+export type VerificationCodePurpose = 'EMAIL_VERIFICATION' | 'PASSWORD_RESET';
+
+export const VERIFICATION_CODE_EXPIRY_MINUTES = 15;
+export const VERIFICATION_CODE_MAX_ATTEMPTS = 5;
+export const CODE_RESEND_COOLDOWN_SECONDS = 60;
