@@ -139,7 +139,7 @@ export class MailService implements EmailSender, OnModuleInit {
   async sendPasswordResetCode(
     email: string,
     code: string,
-    accountType: 'seeker' | 'landlord' | 'agent' = 'seeker',
+    accountType: 'seeker' | 'landlord' | 'agent' | 'admin' = 'seeker',
   ): Promise<void> {
     const { subject, text, html } = await buildPasswordResetEmail(
       code,
