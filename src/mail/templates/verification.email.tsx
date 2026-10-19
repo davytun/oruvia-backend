@@ -13,9 +13,13 @@ import {
 
 interface VerificationEmailProps {
   code: string;
+  accountType?: 'seeker' | 'landlord';
 }
 
-export const VerificationEmail: React.FC<VerificationEmailProps> = ({ code }) => {
+export const VerificationEmail: React.FC<VerificationEmailProps> = ({
+  code,
+  accountType = 'seeker',
+}) => {
   return (
     <Html lang="en">
       <Head />
@@ -30,7 +34,7 @@ export const VerificationEmail: React.FC<VerificationEmailProps> = ({ code }) =>
             <Text style={paragraph}>
               Thank you for registering with Oruvia. Please enter the
               verification code below to verify your email address and activate
-              your seeker account.
+              your {accountType} account.
             </Text>
 
             <Section style={codeBox}>

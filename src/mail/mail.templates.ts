@@ -11,19 +11,20 @@ export interface RenderedEmail {
 
 export async function buildVerificationEmail(
   code: string,
+  accountType: 'seeker' | 'landlord' = 'seeker',
 ): Promise<RenderedEmail> {
-  const subject = 'Verify your Oruvia seeker account';
-  const element = React.createElement(VerificationEmail, { code });
+  const subject = `Verify your Oruvia ${accountType} account`;
+  const element = React.createElement(VerificationEmail, { code, accountType });
   const html = await render(element);
 
   const text = [
-    'Oruvia - Verify your seeker account',
+    `Oruvia - Verify your ${accountType} account`,
     '',
     `Your verification code is: ${code}`,
     '',
     'This code will expire in 15 minutes.',
     '',
-    'Enter this code in the application to verify your email address and activate your seeker account.',
+    `Enter this code in the application to verify your email address and activate your ${accountType} account.`,
     '',
     'If you did not create an account on Oruvia, you can safely ignore this email.',
   ].join('\n');
@@ -33,13 +34,14 @@ export async function buildVerificationEmail(
 
 export async function buildPasswordResetEmail(
   code: string,
+  accountType: 'seeker' | 'landlord' = 'seeker',
 ): Promise<RenderedEmail> {
-  const subject = 'Reset your Oruvia seeker password';
-  const element = React.createElement(PasswordResetEmail, { code });
+  const subject = `Reset your Oruvia ${accountType} password`;
+  const element = React.createElement(PasswordResetEmail, { code, accountType });
   const html = await render(element);
 
   const text = [
-    'Oruvia - Reset your seeker password',
+    `Oruvia - Reset your ${accountType} password`,
     '',
     `Your password reset code is: ${code}`,
     '',

@@ -119,8 +119,15 @@ export class MailService implements EmailSender, OnModuleInit {
     throw new Error(`Unsupported email provider "${this.provider}".`);
   }
 
-  async sendVerificationCode(email: string, code: string): Promise<void> {
-    const { subject, text, html } = await buildVerificationEmail(code);
+  async sendVerificationCode(
+    email: string,
+    code: string,
+    accountType: 'seeker' | 'landlord' = 'seeker',
+  ): Promise<void> {
+    const { subject, text, html } = await buildVerificationEmail(
+      code,
+      accountType,
+    );
     await this.sendEmail({
       to: email,
       subject,
@@ -129,8 +136,15 @@ export class MailService implements EmailSender, OnModuleInit {
     });
   }
 
-  async sendPasswordResetCode(email: string, code: string): Promise<void> {
-    const { subject, text, html } = await buildPasswordResetEmail(code);
+  async sendPasswordResetCode(
+    email: string,
+    code: string,
+    accountType: 'seeker' | 'landlord' = 'seeker',
+  ): Promise<void> {
+    const { subject, text, html } = await buildPasswordResetEmail(
+      code,
+      accountType,
+    );
     await this.sendEmail({
       to: email,
       subject,

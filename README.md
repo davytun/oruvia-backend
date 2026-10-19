@@ -92,6 +92,23 @@ All seeker endpoints are under the global prefix `/api/v1/seekers`:
 
 ---
 
+## Landlord API Reference
+
+All landlord endpoints are under the global prefix `/api/v1/landlords`:
+
+| Method | Endpoint | Auth | Description |
+|---|---|---|---|
+| `POST` | `/api/v1/landlords/register` | Public | Register landlord account and dispatch verification code |
+| `POST` | `/api/v1/landlords/verify-email` | Public | Validate 6-digit code and activate landlord account |
+| `POST` | `/api/v1/landlords/resend-verification-code` | Public | Request fresh verification code (non-enumerating) |
+| `POST` | `/api/v1/landlords/login` | Public | Authenticate; returns JWT access token and landlord profile |
+| `POST` | `/api/v1/landlords/change-password` | Bearer JWT | Change password; revokes all existing JWT sessions |
+| `POST` | `/api/v1/landlords/forgot-password` | Public | Request password reset code (non-enumerating) |
+| `POST` | `/api/v1/landlords/reset-password` | Public | Reset password with valid code; revokes all previous tokens |
+| `GET` | `/api/v1/landlords/me` | Bearer JWT | Retrieve authenticated landlord profile |
+
+---
+
 ## Testing & Quality Assurance
 
 ```bash
@@ -114,4 +131,6 @@ pnpm build
 
 - [Developer Guide & Architecture](docs/developer-guide.md): Deep-dive architectural patterns, security model, and contribution guide.
 - [Seeker Account Module](docs/seeker-account-module.md): Detailed specifications, rate limiting, and code lifecycle for the seeker module.
+- [Landlord Account Module](docs/landlord-account-module.md): Detailed specifications, account isolation, and code lifecycle for the landlord module.
 - [Backend Foundation](docs/backend-foundation.md): Foundation pipeline, middlewares, filters, and interceptor contracts.
+
