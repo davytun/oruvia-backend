@@ -9,6 +9,7 @@ import { DatabaseModule } from './database/database.module.js';
 import { HealthModule } from './health/health.module.js';
 import { LoggingModule } from './logging/logging.module.js';
 import { MailModule } from './mail/mail.module.js';
+import { LandlordsModule } from './landlords/landlords.module.js';
 import { SeekersModule } from './seekers/seekers.module.js';
 
 @Module({
@@ -41,6 +42,7 @@ import { SeekersModule } from './seekers/seekers.module.js';
     HealthModule,
     MailModule,
     SeekersModule,
+    LandlordsModule,
   ],
   providers: [
     {

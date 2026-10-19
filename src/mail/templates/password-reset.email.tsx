@@ -13,10 +13,12 @@ import {
 
 interface PasswordResetEmailProps {
   code: string;
+  accountType?: 'seeker' | 'landlord';
 }
 
 export const PasswordResetEmail: React.FC<PasswordResetEmailProps> = ({
   code,
+  accountType = 'seeker',
 }) => {
   return (
     <Html lang="en">
@@ -30,7 +32,7 @@ export const PasswordResetEmail: React.FC<PasswordResetEmailProps> = ({
           <Section style={contentSection}>
             <Heading style={heading}>Reset your password</Heading>
             <Text style={paragraph}>
-              We received a request to reset the password for your Oruvia seeker
+              We received a request to reset the password for your Oruvia {accountType}{' '}
               account. Enter the code below to proceed with setting a new
               password.
             </Text>
