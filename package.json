@@ -21,11 +21,12 @@
     "test:debug": "vitest --inspect-brk --no-file-parallelism",
     "test:e2e": "vitest run --config ./vitest.config.e2e.ts",
     "migration:create": "node ./node_modules/typeorm/cli.js migration:create",
-    "migration:generate": "nest build && node --env-file=.env ./node_modules/typeorm/cli.js migration:generate -d dist/database/data-source.js",
-    "migration:run": "nest build && node --env-file=.env ./node_modules/typeorm/cli.js migration:run -d dist/database/data-source.js",
-    "migration:revert": "nest build && node --env-file=.env ./node_modules/typeorm/cli.js migration:revert -d dist/database/data-source.js",
-    "migration:show": "nest build && node --env-file=.env ./node_modules/typeorm/cli.js migration:show -d dist/database/data-source.js",
-    "admin:bootstrap": "nest build && node --env-file=.env dist/auth/admin/scripts/bootstrap-admin.js"
+    "migration:generate": "nest build && node --env-file-if-exists=.env ./node_modules/typeorm/cli.js migration:generate -d dist/database/data-source.js",
+    "migration:run": "nest build && node --env-file-if-exists=.env ./node_modules/typeorm/cli.js migration:run -d dist/database/data-source.js",
+    "migration:run:prod": "node ./node_modules/typeorm/cli.js migration:run -d dist/database/data-source.js",
+    "migration:revert": "nest build && node --env-file-if-exists=.env ./node_modules/typeorm/cli.js migration:revert -d dist/database/data-source.js",
+    "migration:show": "nest build && node --env-file-if-exists=.env ./node_modules/typeorm/cli.js migration:show -d dist/database/data-source.js",
+    "admin:bootstrap": "nest build && node --env-file-if-exists=.env dist/auth/admin/scripts/bootstrap-admin.js"
   },
   "dependencies": {
     "@nestjs/common": "^12.0.1",

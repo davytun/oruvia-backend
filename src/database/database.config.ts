@@ -10,6 +10,7 @@ export type DatabaseEnv = Pick<
   | 'DB_NAME'
   | 'DB_SSL'
   | 'DB_LOGGING'
+  | 'DB_MIGRATIONS_RUN'
 >;
 
 // Globs are resolved against the compiled output (dist/), and TypeORM expects
@@ -32,7 +33,7 @@ export function buildDataSourceOptions(env: DatabaseEnv): DataSourceOptions {
     database: env.DB_NAME,
     ssl: env.DB_SSL ? { rejectUnauthorized: true } : false,
     synchronize: false,
-    migrationsRun: false,
+    migrationsRun: env.DB_MIGRATIONS_RUN ?? false,
     logging: env.DB_LOGGING ? ['error', 'warn', 'migration'] : ['error'],
     entities: [`${srcDir}/**/*.entity.js`],
     migrations: [`${srcDir}/database/migrations/*.js`],

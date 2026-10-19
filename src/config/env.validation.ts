@@ -13,6 +13,7 @@ export interface Env {
   DB_NAME: string;
   DB_SSL: boolean;
   DB_LOGGING: boolean;
+  DB_MIGRATIONS_RUN: boolean;
   JWT_SECRET: string;
   JWT_EXPIRES_IN: string;
   EMAIL_PROVIDER: 'console' | 'smtp';
@@ -42,6 +43,7 @@ const envSchema = Joi.object<Env, true>({
   DB_NAME: Joi.string().required(),
   DB_SSL: Joi.boolean().default(false),
   DB_LOGGING: Joi.boolean().default(false),
+  DB_MIGRATIONS_RUN: Joi.boolean().default(false),
 
   JWT_SECRET: Joi.string()
     .min(32)
