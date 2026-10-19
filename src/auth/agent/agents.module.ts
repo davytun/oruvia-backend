@@ -3,7 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import type { Env } from '../config/env.validation.js';
+import type { Env } from '../../config/env.validation.js';
 import { AgentsController } from './agents.controller.js';
 import { AgentsService } from './agents.service.js';
 import { AgentUser } from './entities/agent-user.entity.js';
@@ -36,3 +36,4 @@ import { AgentJwtStrategy } from './strategies/agent-jwt.strategy.js';
   exports: [AgentsService, AgentJwtAuthGuard],
 })
 export class AgentsModule {}
+export { AgentsModule as AgentModule };

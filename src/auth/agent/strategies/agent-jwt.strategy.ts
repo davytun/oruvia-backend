@@ -4,56 +4,56 @@ import { PassportStrategy } from '@nestjs/passport';
 import { InjectRepository } from '@nestjs/typeorm';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { Repository } from 'typeorm';
-import type { Env } from '../../config/env.validation.js';
-import { LandlordUser } from '../entities/landlord-user.entity.js';
-import type { LandlordJwtPayload } from '../interfaces/jwt-payload.interface.js';
+import type { Env } from '../../../config/env.validation.js';
+import { AgentUser } from '../entities/agent-user.entity.js';
+import type { AgentJwtPayload } from '../interfaces/jwt-payload.interface.js';
 
 @Injectable()
-export class LandlordJwtStrategy extends PassportStrategy(
+export class AgentJwtStrategy extends PassportStrategy(
   Strategy,
-  'landlord-jwt',
+  'agent-jwt',
 ) {
   constructor(
     config: ConfigService<Env, true>,
-    @InjectRepository(LandlordUser)
-    private readonly landlordRepository: Repository<LandlordUser>,
+    @InjectRepository(AgentUser)
+    private readonly agentRepository: Repository<AgentUser>,
   ) {
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
       ignoreExpiration: false,
       secretOrKey: config.getOrThrow<string>('JWT_SECRET'),
       issuer: 'oruvia-api',
-      audience: 'oruvia-landlord',
+      audience: 'oruvia-agent',
     });
   }
 
-  async validate(payload: LandlordJwtPayload): Promise<LandlordUser> {
-    if (payload.accountType !== 'landlord' || !payload.sub) {
+  async validate(payload: AgentJwtPayload): Promise<AgentUser> {
+    if (payload.accountType !== 'agent' || !payload.sub) {
       throw new UnauthorizedException({
         code: 'UNAUTHORIZED',
         message: 'Invalid token payload',
       });
     }
 
-    const landlord = await this.landlordRepository.findOne({
+    const agent = await this.agentRepository.findOne({
       where: { id: payload.sub },
     });
 
-    if (!landlord) {
+    if (!agent) {
       throw new UnauthorizedException({
         code: 'UNAUTHORIZED',
-        message: 'Landlord account not found',
+        message: 'Agent account not found',
       });
     }
 
     // Invalidate tokens issued before password changes/resets
-    if (landlord.tokenVersion !== payload.tokenVersion) {
+    if (agent.tokenVersion !== payload.tokenVersion) {
       throw new UnauthorizedException({
         code: 'UNAUTHORIZED',
         message: 'Token has been revoked',
       });
     }
 
-    return landlord;
+    return agent;
   }
 }

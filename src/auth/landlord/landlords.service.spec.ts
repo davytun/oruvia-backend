@@ -11,7 +11,7 @@ import type { JwtService } from '@nestjs/jwt';
 import bcrypt from 'bcrypt';
 import crypto from 'node:crypto';
 import type { DataSource, Repository } from 'typeorm';
-import type { MailService } from '../mail/mail.service.js';
+import type { MailService } from '../../mail/mail.service.js';
 import type { LandlordUser } from './entities/landlord-user.entity.js';
 import type { LandlordVerificationCode } from './entities/landlord-verification-code.entity.js';
 import { LandlordsService } from './landlords.service.js';

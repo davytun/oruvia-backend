@@ -3,7 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import type { Env } from '../config/env.validation.js';
+import type { Env } from '../../config/env.validation.js';
 import { LandlordUser } from './entities/landlord-user.entity.js';
 import { LandlordVerificationCode } from './entities/landlord-verification-code.entity.js';
 import { LandlordJwtAuthGuard } from './guards/landlord-jwt-auth.guard.js';
@@ -36,3 +36,4 @@ import { LandlordJwtStrategy } from './strategies/landlord-jwt.strategy.js';
   exports: [LandlordsService, LandlordJwtAuthGuard],
 })
 export class LandlordsModule {}
+export { LandlordsModule as LandlordModule };
