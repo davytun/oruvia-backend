@@ -34,7 +34,7 @@ export async function buildVerificationEmail(
 
 export async function buildPasswordResetEmail(
   code: string,
-  accountType: 'seeker' | 'landlord' | 'agent' = 'seeker',
+  accountType: 'seeker' | 'landlord' | 'agent' | 'admin' = 'seeker',
 ): Promise<RenderedEmail> {
   const subject = `Reset your Oruvia ${accountType} password`;
   const element = React.createElement(PasswordResetEmail, { code, accountType });

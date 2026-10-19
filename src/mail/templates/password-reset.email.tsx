@@ -13,7 +13,7 @@ import {
 
 interface PasswordResetEmailProps {
   code: string;
-  accountType?: 'seeker' | 'landlord' | 'agent';
+  accountType?: 'seeker' | 'landlord' | 'agent' | 'admin';
 }
 
 export const PasswordResetEmail: React.FC<PasswordResetEmailProps> = ({

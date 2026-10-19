@@ -126,6 +126,22 @@ All agent endpoints are under the global prefix `/api/v1/agents`:
 
 ---
 
+## Admin API Reference
+
+All admin endpoints are under the global prefix `/api/v1/admin/auth`:
+
+| Method | Endpoint | Auth | Description |
+|---|---|---|---|
+| `POST` | `/api/v1/admin/auth/login` | Public | Authenticate active administrator and return JWT access token |
+| `POST` | `/api/v1/admin/auth/forgot-password` | Public | Request password recovery code (non-enumerating) |
+| `POST` | `/api/v1/admin/auth/reset-password` | Public | Reset password with valid code; revokes all previous tokens |
+| `POST` | `/api/v1/admin/auth/change-password` | Bearer JWT | Change password; revokes all existing JWT sessions |
+| `GET` | `/api/v1/admin/auth/me` | Bearer JWT | Retrieve authenticated admin profile |
+
+> **Note:** There is no public registration endpoint for administrators. Admin accounts are provisioned via `pnpm admin:bootstrap`.
+
+---
+
 ## Testing & Quality Assurance
 
 ```bash
@@ -150,6 +166,7 @@ pnpm build
 - [Seeker Account Module](docs/seeker-account-module.md): Detailed specifications, rate limiting, and code lifecycle for the seeker module.
 - [Landlord Account Module](docs/landlord-account-module.md): Detailed specifications, account isolation, and code lifecycle for the landlord module.
 - [Agent Account Module](docs/agent-account-module.md): Detailed specifications, account isolation, and code lifecycle for the agent module.
+- [Admin Account Module](docs/admin-account-module.md): Detailed specifications, account provisioning, status enforcement, and security controls for the admin module.
 - [Backend Foundation](docs/backend-foundation.md): Foundation pipeline, middlewares, filters, and interceptor contracts.
 
 
