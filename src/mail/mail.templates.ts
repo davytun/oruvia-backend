@@ -11,7 +11,7 @@ export interface RenderedEmail {
 
 export async function buildVerificationEmail(
   code: string,
-  accountType: 'seeker' | 'landlord' = 'seeker',
+  accountType: 'seeker' | 'landlord' | 'agent' = 'seeker',
 ): Promise<RenderedEmail> {
   const subject = `Verify your Oruvia ${accountType} account`;
   const element = React.createElement(VerificationEmail, { code, accountType });
@@ -34,7 +34,7 @@ export async function buildVerificationEmail(
 
 export async function buildPasswordResetEmail(
   code: string,
-  accountType: 'seeker' | 'landlord' = 'seeker',
+  accountType: 'seeker' | 'landlord' | 'agent' = 'seeker',
 ): Promise<RenderedEmail> {
   const subject = `Reset your Oruvia ${accountType} password`;
   const element = React.createElement(PasswordResetEmail, { code, accountType });
