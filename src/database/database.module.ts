@@ -17,6 +17,7 @@ import { buildDataSourceOptions } from './database.config.js';
           DB_NAME: config.getOrThrow('DB_NAME'),
           DB_SSL: config.getOrThrow('DB_SSL'),
           DB_LOGGING: config.getOrThrow('DB_LOGGING'),
+          DB_MIGRATIONS_RUN: config.get('DB_MIGRATIONS_RUN', false),
         }),
         autoLoadEntities: true,
         // Fail fast at startup instead of retrying for ~30s.
