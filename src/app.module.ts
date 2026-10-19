@@ -11,6 +11,7 @@ import { LoggingModule } from './logging/logging.module.js';
 import { MailModule } from './mail/mail.module.js';
 import { LandlordsModule } from './landlords/landlords.module.js';
 import { SeekersModule } from './seekers/seekers.module.js';
+import { AgentsModule } from './agents/agents.module.js';
 
 @Module({
   imports: [
@@ -43,6 +44,7 @@ import { SeekersModule } from './seekers/seekers.module.js';
     MailModule,
     SeekersModule,
     LandlordsModule,
+    AgentsModule,
   ],
   providers: [
     {

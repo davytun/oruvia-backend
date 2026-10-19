@@ -13,7 +13,7 @@ import {
 
 interface VerificationEmailProps {
   code: string;
-  accountType?: 'seeker' | 'landlord';
+  accountType?: 'seeker' | 'landlord' | 'agent';
 }
 
 export const VerificationEmail: React.FC<VerificationEmailProps> = ({

@@ -122,7 +122,7 @@ export class MailService implements EmailSender, OnModuleInit {
   async sendVerificationCode(
     email: string,
     code: string,
-    accountType: 'seeker' | 'landlord' = 'seeker',
+    accountType: 'seeker' | 'landlord' | 'agent' = 'seeker',
   ): Promise<void> {
     const { subject, text, html } = await buildVerificationEmail(
       code,
@@ -139,7 +139,7 @@ export class MailService implements EmailSender, OnModuleInit {
   async sendPasswordResetCode(
     email: string,
     code: string,
-    accountType: 'seeker' | 'landlord' = 'seeker',
+    accountType: 'seeker' | 'landlord' | 'agent' = 'seeker',
   ): Promise<void> {
     const { subject, text, html } = await buildPasswordResetEmail(
       code,

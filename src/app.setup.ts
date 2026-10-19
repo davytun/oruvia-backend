@@ -24,7 +24,7 @@ export function setupSwagger(app: NestExpressApplication): void {
   const swaggerConfig = new DocumentBuilder()
     .setTitle('Oruvia Backend API')
     .setDescription(
-      'Developer API documentation for the Oruvia housing platform. Features isolated multi-role authentication (Seekers and Landlords modules), secure JWT lifecycle with session invalidation, HMAC-SHA256 verification codes, Nodemailer & React Email delivery, and health checks.',
+      'Developer API documentation for the Oruvia housing platform. Features isolated multi-role authentication (Seekers, Landlords, and Agents modules), secure JWT lifecycle with session invalidation, HMAC-SHA256 verification codes, Nodemailer & React Email delivery, and health checks.',
     )
     .setVersion('1.0')
     .addBearerAuth(
@@ -45,6 +45,10 @@ export function setupSwagger(app: NestExpressApplication): void {
     .addTag(
       'Landlords Authentication',
       'Registration, login, email verification, password management, and profile access for landlords',
+    )
+    .addTag(
+      'Agents Authentication',
+      'Registration, login, email verification, password management, and profile access for agents',
     )
     .addTag(
       'Health',
