@@ -32,8 +32,8 @@ import type { SeekerJwtPayload } from './interfaces/jwt-payload.interface.js';
 import type { SeekerProfile } from './interfaces/seeker-profile.interface.js';
 
 const PASSWORD_SALT_ROUNDS = 10;
-const CODE_EXPIRY_MS = 15 * 60 * 1000; // 15 minutes
-const CODE_COOLDOWN_MS = 60 * 1000; // 60 seconds minimum interval between requests
+const CODE_EXPIRY_MS = 15 * 60 * 1000;
+const CODE_COOLDOWN_MS = 60 * 1000;
 const MAX_VERIFICATION_ATTEMPTS = 5;
 
 // Precomputed dummy bcrypt hash with 10 rounds to equalize execution time for invalid users
@@ -77,11 +77,6 @@ export class SeekersService {
     return crypto.randomInt(100000, 1000000).toString();
   }
 
-  /**
-   * Hashes short numeric codes using salted HMAC-SHA256.
-   * Eliminates the CPU denial-of-service vector of bcrypt on short codes while maintaining
-   * strong cryptographic security via a 16-byte random salt and server-side HMAC secret.
-   */
   private hashCode(code: string): string {
     const salt = crypto.randomBytes(16).toString('hex');
     const hmac = crypto
@@ -91,9 +86,6 @@ export class SeekersService {
     return `${salt}:${hmac}`;
   }
 
-  /**
-   * Timing-safe verification of code hashes with backward-compatibility for bcrypt.
-   */
   private verifyCode(code: string, storedHash: string): boolean {
     if (storedHash.startsWith('$2')) {
       return bcrypt.compareSync(code, storedHash);

@@ -9,11 +9,6 @@ import type { Request, Response } from 'express';
 import { tap, type Observable } from 'rxjs';
 import { getRequestId } from '../middleware/request-id.middleware.js';
 
-/**
- * Logs exactly one completion line per successfully handled request with its duration.
- * Failed requests are logged once by `AllExceptionsFilter`, preventing duplicate records.
- * Only method, sanitized path (no query string), status, duration, client IP, and request ID are recorded.
- */
 @Injectable()
 export class LoggingInterceptor implements NestInterceptor {
   private readonly logger = new Logger('HTTP');

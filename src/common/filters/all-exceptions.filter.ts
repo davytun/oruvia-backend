@@ -28,22 +28,15 @@ const INTERNAL_MESSAGE = 'Internal server error';
 // with a fixed message before being returned or logged.
 const PARSE_FAILURE_MESSAGE = /\bJSON\b|URI malformed/;
 
-/** `HttpStatus.NOT_FOUND` -> `NOT_FOUND`. */
 function defaultCode(statusCode: number): string {
   return HttpStatus[statusCode] ?? 'ERROR';
 }
 
-/** `PAYLOAD_TOO_LARGE` -> `Payload too large`. */
 function statusPhrase(statusCode: number): string {
   const phrase = defaultCode(statusCode).toLowerCase().replaceAll('_', ' ');
   return phrase.charAt(0).toUpperCase() + phrase.slice(1);
 }
 
-/**
- * Errors raised by Express middleware (e.g. body-parser's 413) are
- * `http-errors` objects rather than Nest exceptions. Only their status is
- * trusted; a fixed message is used instead of the original.
- */
 function fromHttpError(exception: unknown): NormalizedError | undefined {
   if (typeof exception !== 'object' || exception === null) return undefined;
   const { status, statusCode } = exception as Record<string, unknown>;
@@ -101,16 +94,6 @@ function fromHttpException(exception: HttpException): NormalizedError {
   };
 }
 
-/**
- * The single place where errors are turned into HTTP responses and logged.
- *
- * - `HttpException`s keep their status; a `code` (and `details`) in the
- *   exception body is passed through, otherwise the code derives from the status.
- * - Anything else becomes a generic 500 with no internal information; the real
- *   error and stack are logged server-side only.
- * - Logs carry method, path (never the query string), status, code and request
- *   ID. Request bodies, headers and cookies are never logged.
- */
 @Catch()
 export class AllExceptionsFilter implements ExceptionFilter {
   private readonly logger = new Logger('ExceptionFilter');

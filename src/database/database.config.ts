@@ -17,12 +17,6 @@ export type DatabaseEnv = Pick<
 // forward slashes even on Windows.
 const srcDir = `${import.meta.dirname}/..`.replaceAll('\\', '/');
 
-/**
- * Single source of truth for the PostgreSQL connection. Consumed by
- * `DatabaseModule` (runtime) and `data-source.ts` (TypeORM CLI/migrations).
- *
- * `synchronize` is intentionally off: schema changes go through migrations.
- */
 export function buildDataSourceOptions(env: DatabaseEnv): DataSourceOptions {
   return {
     type: 'postgres',

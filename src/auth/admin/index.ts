@@ -1,6 +1,8 @@
 export * from './admins.module.js';
 export * from './admins.service.js';
 export * from './admins.controller.js';
+export * from './kyc-admin.service.js';
+export * from './kyc-admin.controller.js';
 export * from './entities/admin-user.entity.js';
 export * from './entities/admin-verification-code.entity.js';
 export * from './guards/admin-jwt-auth.guard.js';
@@ -13,3 +15,4 @@ export * from './dto/login-admin.dto.js';
 export * from './dto/forgot-password.dto.js';
 export * from './dto/reset-password.dto.js';
 export * from './dto/change-password.dto.js';
+export * from './dto/reject-kyc.dto.js';

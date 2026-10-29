@@ -55,6 +55,18 @@ export function setupSwagger(app: NestExpressApplication): void {
       'Administrative authentication, status enforcement, password recovery, and profile access for platform administrators',
     )
     .addTag(
+      'Agents KYC',
+      'Identity document submission and verification status for agent listers',
+    )
+    .addTag(
+      'Landlords KYC',
+      'Identity document submission and verification status for landlord listers',
+    )
+    .addTag(
+      'Admin KYC Review',
+      'Review queue, approval, and rejection of agent and landlord identity submissions',
+    )
+    .addTag(
       'Health',
       'Application liveness and PostgreSQL connectivity check',
     )
@@ -70,10 +82,6 @@ export function setupSwagger(app: NestExpressApplication): void {
   });
 }
 
-/**
- * Application-wide settings shared by `main.ts` and the e2e tests so both run
- * the app exactly as it is configured in production.
- */
 export function configureApp(app: NestExpressApplication): void {
   const config = app.get<ConfigService<Env, true>>(ConfigService);
 
@@ -139,7 +147,6 @@ export function configureApp(app: NestExpressApplication): void {
   app.useGlobalPipes(createValidationPipe());
   app.useGlobalFilters(new AllExceptionsFilter());
 
-  // Configure interactive OpenAPI documentation (/docs)
   setupSwagger(app);
 
   // Lets Nest close the HTTP server and the DB pool on SIGTERM/SIGINT.

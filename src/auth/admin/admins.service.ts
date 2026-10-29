@@ -52,9 +52,6 @@ export class AdminsService {
     this.hmacSecret = configService.getOrThrow<string>('JWT_SECRET');
   }
 
-  /**
-   * Secure salted HMAC-SHA256 generation for numeric verification codes.
-   */
   private generateHmacHash(code: string): string {
     const salt = crypto.randomBytes(16).toString('hex');
     const hmac = crypto
@@ -64,9 +61,6 @@ export class AdminsService {
     return `${salt}:${hmac}`;
   }
 
-  /**
-   * Timing-safe verification of code against stored hash.
-   */
   private async verifyCodeHash(code: string, storedHash: string): Promise<boolean> {
     if (storedHash.includes(':')) {
       const [salt, hash] = storedHash.split(':');
@@ -90,9 +84,6 @@ export class AdminsService {
     return bcrypt.compare(code, storedHash);
   }
 
-  /**
-   * Internal provisioning of an administrative account.
-   */
   async provisionInitialAdmin(dto: ProvisionAdminDto): Promise<AdminProfile> {
     const normalizedEmail = dto.email.trim().toLowerCase();
 
@@ -132,9 +123,6 @@ export class AdminsService {
     }
   }
 
-  /**
-   * Authenticate admin with email and password. Enforces account status check.
-   */
   async login(
     dto: LoginAdminDto,
   ): Promise<{ accessToken: string; admin: AdminProfile }> {
@@ -171,7 +159,6 @@ export class AdminsService {
       });
     }
 
-    // Update lastLoginAt on successful login
     admin.lastLoginAt = new Date();
     await this.adminRepository.save(admin);
 
@@ -190,9 +177,6 @@ export class AdminsService {
     };
   }
 
-  /**
-   * Change admin password. Invalidates previous JWT sessions.
-   */
   async changePassword(
     adminId: string,
     dto: ChangeAdminPasswordDto,
@@ -235,9 +219,6 @@ export class AdminsService {
     return { message: 'Password changed successfully' };
   }
 
-  /**
-   * Request password recovery code. Non-enumerating.
-   */
   async forgotPassword(
     dto: ForgotAdminPasswordDto,
   ): Promise<{ message: string }> {
@@ -316,9 +297,6 @@ export class AdminsService {
     return genericResponse;
   }
 
-  /**
-   * Reset password with valid 6-digit recovery code. Invalidates previous JWT sessions.
-   */
   async resetPassword(
     dto: ResetAdminPasswordDto,
   ): Promise<{ message: string }> {
@@ -394,9 +372,6 @@ export class AdminsService {
     return { message: 'Password reset successfully' };
   }
 
-  /**
-   * Safe admin profile representation omitting sensitive credentials.
-   */
   toProfile(admin: AdminUser): AdminProfile {
     return {
       id: admin.id,

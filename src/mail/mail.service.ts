@@ -5,6 +5,7 @@ import type { Transporter } from 'nodemailer';
 import type { Env } from '../config/env.validation.js';
 import type { EmailMessage, EmailSender } from './mail.interface.js';
 import {
+  buildKycDecisionEmail,
   buildPasswordResetEmail,
   buildVerificationEmail,
 } from './mail.templates.js';
@@ -144,6 +145,27 @@ export class MailService implements EmailSender, OnModuleInit {
     const { subject, text, html } = await buildPasswordResetEmail(
       code,
       accountType,
+    );
+    await this.sendEmail({
+      to: email,
+      subject,
+      text,
+      html,
+    });
+  }
+
+  async sendKycDecision(
+    email: string,
+    fullName: string,
+    approved: boolean,
+    accountType: 'landlord' | 'agent',
+    rejectionReason?: string,
+  ): Promise<void> {
+    const { subject, text, html } = await buildKycDecisionEmail(
+      fullName,
+      approved,
+      accountType,
+      rejectionReason,
     );
     await this.sendEmail({
       to: email,

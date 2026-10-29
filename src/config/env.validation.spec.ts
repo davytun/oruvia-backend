@@ -95,6 +95,11 @@ describe('validateEnv', () => {
         ...required,
         NODE_ENV: 'production',
         JWT_SECRET: 'a-very-strong-production-secret-with-at-least-32-chars!',
+        // Production also requires cloudinary KYC storage (see rules below)
+        KYC_STORAGE_PROVIDER: 'cloudinary',
+        CLOUDINARY_CLOUD_NAME: 'demo-cloud',
+        CLOUDINARY_API_KEY: '1234567890',
+        CLOUDINARY_API_SECRET: 'secret-value',
       });
       expect(env.JWT_SECRET).toBe(
         'a-very-strong-production-secret-with-at-least-32-chars!',
@@ -169,6 +174,58 @@ describe('validateEnv', () => {
         EMAIL_PROVIDER: 'unimplemented_provider',
       }),
     ).toThrow(/EMAIL_PROVIDER/);
+  });
+
+  describe('KYC_STORAGE_PROVIDER configuration rules', () => {
+    const validCloudinary = {
+      ...required,
+      KYC_STORAGE_PROVIDER: 'cloudinary',
+      CLOUDINARY_CLOUD_NAME: 'demo-cloud',
+      CLOUDINARY_API_KEY: '1234567890',
+      CLOUDINARY_API_SECRET: 'secret-value',
+    };
+
+    it('defaults to the local dev/test provider', () => {
+      const env = validateEnv(required);
+      expect(env.KYC_STORAGE_PROVIDER).toBe('local');
+      expect(env.KYC_UPLOAD_DIR).toBe('uploads/kyc');
+      expect(env.CLOUDINARY_KYC_FOLDER).toBe('oruvia/kyc');
+    });
+
+    it('accepts complete Cloudinary configuration', () => {
+      const env = validateEnv(validCloudinary);
+      expect(env.KYC_STORAGE_PROVIDER).toBe('cloudinary');
+      expect(env.CLOUDINARY_CLOUD_NAME).toBe('demo-cloud');
+    });
+
+    it('rejects missing Cloudinary credentials when the provider is cloudinary', () => {
+      expect(() =>
+        validateEnv({ ...validCloudinary, CLOUDINARY_CLOUD_NAME: '' }),
+      ).toThrow(/CLOUDINARY_CLOUD_NAME.*required/);
+      expect(() =>
+        validateEnv({ ...validCloudinary, CLOUDINARY_API_KEY: '' }),
+      ).toThrow(/CLOUDINARY_API_KEY.*required/);
+      expect(() =>
+        validateEnv({ ...validCloudinary, CLOUDINARY_API_SECRET: '' }),
+      ).toThrow(/CLOUDINARY_API_SECRET.*required/);
+    });
+
+    it('rejects the local provider in production', () => {
+      expect(() =>
+        validateEnv({
+          ...required,
+          NODE_ENV: 'production',
+          JWT_SECRET: 'a-very-strong-production-secret-with-at-least-32-chars!',
+          KYC_STORAGE_PROVIDER: 'local',
+        }),
+      ).toThrow(/KYC_STORAGE_PROVIDER.*cloudinary.*production/);
+    });
+
+    it('rejects unknown providers', () => {
+      expect(() =>
+        validateEnv({ ...required, KYC_STORAGE_PROVIDER: 's3' }),
+      ).toThrow(/KYC_STORAGE_PROVIDER/);
+    });
   });
 });
 

@@ -24,6 +24,13 @@ export interface Env {
   SMTP_PASS: string;
   EMAIL_FROM: string;
   TRUST_PROXY: string;
+  /** KYC document storage backend: `cloudinary` (production) or `local` (dev/test fallback). */
+  KYC_STORAGE_PROVIDER: 'cloudinary' | 'local';
+  KYC_UPLOAD_DIR: string;
+  CLOUDINARY_CLOUD_NAME: string;
+  CLOUDINARY_API_KEY: string;
+  CLOUDINARY_API_SECRET: string;
+  CLOUDINARY_KYC_FOLDER: string;
 }
 
 const envSchema = Joi.object<Env, true>({
@@ -57,15 +64,17 @@ const envSchema = Joi.object<Env, true>({
   SMTP_PASS: Joi.string().allow('').default(''),
   EMAIL_FROM: Joi.string().default('noreply@oruvia.com'),
   TRUST_PROXY: Joi.string().allow('').default(''),
+
+  KYC_STORAGE_PROVIDER: Joi.string()
+    .valid('cloudinary', 'local')
+    .default('local'),
+  KYC_UPLOAD_DIR: Joi.string().default('uploads/kyc'),
+  CLOUDINARY_CLOUD_NAME: Joi.string().allow('').default(''),
+  CLOUDINARY_API_KEY: Joi.string().allow('').default(''),
+  CLOUDINARY_API_SECRET: Joi.string().allow('').default(''),
+  CLOUDINARY_KYC_FOLDER: Joi.string().default('oruvia/kyc'),
 });
 
-/**
- * Validates raw environment variables and applies defaults. Used by
- * `ConfigModule` at startup and by the TypeORM CLI data source, so the app
- * and the migration tooling always agree on the same rules.
- *
- * Error messages only reference variable names, never values.
- */
 export function validateEnv(config: Record<string, unknown>): Env {
   const { value, error } = envSchema.validate(config, {
     abortEarly: false,
@@ -87,9 +96,31 @@ export function validateEnv(config: Record<string, unknown>): Env {
         'Invalid environment configuration: "JWT_SECRET" is required and cannot use the development default in production',
       );
     }
+
+    // Local-disk KYC storage is a dev/test fallback only; production must use Cloudinary
+    if (value.KYC_STORAGE_PROVIDER !== 'cloudinary') {
+      throw new Error(
+        'Invalid environment configuration: "KYC_STORAGE_PROVIDER" must be "cloudinary" in production',
+      );
+    }
   }
 
-  // Enforce required SMTP credentials and host when EMAIL_PROVIDER is 'smtp'
+  if (value.KYC_STORAGE_PROVIDER === 'cloudinary') {
+    const missing: string[] = [];
+    if (!value.CLOUDINARY_CLOUD_NAME || value.CLOUDINARY_CLOUD_NAME.trim() === '') {
+      missing.push('"CLOUDINARY_CLOUD_NAME" is required when KYC_STORAGE_PROVIDER is "cloudinary"');
+    }
+    if (!value.CLOUDINARY_API_KEY || value.CLOUDINARY_API_KEY.trim() === '') {
+      missing.push('"CLOUDINARY_API_KEY" is required when KYC_STORAGE_PROVIDER is "cloudinary"');
+    }
+    if (!value.CLOUDINARY_API_SECRET || value.CLOUDINARY_API_SECRET.trim() === '') {
+      missing.push('"CLOUDINARY_API_SECRET" is required when KYC_STORAGE_PROVIDER is "cloudinary"');
+    }
+    if (missing.length > 0) {
+      throw new Error(`Invalid environment configuration: ${missing.join('; ')}`);
+    }
+  }
+
   if (value.EMAIL_PROVIDER === 'smtp') {
     const missing: string[] = [];
     if (!value.SMTP_HOST || value.SMTP_HOST.trim() === '') {

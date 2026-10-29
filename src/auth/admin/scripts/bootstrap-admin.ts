@@ -67,7 +67,6 @@ export async function bootstrapAdmin(): Promise<void> {
     process.exit(1);
   }
 
-  // 1. Read or prompt for full name
   let fullName = process.env.ADMIN_BOOTSTRAP_FULL_NAME?.trim();
   if (!fullName) {
     fullName = await askQuestion('Admin Full Name: ');
@@ -78,7 +77,6 @@ export async function bootstrapAdmin(): Promise<void> {
     process.exit(1);
   }
 
-  // 2. Read or prompt for email
   let email = process.env.ADMIN_BOOTSTRAP_EMAIL?.trim().toLowerCase();
   if (!email) {
     email = (await askQuestion('Admin Email: ')).toLowerCase();
@@ -90,7 +88,6 @@ export async function bootstrapAdmin(): Promise<void> {
     process.exit(1);
   }
 
-  // 3. Read or prompt for password
   let password = process.env.ADMIN_BOOTSTRAP_PASSWORD;
   if (!password) {
     password = await askQuestion('Admin Password (min 8 chars): ', true);
@@ -101,7 +98,6 @@ export async function bootstrapAdmin(): Promise<void> {
     process.exit(1);
   }
 
-  // Connect to database
   const env = validateEnv(process.env);
   const dataSourceOptions = buildDataSourceOptions(env);
   const dataSource = new DataSource({
@@ -136,7 +132,6 @@ export async function bootstrapAdmin(): Promise<void> {
       process.exit(1);
     }
 
-    // Hash password with bcrypt (10 rounds)
     const passwordHash = await bcrypt.hash(password, 10);
 
     const newAdmin = adminRepo.create({

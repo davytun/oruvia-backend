@@ -23,13 +23,6 @@ function isRawPayload(data: unknown): boolean {
   );
 }
 
-/**
- * Wraps successful JSON results as `{ success: true, data, requestId }`.
- *
- * Left untouched: streams, files (`StreamableFile`), buffers, bodyless
- * statuses (204/205/304) and handlers that already wrote the response via
- * `@Res()`. Errors are never handled here; see `AllExceptionsFilter`.
- */
 @Injectable()
 export class ResponseEnvelopeInterceptor implements NestInterceptor {
   intercept(context: ExecutionContext, next: CallHandler): Observable<unknown> {

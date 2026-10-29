@@ -4,7 +4,6 @@ import type { ApiErrorDetail } from '../interfaces/api-response.interface.js';
 
 export const VALIDATION_FAILED_CODE = 'VALIDATION_FAILED';
 
-/** Flattens nested class-validator errors into `field` / `messages` pairs. */
 export function flattenValidationErrors(
   errors: ValidationError[],
   parentPath = '',
@@ -18,11 +17,6 @@ export function flattenValidationErrors(
   });
 }
 
-/**
- * The application-wide ValidationPipe. Unknown properties are rejected, input
- * is transformed into DTO instances, and failures become a 400 carrying the
- * `VALIDATION_FAILED` code plus per-field details (never the submitted values).
- */
 export function createValidationPipe(): ValidationPipe {
   return new ValidationPipe({
     whitelist: true,

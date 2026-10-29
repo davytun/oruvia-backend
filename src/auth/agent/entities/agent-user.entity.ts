@@ -6,6 +6,7 @@ import {
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
+import type { ListerVerificationStatus } from '../../kyc/kyc.constants.js';
 
 @Entity('agent_users')
 export class AgentUser {
@@ -30,6 +31,18 @@ export class AgentUser {
 
   @Column({ name: 'token_version', type: 'int', default: 0 })
   tokenVersion!: number;
+
+  @Column({
+    name: 'verification_status',
+    type: 'varchar',
+    length: 20,
+    default: 'unverified',
+  })
+
+  verificationStatus!: ListerVerificationStatus;
+
+  @Column({ name: 'verified_at', type: 'timestamptz', nullable: true })
+  verifiedAt!: Date | null;
 
   @CreateDateColumn({ name: 'created_at', type: 'timestamptz' })
   createdAt!: Date;

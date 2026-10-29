@@ -3,6 +3,10 @@
 /node_modules
 /build
 
+# Local KYC document storage (dev fallback for KYC_STORAGE_PROVIDER=local).
+# Never commit identity documents.
+/uploads
+
 # TypeScript build cache
 *.tsbuildinfo
 

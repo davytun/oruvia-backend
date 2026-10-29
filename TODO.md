@@ -13,6 +13,7 @@ Future decisions and work. None of this is implemented in Phase 1.
 - [ ] Listings, search and filters, favourites, inspection booking, messaging
 - [ ] First entities and migrations (decide naming/ID conventions, e.g. UUIDs)
 - [ ] Image/media storage for listings
+- [x] KYC (identity verification for Agents/Landlords) — implemented per `docs/kyc-module.md` (Cloudinary storage + local dev fallback). Pending: run the `CreateKycTables` migration, and the `RequireVerifiedLister` soft-gate guard lands with the Listings module
 
 ## Validation and authorization
 - [ ] Per-feature DTOs and validation rules

@@ -7,12 +7,6 @@ export const REQUEST_ID_HEADER = 'X-Request-Id';
 // newlines, ...) is replaced so it can never be used for log injection.
 export const VALID_INBOUND_ID = /^[A-Za-z0-9._-]{8,128}$/;
 
-/**
- * Assigns every request a correlation ID. A valid `X-Request-Id` supplied by a
- * gateway/client is reused so traces line up across services; otherwise a UUID
- * is generated. The ID is echoed in the response header and stored in
- * `res.locals` and on `req` for logs, interceptors and the exception filter.
- */
 export function requestIdMiddleware(
   req: Request,
   res: Response,
@@ -30,7 +24,6 @@ export function requestIdMiddleware(
   next();
 }
 
-/** Reads the ID set by {@link requestIdMiddleware}. */
 export function getRequestId(res: Response): string {
   return (res.locals?.requestId as string | undefined) ?? 'unknown';
 }

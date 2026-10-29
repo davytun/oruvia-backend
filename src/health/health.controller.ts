@@ -11,7 +11,6 @@ import { DataSource } from 'typeorm';
 export class HealthController {
   constructor(private readonly dataSource: DataSource) {}
 
-  /** Succeeds only if the app is up and PostgreSQL answers a real query. */
   @Get()
   @ApiOperation({
     summary: 'Health and database connectivity check',
