@@ -2,7 +2,6 @@ import { ApiProperty } from '@nestjs/swagger';
 import { Transform, Type } from 'class-transformer';
 import {
   ArrayMaxSize,
-  IsEnum,
   IsInt,
   IsNumber,
   IsOptional,
@@ -12,6 +11,7 @@ import {
   Min,
   MinLength,
 } from 'class-validator';
+import { IsEnumValues } from '../../common/validation/enum-validator.js';
 import {
   LISTING_TYPES,
   PROPERTY_TYPES,
@@ -31,7 +31,7 @@ export class CreateListingDto {
   title!: string;
 
   @ApiProperty({ enum: LISTING_TYPES, example: 'rent' })
-  @IsEnum(LISTING_TYPES as readonly string[])
+  @IsEnumValues(LISTING_TYPES)
   listingType!: ListingType;
 
   @ApiProperty({ example: 2500000, description: 'Whole naira, no kobo.' })
@@ -54,7 +54,7 @@ export class CreateListingDto {
   city!: string;
 
   @ApiProperty({ example: 'apartment', enum: PROPERTY_TYPES })
-  @IsEnum(PROPERTY_TYPES as readonly string[])
+  @IsEnumValues(PROPERTY_TYPES)
   propertyType!: PropertyType;
 
   @ApiProperty({ example: 3 })

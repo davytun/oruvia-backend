@@ -1,6 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
-import { IsEnum, IsNotEmpty } from 'class-validator';
+import { IsNotEmpty } from 'class-validator';
+import { IsEnumValues } from '../../../common/validation/enum-validator.js';
 import {
   KYC_DOCUMENT_TYPES,
   type KycDocumentType,
@@ -13,7 +14,7 @@ export class SubmitLandlordKycDto {
     enum: KYC_DOCUMENT_TYPES as unknown as KycDocumentType[],
     example: 'NIN_SLIP',
   })
-  @IsEnum(KYC_DOCUMENT_TYPES as readonly string[])
+  @IsEnumValues(KYC_DOCUMENT_TYPES)
   @IsNotEmpty()
   @Transform(({ value }) =>
     typeof value === 'string' ? value.trim().toUpperCase() : value,
