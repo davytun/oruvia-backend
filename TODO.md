@@ -11,11 +11,12 @@ Future decisions and work. None of this is implemented in Phase 1.
 ## Business modules
 - [ ] Users and roles (Seeker, Agent, Landlord, Admin)
 - [ ] Listings, search and filters, favourites, inspection booking, messaging
-  - [x] Listings Phase 1 Core (publish, public search + filters, detail, verified soft-gate) — implemented per `docs/listings-module.md`. Pending: run the `CreateListingsTable` migration. Phase 2 deferrals: dashboard (edit/mark rented-sold/delete), favourites, inspection booking, messaging, map view
+  - [x] Listings Phase 1 Core (publish, public search + filters, detail, verified soft-gate) — implemented per `docs/listings-module.md`. Migrations applied. Phase 2 deferrals: favourites, inspection booking, messaging, map view
+  - [x] Listings Phase 2 Lister Dashboard (list own, edit scalars, mark rented/sold, soft delete) — implemented per `docs/listings-module.md`. No migration needed (`status`/`deleted_at` already existed). Pending Phase 2: favourites, inspection booking, messaging, photo replacement on edit, restore of soft-deleted
   - [ ] Favourites, inspection booking, messaging (Phase 2)
 - [ ] First entities and migrations (decide naming/ID conventions, e.g. UUIDs)
 - [x] Image/media storage for listings — public-image `ListingsStorageProvider` (Cloudinary `secure_url` + local dev fallback), delivered with Listings Phase 1 Core
-- [x] KYC (identity verification for Agents/Landlords) — implemented per `docs/kyc-module.md` (Cloudinary storage + local dev fallback). Pending: run the `CreateKycTables` migration, and the `RequireVerifiedLister` soft-gate guard lands with the Listings module
+- [x] KYC (identity verification for Agents/Landlords) — implemented per `docs/kyc-module.md` (Cloudinary storage + local dev fallback). Migrations applied, and the `RequireVerifiedLister` soft-gate guard landed with the Listings module
 
 ## Validation and authorization
 - [ ] Per-feature DTOs and validation rules

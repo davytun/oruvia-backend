@@ -101,9 +101,9 @@ The Seeker module handles registration, email confirmation, secure login, passwo
 
 ---
 
-## 3b. Listings Module (Phase 1 Core)
+## 3b. Listings Module (Phase 1 Core + Phase 2 Lister Dashboard)
 
-Agents and Landlords publish listings; anyone can browse them. Publishing is gated by the KYC soft-gate guard. Full spec: [listings-module.md](./listings-module.md).
+Agents and Landlords publish listings; anyone can browse them. Publishing is gated by the KYC soft-gate guard; dashboard routes are JWT-only (no soft gate) and scoped to the authenticated lister. Full spec: [listings-module.md](./listings-module.md).
 
 ### Endpoints Reference
 
@@ -113,6 +113,11 @@ Agents and Landlords publish listings; anyone can browse them. Publishing is gat
 | `GET` | `/api/v1/listings/:id` | Public | Listing detail with snapshot Verified badge |
 | `POST` | `/api/v1/agents/listings` | Bearer JWT (agent) + verified | Publish a listing (multipart `photos`, 3–10) |
 | `POST` | `/api/v1/landlords/listings` | Bearer JWT (landlord) + verified | Publish a listing (multipart `photos`, 3–10) |
+| `GET` | `/api/v1/agents/listings` | Bearer JWT (agent) | Own listings (all statuses, optional `status` filter, paginated) |
+| `PATCH` | `/api/v1/agents/listings/:id` | Bearer JWT (agent) | Edit whitelisted scalar fields (JSON; photos not editable) |
+| `PATCH` | `/api/v1/agents/listings/:id/status` | Bearer JWT (agent) | Mark `active` / `rented` / `sold` |
+| `DELETE` | `/api/v1/agents/listings/:id` | Bearer JWT (agent) | Soft delete (sets `deleted_at`) |
+| `GET`/`PATCH`/`DELETE` | `/api/v1/landlords/listings[...]` | Bearer JWT (landlord) | Same dashboard shape for landlords |
 
 ---
 

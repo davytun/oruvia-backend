@@ -1,12 +1,12 @@
-# Listings Module (Phase 1 Core)
+# Listings Module (Phase 1 Core + Phase 2 Lister Dashboard)
 
 ## Overview
 
-The Listings Module is how **Agents and Landlords publish properties** for rent or sale and how **anyone browses them**. This phase covers the **core**: publish (create), public search with filters, and public detail, all behind the KYC **soft gate** on publishing.
+The Listings Module is how **Agents and Landlords publish properties** for rent or sale and how **anyone browses them**. Phase 1 covers the **core**: publish (create), public search with filters, and public detail, all behind the KYC **soft gate** on publishing. Phase 2 adds the **lister dashboard**: list own listings, edit scalar fields, mark rented/sold, and soft delete.
 
 Listings are a **business entity shared across roles**, deliberately held in a single table (see Build Decisions) so cross-role search and pagination work without UNIONs. The lister's identity is **referenced**, not embedded in a users table.
 
-Out of scope for this phase (Phase 2 / later): lister dashboard (edit, mark rented/sold, delete), favourites, inspection booking, messaging, map view, and full-text/relevance search.
+Out of scope (Phase 2 / later): favourites, inspection booking, messaging, map view, and full-text/relevance search. Also out of scope for the dashboard: photo replacement on edit, and restore of soft-deleted listings.
 
 ---
 
@@ -28,7 +28,7 @@ Every listing row carries a polymorphic owner reference and a snapshot of the li
 - `property_type`: one of `apartment`, `duplex`, `terrace`, `detached`, `semi_detached`, `bungalow`, `penthouse`, `land`, `other`
 - `bedrooms` / `bathrooms`: int · `description`: text
 - `amenities`: text[] (default `{}`) · `image_urls`: text[] (ordered, 3–10 public URLs)
-- `status`: `active` | `rented` | `sold` (CHECK enforced) — **Core only ever writes `active`**
+- `status`: `active` | `rented` | `sold` (CHECK enforced) — Core writes `active`; the Phase 2 dashboard is the only writer of `rented`/`sold`, and either transition removes the listing from the public browsable set
 - `created_at` / `updated_at`: timestamptz · `deleted_at`: timestamptz (`@DeleteDateColumn`, created for Phase 2 soft-delete readiness)
 
 ### Indexes
@@ -79,12 +79,27 @@ Mounted under `/api/v1`. Write routes are role-nested like the KYC precedent; re
 | `POST` | `/api/v1/agents/listings` | `AgentJwtAuthGuard` + `RequireVerifiedListerGuard` | Publish a listing (multipart: `photos` + scalar fields). Throttled 10/min. |
 | `POST` | `/api/v1/landlords/listings` | `LandlordJwtAuthGuard` + `RequireVerifiedListerGuard` | Same shape for landlords. |
 
+### Lister dashboard (Phase 2)
+
+Dashboard routes are **JWT-only** — the KYC soft-gate guards publishing, not managing listings already live. Ownership is enforced in the service by scoping every query to `(lister_id, lister_type)`; another lister's listing responds `404 LISTING_NOT_FOUND` rather than `403`, so existence is not leaked. Throttled 30/min. Shared route decorators (`src/listings/decorators/lister-dashboard-routes.ts`) carry the guard, throttle and Swagger docs so the two role controllers stay thin. `UpdateListingDto` is `PartialType(CreateListingDto)`; the service mass-assigns only a whitelisted field list, so photos/owner/badge fields are never editable by payload.
+
+| Method | Path | Auth | Description |
+|---|---|---|---|
+| `GET` | `/api/v1/agents/listings` | `AgentJwtAuthGuard` | Paginated own listings across all statuses; optional `status` filter. Dashboard responses add `status` and `updatedAt` to the public detail shape. |
+| `PATCH` | `/api/v1/agents/listings/:id/status` | `AgentJwtAuthGuard` | Mark `active` / `rented` / `sold` (body: `{ status }`). Terminal status must match the listing type: `rented` only for rent, `sold` only for sale. |
+| `PATCH` | `/api/v1/agents/listings/:id` | `AgentJwtAuthGuard` | Partial edit of whitelisted scalar fields (JSON). Photos, owner reference and snapshot badge are not editable. |
+| `DELETE` | `/api/v1/agents/listings/:id` | `AgentJwtAuthGuard` | Soft delete — sets `deleted_at`; row disappears from public search/detail and the dashboard. |
+| `GET` | `/api/v1/landlords/listings` | `LandlordJwtAuthGuard` | Same dashboard shape for landlords. |
+| `PATCH` | `/api/v1/landlords/listings/:id/status` | `LandlordJwtAuthGuard` | As agents. |
+| `PATCH` | `/api/v1/landlords/listings/:id` | `LandlordJwtAuthGuard` | As agents. |
+| `DELETE` | `/api/v1/landlords/listings/:id` | `LandlordJwtAuthGuard` | As agents. |
+
 ---
 
 ## Soft-Gate Enforcement
 
 - `RequireVerifiedListerGuard` is the **second** guard on the write routes; it reads the role entity attached by the JWT strategy and allows only `verificationStatus === 'approved'`. Otherwise it throws `403 KYC_NOT_APPROVED` with the current status embedded so the frontend renders the correct CTA (`docs/kyc-module.md`).
-- Browse and detail stay fully public — verification gates **publishing only**.
+- Browse and detail stay fully public — verification gates **publishing only**. Dashboard routes are deliberately **not** soft-gated: a lister who lost approval must still be able to edit, delist, or delete existing listings.
 
 ---
 
@@ -93,7 +108,7 @@ Mounted under `/api/v1`. Write routes are role-nested like the KYC precedent; re
 1. **Strict DTOs:** `ValidationPipe` (`whitelist`, `forbidNonWhitelisted`) rejects unexpected fields; scalars are validated by class-validator. Photos are never accepted as string fields.
 2. **File constraints:** 3–10 photos, ≤ 5 MB each, JPEG/PNG/WebP only — validated per file before any storage call.
 3. **Atomic media:** every photo is stored before the DB write; a null provider result responds `503 LISTING_MEDIA_UNAVAILABLE` and no row is written (an orphaned stored file is acceptable; a listing pointing at a missing photo is not).
-4. **No ownership overreach:** the owner reference comes from the authenticated principal, never from the request body.
+4. **No ownership overreach:** the owner reference comes from the authenticated principal, never from the request body. Dashboard queries are scoped to that principal, so cross-owner access is a `404`, not a `403`.
 5. **Rate limiting:** publish routes throttled in line with auth endpoints (10/min per IP).
 6. **Serializer-only responses:** the service maps rows through explicit serializers; the raw entity (and audit/soft-delete columns) never reaches clients.
 
@@ -106,7 +121,8 @@ Mounted under `/api/v1`. Write routes are role-nested like the KYC precedent; re
 | `LISTING_PHOTO_TYPE_INVALID` | 400 | Non-JPEG/PNG/WebP photo |
 | `LISTING_PHOTO_TOO_LARGE` | 400 | A photo over 5 MB |
 | `LISTING_MEDIA_UNAVAILABLE` | 503 | Storage provider returned no URL |
-| `LISTING_NOT_FOUND` | 404 | Detail for a missing/non-active listing |
+| `LISTING_STATUS_TYPE_MISMATCH` | 400 | Marking a listing with a terminal status that contradicts its type (e.g. `sold` on a rent listing), via the status route or a type edit |
+| `LISTING_NOT_FOUND` | 404 | Detail for a missing/non-active listing; dashboard actions on a listing the caller does not own |
 
 ---
 
@@ -119,7 +135,10 @@ Mounted under `/api/v1`. Write routes are role-nested like the KYC precedent; re
 | Snapshot badge | `lister_display_name` + `lister_verified` copied at publish; no live join |
 | Photo storage | Dedicated public-image `ListingsStorageProvider` (Cloudinary `secure_url`), separate from the private KYC provider |
 | Migration | `src/database/migrations/1792161067220-CreateListingsTable.ts` (after the KYC tables) |
-| Phase 2 readiness | `status` and `deleted_at` exist now; Core writes only `active` |
+| Phase 2 readiness | `status` and `deleted_at` exist now; Core writes only `active`; the dashboard (Phase 2) is the sole writer of `rented`/`sold`/`deleted_at` |
+| Dashboard auth | JWT only, no soft gate — management of live listings must not require current approval |
+| Dashboard ownership | Scoped queries (`lister_id` + `lister_type`) → foreign listing = `404`; no dedicated ownership guard |
+| Enum validation | `IsEnumValues` (`src/common/validation/enum-validator.ts`) wraps `@IsIn` for `as const` arrays — `@IsEnum` on an array validates but renders an empty allow-list in the error message |
 
 ## Dependencies
 

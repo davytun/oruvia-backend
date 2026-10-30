@@ -1,9 +1,15 @@
 /**
- * Constants and response types for the Listings module (Phase 1 Core).
- * See docs/listings-module.md for the full spec.
+ * Constants and response types for the Listings module (Phase 1 Core +
+ * Phase 2 lister dashboard). See docs/listings-module.md for the full spec.
  */
 
 export type ListerType = 'agent' | 'landlord';
+
+/** Name of the throttler bucket shared by authenticated write routes (registered in AppModule). */
+export const LISTING_THROTTLE_BUCKET = 'auth';
+export const LISTING_THROTTLE_TTL_MS = 60_000;
+export const LISTING_PUBLISH_THROTTLE_LIMIT = 10;
+export const LISTING_DASHBOARD_THROTTLE_LIMIT = 30;
 
 export const LISTING_TYPES = ['rent', 'sale'] as const;
 export type ListingType = (typeof LISTING_TYPES)[number];
@@ -23,6 +29,21 @@ export type PropertyType = (typeof PROPERTY_TYPES)[number];
 
 export const LISTING_STATUSES = ['active', 'rented', 'sold'] as const;
 export type ListingStatus = (typeof LISTING_STATUSES)[number];
+
+/** Terminal (delisting) status allowed per listing type — rented for rent, sold for sale. */
+export const LISTING_TERMINAL_STATUS: Record<ListingType, ListingStatus> = {
+  rent: 'rented',
+  sale: 'sold',
+};
+
+/** Single-construct 404 payload; the dashboard deliberately mirrors it for foreign rows. */
+export const LISTING_NOT_FOUND = {
+  code: 'LISTING_NOT_FOUND',
+  message: 'Listing not found',
+} as const;
+
+export const LISTING_NOT_FOUND_DESCRIPTION =
+  'Listing not found (LISTING_NOT_FOUND). Also returned for listings owned by another lister.';
 
 export const LISTING_MIN_PHOTOS = 3;
 export const LISTING_MAX_PHOTOS = 10;
@@ -68,4 +89,10 @@ export interface ListingDetailResponse extends ListingResponse {
   address: string | null;
   latitude: number | null;
   longitude: number | null;
+}
+
+/** Dashboard (owner) view: detail plus the lifecycle fields never exposed publicly. */
+export interface ListingDashboardResponse extends ListingDetailResponse {
+  status: ListingStatus;
+  updatedAt: Date;
 }

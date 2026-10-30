@@ -1,7 +1,13 @@
 import {
   Body,
   Controller,
+  Delete,
+  Get,
+  Param,
+  ParseUUIDPipe,
+  Patch,
   Post,
+  Query,
   UploadedFiles,
   UseGuards,
   UseInterceptors,
@@ -23,12 +29,26 @@ import { memoryStorage } from 'multer';
 import { CurrentAgent } from '../auth/agent/decorators/current-agent.decorator.js';
 import { AgentUser } from '../auth/agent/entities/agent-user.entity.js';
 import { AgentJwtAuthGuard } from '../auth/agent/guards/agent-jwt-auth.guard.js';
+import type { PaginatedResult } from '../common/interfaces/pagination.interface.js';
 import { CreateListingDto } from './dto/create-listing.dto.js';
+import { MyListingsQueryDto } from './dto/my-listings.query.dto.js';
+import { UpdateListingStatusDto } from './dto/update-listing-status.dto.js';
+import { UpdateListingDto } from './dto/update-listing.dto.js';
+import {
+  DashboardListRoute,
+  DashboardRemoveRoute,
+  DashboardUpdateRoute,
+  DashboardUpdateStatusRoute,
+} from './decorators/lister-dashboard-routes.js';
 import { multipartListingBody } from './listing-multipart-body.js';
 import { RequireVerifiedListerGuard } from './guards/require-verified-lister.guard.js';
 import {
   LISTING_MAX_PHOTOS,
   LISTING_MAX_PHOTO_BYTES,
+  LISTING_PUBLISH_THROTTLE_LIMIT,
+  LISTING_THROTTLE_BUCKET,
+  LISTING_THROTTLE_TTL_MS,
+  type ListingDashboardResponse,
   type ListingDetailResponse,
 } from './listings.constants.js';
 import { ListingsService } from './listings.service.js';
@@ -38,7 +58,7 @@ import { ListingsService } from './listings.service.js';
 export class AgentsListingsController {
   constructor(private readonly listingsService: ListingsService) {}
 
-  @Throttle({ auth: { limit: 10, ttl: 60000 } })
+  @Throttle({ [LISTING_THROTTLE_BUCKET]: { limit: LISTING_PUBLISH_THROTTLE_LIMIT, ttl: LISTING_THROTTLE_TTL_MS } })
   @UseGuards(AgentJwtAuthGuard, RequireVerifiedListerGuard)
   @ApiBearerAuth('JWT-auth')
   @ApiConsumes('multipart/form-data')
@@ -77,5 +97,51 @@ export class AgentsListingsController {
       dto,
       files.map((file) => ({ buffer: file.buffer, mimeType: file.mimetype })),
     );
+  }
+
+  // ------------------------------------------------------------------
+  // Phase 2 — dashboard. JWT only: the KYC soft-gate guards publishing,
+  // not managing listings already live. Ownership is enforced in the
+  // service by scoping every query to the authenticated lister. Route
+  // docs/throttle/guard bundle lives in decorators/lister-dashboard-routes.
+  // ------------------------------------------------------------------
+
+  @DashboardListRoute(AgentJwtAuthGuard)
+  @Get()
+  async findOwn(
+    @CurrentAgent() agent: AgentUser,
+    @Query() query: MyListingsQueryDto,
+  ): Promise<PaginatedResult<ListingDashboardResponse>> {
+    return this.listingsService.findOwn(agent, 'agent', query);
+  }
+
+  // Declared before ':id' so the literal '/status' segment wins matching.
+  @DashboardUpdateStatusRoute(AgentJwtAuthGuard)
+  @Patch(':id/status')
+  async updateStatus(
+    @CurrentAgent() agent: AgentUser,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: UpdateListingStatusDto,
+  ): Promise<ListingDashboardResponse> {
+    return this.listingsService.updateStatus(agent, 'agent', id, dto.status);
+  }
+
+  @DashboardUpdateRoute(AgentJwtAuthGuard)
+  @Patch(':id')
+  async update(
+    @CurrentAgent() agent: AgentUser,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: UpdateListingDto,
+  ): Promise<ListingDashboardResponse> {
+    return this.listingsService.update(agent, 'agent', id, dto);
+  }
+
+  @DashboardRemoveRoute(AgentJwtAuthGuard)
+  @Delete(':id')
+  async remove(
+    @CurrentAgent() agent: AgentUser,
+    @Param('id', ParseUUIDPipe) id: string,
+  ): Promise<void> {
+    return this.listingsService.remove(agent, 'agent', id);
   }
 }

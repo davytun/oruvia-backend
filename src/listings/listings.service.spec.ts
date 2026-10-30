@@ -5,7 +5,9 @@ import {
 } from '@nestjs/common';
 import type { Repository } from 'typeorm';
 import type { CreateListingDto } from './dto/create-listing.dto.js';
+import type { MyListingsQueryDto } from './dto/my-listings.query.dto.js';
 import type { SearchListingsQueryDto } from './dto/search-listings.query.dto.js';
+import type { UpdateListingDto } from './dto/update-listing.dto.js';
 import { Listing } from './entities/listing.entity.js';
 import { ListingsService } from './listings.service.js';
 import type { ListingsStorageProvider } from './storage/listings-storage.interface.js';
@@ -69,7 +71,9 @@ describe('ListingsService', () => {
   beforeEach(() => {
     repo = {
       create: vi.fn((entity) => entity),
-      save: vi.fn((entity) => Promise.resolve({ id: 'listing-1', createdAt: new Date(), ...entity })),
+      save: vi.fn((entity) =>
+        Promise.resolve({ id: 'listing-1', createdAt: new Date(), updatedAt: new Date(), ...entity }),
+      ),
       findOne: vi.fn(),
       createQueryBuilder: vi.fn(),
     };
@@ -240,6 +244,129 @@ describe('ListingsService', () => {
       const error = await service.findDetail('missing').catch((e) => e);
       expect(error).toBeInstanceOf(NotFoundException);
       expect(error.getResponse()).toMatchObject({ code: 'LISTING_NOT_FOUND' });
+    });
+  });
+
+  describe('dashboard (Phase 2)', () => {
+    const attachQueryBuilder = (rows: Listing[], total: number) => {
+      const whereArgs: string[] = [];
+      const qb: any = {
+        where: vi.fn((sql: string) => {
+          whereArgs.push(sql);
+          return qb;
+        }),
+        andWhere: vi.fn((sql: string) => {
+          whereArgs.push(sql);
+          return qb;
+        }),
+        orderBy: vi.fn().mockReturnThis(),
+        skip: vi.fn().mockReturnThis(),
+        take: vi.fn().mockReturnThis(),
+        getManyAndCount: vi.fn().mockResolvedValue([rows, total]),
+        __whereArgs: whereArgs,
+      };
+      repo.createQueryBuilder = vi.fn().mockReturnValue(qb);
+      return qb;
+    };
+
+    it('findOwn scopes the query to the authenticated lister and exposes status', async () => {
+      const qb = attachQueryBuilder([makeListing({ status: 'rented' })], 1);
+
+      const result = await service.findOwn(lister, 'agent', {
+        page: 1,
+        limit: 12,
+      } as MyListingsQueryDto);
+
+      expect(qb.__whereArgs).toEqual([
+        'listing.lister_id = :listerId',
+        'listing.lister_type = :listerType',
+      ]);
+      expect(result.items[0]).toMatchObject({ status: 'rented' });
+      expect(result.meta).toEqual({ page: 1, limit: 12, total: 1 });
+    });
+
+    it('findOwn applies the optional status filter', async () => {
+      const qb = attachQueryBuilder([], 0);
+
+      await service.findOwn(lister, 'agent', {
+        status: 'sold',
+        page: 1,
+        limit: 12,
+      } as MyListingsQueryDto);
+
+      expect(qb.__whereArgs).toContain('listing.status = :status');
+    });
+
+    it('update changes only the provided fields of an owned listing', async () => {
+      repo.findOne = vi.fn().mockResolvedValue(makeListing());
+
+      const result = await service.update(lister, 'agent', 'listing-1', {
+        price: 3000000,
+      } as UpdateListingDto);
+
+      // Ownership is scoped into the lookup, not compared after fetching
+      expect(repo.findOne).toHaveBeenCalledWith({
+        where: { id: 'listing-1', listerId: 'agent-123', listerType: 'agent' },
+      });
+      expect(result.price).toBe(3000000);
+      expect(result.title).toBe(baseDto.title);
+      expect(result.imageUrls).toHaveLength(3);
+    });
+
+    it('update responds LISTING_NOT_FOUND for a foreign or missing listing', async () => {
+      repo.findOne = vi.fn().mockResolvedValue(null);
+
+      const error = await service
+        .update(lister, 'agent', 'listing-1', { price: 1 } as UpdateListingDto)
+        .catch((e) => e);
+
+      expect(error).toBeInstanceOf(NotFoundException);
+      expect(error.getResponse()).toMatchObject({ code: 'LISTING_NOT_FOUND' });
+      expect(repo.save).not.toHaveBeenCalled();
+    });
+
+    it('updateStatus marks a listing rented', async () => {
+      repo.findOne = vi.fn().mockResolvedValue(makeListing());
+
+      const result = await service.updateStatus(lister, 'agent', 'listing-1', 'rented');
+
+      expect(result.status).toBe('rented');
+      expect(repo.save).toHaveBeenCalledWith(
+        expect.objectContaining({ status: 'rented' }),
+      );
+    });
+
+    it('updateStatus rejects a terminal status that contradicts the listing type', async () => {
+      repo.findOne = vi.fn().mockResolvedValue(makeListing({ listingType: 'rent' }));
+
+      const error = await service
+        .updateStatus(lister, 'agent', 'listing-1', 'sold')
+        .catch((e) => e);
+
+      expect(error).toBeInstanceOf(BadRequestException);
+      expect(error.getResponse()).toMatchObject({ code: 'LISTING_STATUS_TYPE_MISMATCH' });
+      expect(repo.save).not.toHaveBeenCalled();
+    });
+
+    it('remove soft-deletes an owned listing', async () => {
+      repo.findOne = vi.fn().mockResolvedValue(makeListing());
+      repo.softDelete = vi.fn().mockResolvedValue(undefined);
+
+      await service.remove(lister, 'agent', 'listing-1');
+
+      expect(repo.softDelete).toHaveBeenCalledWith({ id: 'listing-1' });
+    });
+
+    it('remove responds LISTING_NOT_FOUND without deleting when not owned', async () => {
+      repo.findOne = vi.fn().mockResolvedValue(null);
+      repo.softDelete = vi.fn();
+
+      const error = await service
+        .remove(lister, 'agent', 'listing-1')
+        .catch((e) => e);
+
+      expect(error).toBeInstanceOf(NotFoundException);
+      expect(repo.softDelete).not.toHaveBeenCalled();
     });
   });
 });
