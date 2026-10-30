@@ -95,8 +95,9 @@ describe('validateEnv', () => {
         ...required,
         NODE_ENV: 'production',
         JWT_SECRET: 'a-very-strong-production-secret-with-at-least-32-chars!',
-        // Production also requires cloudinary KYC storage (see rules below)
+        // Production also requires cloudinary for both storage providers
         KYC_STORAGE_PROVIDER: 'cloudinary',
+        LISTINGS_STORAGE_PROVIDER: 'cloudinary',
         CLOUDINARY_CLOUD_NAME: 'demo-cloud',
         CLOUDINARY_API_KEY: '1234567890',
         CLOUDINARY_API_SECRET: 'secret-value',
@@ -225,6 +226,40 @@ describe('validateEnv', () => {
       expect(() =>
         validateEnv({ ...required, KYC_STORAGE_PROVIDER: 's3' }),
       ).toThrow(/KYC_STORAGE_PROVIDER/);
+    });
+  });
+
+  describe('LISTINGS_STORAGE_PROVIDER configuration rules', () => {
+    it('defaults to the local dev/test provider', () => {
+      const env = validateEnv(required);
+      expect(env.LISTINGS_STORAGE_PROVIDER).toBe('local');
+      expect(env.LISTINGS_UPLOAD_DIR).toBe('uploads/listings');
+      expect(env.CLOUDINARY_LISTINGS_FOLDER).toBe('oruvia/listings');
+    });
+
+    it('rejects the local provider in production', () => {
+      expect(() =>
+        validateEnv({
+          ...required,
+          NODE_ENV: 'production',
+          JWT_SECRET: 'a-very-strong-production-secret-with-at-least-32-chars!',
+          KYC_STORAGE_PROVIDER: 'cloudinary',
+          LISTINGS_STORAGE_PROVIDER: 'local',
+          CLOUDINARY_CLOUD_NAME: 'demo-cloud',
+          CLOUDINARY_API_KEY: '1234567890',
+          CLOUDINARY_API_SECRET: 'secret-value',
+        }),
+      ).toThrow(/LISTINGS_STORAGE_PROVIDER.*cloudinary.*production/);
+    });
+
+    it('requires Cloudinary credentials when only listings use cloudinary', () => {
+      expect(() =>
+        validateEnv({
+          ...required,
+          LISTINGS_STORAGE_PROVIDER: 'cloudinary',
+          CLOUDINARY_CLOUD_NAME: '',
+        }),
+      ).toThrow(/CLOUDINARY_CLOUD_NAME.*required/);
     });
   });
 });

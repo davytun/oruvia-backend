@@ -163,4 +163,6 @@ startup retries the database 3 times, then exits.
 | Observability/timing interceptor + safe error logging | CI/CD, deployment config |
 | `GET /api/v1/health` with real DB check | Swagger/OpenAPI setup |
 | Unit tests + DB-free pipeline e2e + DB e2e | |
+| KYC identity verification (Agents/Landlords) | |
+| Listings core: publish, public search + filters, detail | Listing dashboard, favourites, inspections, messaging (Phase 2) |
 

@@ -10,6 +10,7 @@ import { HealthModule } from './health/health.module.js';
 import { LoggingModule } from './logging/logging.module.js';
 import { MailModule } from './mail/mail.module.js';
 import { AuthModule } from './auth/auth.module.js';
+import { ListingsModule } from './listings/listings.module.js';
 
 @Module({
   imports: [
@@ -41,6 +42,7 @@ import { AuthModule } from './auth/auth.module.js';
     HealthModule,
     MailModule,
     AuthModule,
+    ListingsModule,
   ],
   providers: [
     {

@@ -27,10 +27,14 @@ export interface Env {
   /** KYC document storage backend: `cloudinary` (production) or `local` (dev/test fallback). */
   KYC_STORAGE_PROVIDER: 'cloudinary' | 'local';
   KYC_UPLOAD_DIR: string;
+  /** Listing photo storage backend: `cloudinary` (production) or `local` (dev/test fallback). */
+  LISTINGS_STORAGE_PROVIDER: 'cloudinary' | 'local';
+  LISTINGS_UPLOAD_DIR: string;
   CLOUDINARY_CLOUD_NAME: string;
   CLOUDINARY_API_KEY: string;
   CLOUDINARY_API_SECRET: string;
   CLOUDINARY_KYC_FOLDER: string;
+  CLOUDINARY_LISTINGS_FOLDER: string;
 }
 
 const envSchema = Joi.object<Env, true>({
@@ -69,10 +73,15 @@ const envSchema = Joi.object<Env, true>({
     .valid('cloudinary', 'local')
     .default('local'),
   KYC_UPLOAD_DIR: Joi.string().default('uploads/kyc'),
+  LISTINGS_STORAGE_PROVIDER: Joi.string()
+    .valid('cloudinary', 'local')
+    .default('local'),
+  LISTINGS_UPLOAD_DIR: Joi.string().default('uploads/listings'),
   CLOUDINARY_CLOUD_NAME: Joi.string().allow('').default(''),
   CLOUDINARY_API_KEY: Joi.string().allow('').default(''),
   CLOUDINARY_API_SECRET: Joi.string().allow('').default(''),
   CLOUDINARY_KYC_FOLDER: Joi.string().default('oruvia/kyc'),
+  CLOUDINARY_LISTINGS_FOLDER: Joi.string().default('oruvia/listings'),
 });
 
 export function validateEnv(config: Record<string, unknown>): Env {
@@ -102,18 +111,28 @@ export function validateEnv(config: Record<string, unknown>): Env {
         'Invalid environment configuration: "KYC_STORAGE_PROVIDER" must be "cloudinary" in production',
       );
     }
+
+    // Local-disk listing storage is a dev/test fallback only; production must use Cloudinary
+    if (value.LISTINGS_STORAGE_PROVIDER !== 'cloudinary') {
+      throw new Error(
+        'Invalid environment configuration: "LISTINGS_STORAGE_PROVIDER" must be "cloudinary" in production',
+      );
+    }
   }
 
-  if (value.KYC_STORAGE_PROVIDER === 'cloudinary') {
+  if (
+    value.KYC_STORAGE_PROVIDER === 'cloudinary' ||
+    value.LISTINGS_STORAGE_PROVIDER === 'cloudinary'
+  ) {
     const missing: string[] = [];
     if (!value.CLOUDINARY_CLOUD_NAME || value.CLOUDINARY_CLOUD_NAME.trim() === '') {
-      missing.push('"CLOUDINARY_CLOUD_NAME" is required when KYC_STORAGE_PROVIDER is "cloudinary"');
+      missing.push('"CLOUDINARY_CLOUD_NAME" is required when Cloudinary storage is enabled');
     }
     if (!value.CLOUDINARY_API_KEY || value.CLOUDINARY_API_KEY.trim() === '') {
-      missing.push('"CLOUDINARY_API_KEY" is required when KYC_STORAGE_PROVIDER is "cloudinary"');
+      missing.push('"CLOUDINARY_API_KEY" is required when Cloudinary storage is enabled');
     }
     if (!value.CLOUDINARY_API_SECRET || value.CLOUDINARY_API_SECRET.trim() === '') {
-      missing.push('"CLOUDINARY_API_SECRET" is required when KYC_STORAGE_PROVIDER is "cloudinary"');
+      missing.push('"CLOUDINARY_API_SECRET" is required when Cloudinary storage is enabled');
     }
     if (missing.length > 0) {
       throw new Error(`Invalid environment configuration: ${missing.join('; ')}`);

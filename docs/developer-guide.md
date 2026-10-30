@@ -101,6 +101,21 @@ The Seeker module handles registration, email confirmation, secure login, passwo
 
 ---
 
+## 3b. Listings Module (Phase 1 Core)
+
+Agents and Landlords publish listings; anyone can browse them. Publishing is gated by the KYC soft-gate guard. Full spec: [listings-module.md](./listings-module.md).
+
+### Endpoints Reference
+
+| Method | Endpoint | Auth | Purpose |
+|---|---|---|---|
+| `GET` | `/api/v1/listings` | Public | Search active listings with filters + pagination (`{ items, meta: { page, limit, total } }`) |
+| `GET` | `/api/v1/listings/:id` | Public | Listing detail with snapshot Verified badge |
+| `POST` | `/api/v1/agents/listings` | Bearer JWT (agent) + verified | Publish a listing (multipart `photos`, 3–10) |
+| `POST` | `/api/v1/landlords/listings` | Bearer JWT (landlord) + verified | Publish a listing (multipart `photos`, 3–10) |
+
+---
+
 ## 4. Email Delivery & React Email Templates
 
 Outbound emails are managed through `src/mail/`.
@@ -144,6 +159,9 @@ All environment variables are parsed and validated at startup using Joi in `src/
 | `SMTP_USER` | string | `""` | **If smtp** | SMTP authentication username |
 | `SMTP_PASS` | string | `""` | **If smtp** | SMTP authentication password |
 | `TRUST_PROXY` | string | `""` | No | Reverse proxy hop count (e.g. `1` for ALB/Cloudflare) |
+| `LISTINGS_STORAGE_PROVIDER` | string | `local` | **Yes (prod: `cloudinary`)** | Listing photo storage backend; `local` is a dev/test fallback rejected in production |
+| `LISTINGS_UPLOAD_DIR` | string | `uploads/listings` | No | Storage root for the `local` listing provider |
+| `CLOUDINARY_LISTINGS_FOLDER` | string | `oruvia/listings` | No | Public Cloudinary folder for listing photos |
 
 ---
 
