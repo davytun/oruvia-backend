@@ -194,6 +194,36 @@ describe('AgentKycService', () => {
       );
       expect(result.attemptsUsed).toBe(3);
     });
+
+    it('maps a concurrent-submit unique violation (23505) to 409 KYC_ALREADY_PENDING', async () => {
+      submissionRepo.save = vi
+        .fn()
+        .mockRejectedValue(
+          Object.assign(new Error('duplicate key'), {
+            code: '23505',
+            constraint: 'uq_agent_kyc_pending_per_agent',
+          }),
+        );
+
+      const error = await service
+        .submit(makeAgent(), { documentType: 'NIN_SLIP' }, validFile)
+        .catch((e) => e);
+
+      expect(error).toBeInstanceOf(ConflictException);
+      expect(error.getResponse()).toMatchObject({ code: 'KYC_ALREADY_PENDING' });
+    });
+
+    it('re-throws an unrelated unique violation instead of masking it as 409', async () => {
+      const dbError = Object.assign(new Error('duplicate key'), {
+        code: '23505',
+        constraint: 'uq_agent_kyc_something_else',
+      });
+      submissionRepo.save = vi.fn().mockRejectedValue(dbError);
+
+      await expect(
+        service.submit(makeAgent(), { documentType: 'NIN_SLIP' }, validFile),
+      ).rejects.toBe(dbError);
+    });
   });
 
   describe('getStatus', () => {

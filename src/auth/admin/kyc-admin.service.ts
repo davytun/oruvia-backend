@@ -1,6 +1,7 @@
 import {
   ConflictException,
   Injectable,
+  Logger,
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -52,6 +53,8 @@ function isAgentSubmission(
 
 @Injectable()
 export class KycAdminService {
+  private readonly logger = new Logger(KycAdminService.name);
+
   constructor(
     @InjectRepository(AgentKycSubmission)
     private readonly agentSubmissionRepository: Repository<AgentKycSubmission>,
@@ -128,6 +131,36 @@ export class KycAdminService {
     return document;
   }
 
+  private async notifyLister(
+    user: AgentUser | LandlordUser,
+    approved: boolean,
+    listerType: KycListerType,
+    rejectionReason?: string,
+  ): Promise<void> {
+    try {
+      if (rejectionReason === undefined) {
+        await this.mailService.sendKycDecision(
+          user.email,
+          user.fullName,
+          approved,
+          listerType,
+        );
+      } else {
+        await this.mailService.sendKycDecision(
+          user.email,
+          user.fullName,
+          approved,
+          listerType,
+          rejectionReason,
+        );
+      }
+    } catch (error: unknown) {
+      this.logger.warn(
+        `KYC ${approved ? 'approval' : 'rejection'} email failed for ${user.email}: ${error instanceof Error ? error.message : String(error)}`,
+      );
+    }
+  }
+
   async approve(id: string, adminId: string): Promise<KycSubmissionDetail> {
     const { submission, user, listerType } = await this.review(
       id,
@@ -145,12 +178,7 @@ export class KycAdminService {
       },
     );
 
-    await this.mailService.sendKycDecision(
-      user.email,
-      user.fullName,
-      true,
-      listerType,
-    );
+    await this.notifyLister(user, true, listerType);
 
     return this.toDetail(listerType, submission, user);
   }
@@ -175,13 +203,7 @@ export class KycAdminService {
       },
     );
 
-    await this.mailService.sendKycDecision(
-      user.email,
-      user.fullName,
-      false,
-      listerType,
-      reason,
-    );
+    await this.notifyLister(user, false, listerType, reason);
 
     return this.toDetail(listerType, submission, user);
   }

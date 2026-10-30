@@ -86,7 +86,6 @@ export function validateEnv(config: Record<string, unknown>): Env {
     throw new Error(`Invalid environment configuration: ${problems}`);
   }
 
-  // Enforce strong, non-default JWT secret in production
   if (value.NODE_ENV === 'production') {
     if (
       !config.JWT_SECRET ||

@@ -132,7 +132,6 @@ export class LandlordsService {
       );
     }
 
-    // Invalidate existing unused codes for this purpose
     await this.codeRepository.update(
       { landlordId, purpose, usedAt: IsNull() },
       { usedAt: new Date() },

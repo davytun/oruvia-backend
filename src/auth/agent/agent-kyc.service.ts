@@ -109,15 +109,29 @@ export class AgentKycService {
       });
     }
 
-    const submission = await this.submissionRepository.save(
-      this.submissionRepository.create({
-        agentId: agent.id,
-        status: 'pending',
-        documentType: dto.documentType,
-        documentUrl: stored.reference,
-        attempt: attemptsUsed + 1,
-      }),
-    );
+    let submission: AgentKycSubmission;
+    try {
+      submission = await this.submissionRepository.save(
+        this.submissionRepository.create({
+          agentId: agent.id,
+          status: 'pending',
+          documentType: dto.documentType,
+          documentUrl: stored.reference,
+          attempt: attemptsUsed + 1,
+        }),
+      );
+    } catch (error: any) {
+      if (
+        error?.code === '23505' &&
+        error?.constraint === 'uq_agent_kyc_pending_per_agent'
+      ) {
+        throw new ConflictException({
+          code: 'KYC_ALREADY_PENDING',
+          message: 'A submission is already awaiting review',
+        });
+      }
+      throw error;
+    }
 
     agent.verificationStatus = 'pending';
     await this.agentRepository.save(agent);

@@ -112,15 +112,29 @@ export class LandlordKycService {
       });
     }
 
-    const submission = await this.submissionRepository.save(
-      this.submissionRepository.create({
-        landlordId: landlord.id,
-        status: 'pending',
-        documentType: dto.documentType,
-        documentUrl: stored.reference,
-        attempt: attemptsUsed + 1,
-      }),
-    );
+    let submission: LandlordKycSubmission;
+    try {
+      submission = await this.submissionRepository.save(
+        this.submissionRepository.create({
+          landlordId: landlord.id,
+          status: 'pending',
+          documentType: dto.documentType,
+          documentUrl: stored.reference,
+          attempt: attemptsUsed + 1,
+        }),
+      );
+    } catch (error: any) {
+      if (
+        error?.code === '23505' &&
+        error?.constraint === 'uq_landlord_kyc_pending_per_landlord'
+      ) {
+        throw new ConflictException({
+          code: 'KYC_ALREADY_PENDING',
+          message: 'A submission is already awaiting review',
+        });
+      }
+      throw error;
+    }
 
     landlord.verificationStatus = 'pending';
     await this.landlordRepository.save(landlord);

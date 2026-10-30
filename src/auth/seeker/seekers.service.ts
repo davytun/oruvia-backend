@@ -131,7 +131,6 @@ export class SeekersService {
       );
     }
 
-    // Invalidate existing unused codes for this purpose
     await this.codeRepository.update(
       { seekerId, purpose, usedAt: IsNull() },
       { usedAt: new Date() },

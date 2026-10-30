@@ -151,6 +151,20 @@ describe('KycAdminService', () => {
       expect(result.listerType).toBe('agent');
     });
 
+    it('still approves when the notification email fails (review already committed)', async () => {
+      const submission = makeAgentSubmission();
+      agentSubmissionRepo.findOne = vi.fn().mockResolvedValue(submission);
+      mailService.sendKycDecision = vi
+        .fn()
+        .mockRejectedValue(new Error('smtp unavailable'));
+
+      const result = await service.approve('sub-agent-1', 'admin-1');
+
+      expect(submission.status).toBe('approved');
+      expect(result.status).toBe('approved');
+      expect(mailService.sendKycDecision).toHaveBeenCalled();
+    });
+
     it('rejects double-review of an already decided submission', async () => {
       agentSubmissionRepo.findOne = vi
         .fn()

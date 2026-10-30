@@ -236,7 +236,6 @@ export class AdminsService {
       return genericResponse;
     }
 
-    // Enforce 60-second cooldown
     const recentCode = await this.codeRepository.findOne({
       where: {
         adminId: admin.id,
@@ -258,7 +257,6 @@ export class AdminsService {
       );
     }
 
-    // Mark previous unused reset codes as expired
     await this.codeRepository.update(
       {
         adminId: admin.id,

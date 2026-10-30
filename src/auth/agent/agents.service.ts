@@ -132,7 +132,6 @@ export class AgentsService {
       );
     }
 
-    // Invalidate existing unused codes for this purpose
     await this.codeRepository.update(
       { agentId, purpose, usedAt: IsNull() },
       { usedAt: new Date() },

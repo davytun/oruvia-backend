@@ -85,7 +85,6 @@ export function setupSwagger(app: NestExpressApplication): void {
 export function configureApp(app: NestExpressApplication): void {
   const config = app.get<ConfigService<Env, true>>(ConfigService);
 
-  // Wire Pino structured logger if present in application context
   try {
     const logger = app.get(Logger);
     if (logger) {
