@@ -1,6 +1,6 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "oruvia-api",
+  "name": "api",
   "main": "src/index.ts",
   "compatibility_date": "2026-11-09",
   "compatibility_flags": [
@@ -9,7 +9,7 @@
   "vars": {
     "APP_NAME": "Oruvia",
     "APP_ENV": "production",
-    "APP_URL": "https://oruvia-api.oruvia.workers.dev",
+    "APP_URL": "https://api.oruvia.workers.dev",
     "FRONTEND_URL": "http://localhost:3000",
     "EMAIL_FROM": "Oruvia <noreply@oruvia.ng>"
   },
