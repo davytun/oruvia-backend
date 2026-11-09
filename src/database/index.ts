@@ -20,4 +20,3 @@ export const dbMiddleware = factory.createMiddleware(async (c, next) => {
   }
   await next()
 })
-
