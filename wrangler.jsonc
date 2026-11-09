@@ -1,0 +1,34 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "oruvia-backend",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-11-09",
+  "compatibility_flags": [
+    "nodejs_compat"
+  ],
+  "vars": {
+    "APP_NAME": "Oruvia",
+    "APP_ENV": "development",
+    "APP_URL": "http://localhost:8787",
+    "FRONTEND_URL": "http://localhost:3000",
+    "EMAIL_FROM": "Oruvia <noreply@oruvia.ng>"
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "oruvia-db",
+      "database_id": "00000000-0000-0000-0000-000000000000",
+      "migrations_dir": "src/database/migrations"
+    }
+  ],
+  "r2_buckets": [
+    {
+      "binding": "BUCKET",
+      "bucket_name": "oruvia-media"
+    }
+  ],
+  "observability": {
+    "enabled": true,
+    "head_sampling_rate": 1
+  }
+}

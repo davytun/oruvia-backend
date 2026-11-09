@@ -1,0 +1,31 @@
+{
+  "name": "oruvia-backend",
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy --minify",
+    "cf-typegen": "wrangler types --env-interface CloudflareBindings",
+    "typecheck": "tsc --noEmit",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate:local": "wrangler d1 migrations apply oruvia-db --local",
+    "db:migrate:remote": "wrangler d1 migrations apply oruvia-db --remote"
+  },
+  "dependencies": {
+    "@hono/zod-validator": "^0.9.1",
+    "@react-email/components": "^1.0.12",
+    "@react-email/render": "^2.2.0",
+    "drizzle-orm": "^0.45.4",
+    "hono": "^4.13.16",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@hono/cli": "^1.0.0-rc.9",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "drizzle-kit": "^0.31.11",
+    "typescript": "^7.0.2",
+    "wrangler": "^4.110.0"
+  }
+}
