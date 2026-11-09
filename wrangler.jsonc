@@ -9,7 +9,7 @@
   "vars": {
     "APP_NAME": "Oruvia",
     "APP_ENV": "production",
-    "APP_URL": "https://oruvia-api.davidakintunde433.workers.dev",
+    "APP_URL": "https://oruvia-api.oruvia.workers.dev",
     "FRONTEND_URL": "http://localhost:3000",
     "EMAIL_FROM": "Oruvia <noreply@oruvia.ng>"
   },
@@ -17,7 +17,7 @@
     {
       "binding": "DB",
       "database_name": "oruvia-db",
-      "database_id": "8b32fe38-9688-4def-bbad-ccf80ce5710a",
+      "database_id": "2a6c11b7-5827-4699-b084-0e5e66242938",
       "migrations_dir": "src/database/migrations"
     }
   ],
