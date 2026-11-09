@@ -14,7 +14,7 @@
     "APP_ENV": "production",
     "APP_URL": "https://api.oruvia.workers.dev",
     "FRONTEND_URL": "http://localhost:3000",
-    "EMAIL_FROM": "Oruvia <noreply@oruvia.ng>"
+    "EMAIL_FROM": "Oruvia <davidakintunde433@gmail.com>"
   },
   "d1_databases": [
     {

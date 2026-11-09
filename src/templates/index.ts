@@ -1,6 +1,5 @@
 import type { ReactElement } from 'react'
-// @ts-expect-error Direct import of production browser legacy SSR bundle to avoid bundling 1.1MB of dev/stream SSR bundles on Workers
-import { renderToStaticMarkup } from '../../node_modules/react-dom/cjs/react-dom-server-legacy.browser.production.js'
+import { renderToStaticMarkup } from 'react-dom/server.browser'
 
 export * from './BaseEmailLayout'
 export * from './NotificationEmail'
