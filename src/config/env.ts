@@ -13,7 +13,8 @@ export interface AuthUser {
 /**
  * Cloudflare Worker Bindings extended with environment secrets
  */
-export type AppBindings = CloudflareBindings & {
+export type AppBindings = Omit<CloudflareBindings, 'APP_ENV'> & {
+  APP_ENV?: string
   JWT_SECRET?: string
   JWT_EXPIRES_IN_SECONDS?: string
   RESEND_API_KEY?: string

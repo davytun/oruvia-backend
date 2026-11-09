@@ -8,8 +8,8 @@
   ],
   "vars": {
     "APP_NAME": "Oruvia",
-    "APP_ENV": "development",
-    "APP_URL": "http://localhost:8787",
+    "APP_ENV": "production",
+    "APP_URL": "https://oruvia-backend.workers.dev",
     "FRONTEND_URL": "http://localhost:3000",
     "EMAIL_FROM": "Oruvia <noreply@oruvia.ng>"
   },

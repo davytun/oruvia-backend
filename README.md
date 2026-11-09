@@ -10,6 +10,7 @@ Oruvia is a Proptech and Real Estate Marketplace built for the Ogun Digital Summ
 - [User Roles & Permissions](docs/roles.md) — Separate role tables (`seekers`, `agents`, `landlords`, `admins`) and permission rules
 - [Developer Architecture Guide](docs/architecture.md) — Tech stack, folder structure, response conventions, and local setup
 - [API Reference](docs/api.md) — Request and response documentation for all endpoints
+- [Deployment Guide](docs/deployment.md) — Step-by-step instructions to deploy to Cloudflare Workers & D1
 
 ## Quick Start
 
