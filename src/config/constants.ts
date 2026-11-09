@@ -71,6 +71,15 @@ export const NOTIFICATION_TYPES = {
   LISTING_UPDATE: 'listing_update',
 } as const
 
+export const AUTH_CONFIG = {
+  ACCESS_TOKEN_TTL_SECONDS: 60 * 15, // 15 minutes
+  REFRESH_TOKEN_TTL_SECONDS: 60 * 60 * 24 * 30, // 30 days
+  MAX_FAILED_LOGIN_ATTEMPTS: 5,
+  LOCKOUT_DURATION_MINUTES: 15,
+  MIN_PASSWORD_LENGTH: 8,
+  MAX_PASSWORD_LENGTH: 128,
+} as const
+
 export const PAGINATION_DEFAULTS = {
   PAGE: 1,
   PER_PAGE: 20,

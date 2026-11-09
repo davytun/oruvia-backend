@@ -4,20 +4,22 @@
 
 ## 1. Purpose
 
-This document defines the user roles within Oruvia and the responsibilities and permissions associated with each role.
+This document defines the user roles within Oruvia, how roles are represented in the database, and the responsibilities and permissions associated with each role.
 
 All role-related functionality must follow the definitions in this document.
 
-## 2. User Roles
+## 2. Role Architecture (Separate Role Tables)
 
-Oruvia supports four primary roles:
+Oruvia supports four primary roles, each stored in its own dedicated table linked to the base `users` authentication table (`user_id`):
 
-- Seeker
-- Agent
-- Landlord
-- Admin
+- **Seeker** (`seekers` table)
+- **Agent** (`agents` table)
+- **Landlord** (`landlords` table)
+- **Admin** (`admins` table)
 
-## 3. Seeker
+Every registered user receives a `seekers` record by default so they can discover properties, save favorites, and request inspections. Because each role lives in its own table with its own primary key (`seekers.id`, `agents.id`, `landlords.id`, `admins.id`), a Seeker can also onboard as an **Agent** and/or a **Landlord** without role or foreign-key conflicts.
+
+## 3. Seeker (`seekers`)
 
 A Seeker is a user looking to rent or purchase a property.
 
@@ -35,15 +37,15 @@ A Seeker is a user looking to rent or purchase a property.
 ### Permissions
 
 - View published listings.
-- Save and remove favorites.
-- Create property inquiries.
-- Request inspections.
+- Save and remove favorites (`favorites.seeker_id`).
+- Create property inquiries (`conversations.seeker_id`).
+- Request inspections (`inspections.seeker_id`).
 - Manage their own inspection requests.
-- Manage their own account and profile.
+- Manage their own account and seeker profile.
 
-A Seeker must not be able to manage property listings or access administrative functionality.
+A user who only has a `seekers` record must not be able to publish property listings or access administrative functionality until they create an `agents` or `landlords` profile.
 
-## 4. Agent
+## 4. Agent (`agents`)
 
 An Agent is a real estate professional who represents or manages property listings.
 
@@ -54,23 +56,23 @@ An Agent is a real estate professional who represents or manages property listin
 - Receive inquiries.
 - Respond to inspection requests.
 - Communicate with property seekers.
-- Maintain their profile.
+- Maintain their agent profile.
 - Submit verification requests.
 
 ### Permissions
 
-- Create property listings.
+- Create property listings (`properties.agent_id`).
 - View and manage their own listings.
 - Edit their own listings.
 - Delete their own listings.
 - Manage inspection requests associated with their listings.
 - Respond to inquiries.
-- Manage their own profile.
+- Manage their own agent profile.
 - Submit verification documents.
 
 Agents must not manage listings belonging to other users unless explicitly authorized.
 
-## 5. Landlord
+## 5. Landlord (`landlords`)
 
 A Landlord is a property owner who intends to rent or sell a property.
 
@@ -86,19 +88,19 @@ A Landlord is a property owner who intends to rent or sell a property.
 
 ### Permissions
 
-- Create property listings.
+- Create property listings (`properties.landlord_id`).
 - View and manage their own listings.
 - Edit their own listings.
 - Delete their own listings.
 - Mark properties as rented or sold.
 - Manage inspection requests associated with their listings.
 - Respond to inquiries.
-- Manage their own profile.
+- Manage their own landlord profile.
 - Submit verification documents.
 
 Landlords must not manage listings belonging to other users unless explicitly authorized.
 
-## 6. Admin
+## 6. Admin (`admins`)
 
 An Admin is responsible for platform administration, moderation, and trust management.
 
@@ -121,15 +123,14 @@ An Admin is responsible for platform administration, moderation, and trust manag
 - Take appropriate administrative action.
 - Manage platform users where authorized.
 
-Administrative permissions must remain restricted to authorized administrators.
+Administrative permissions must remain restricted to users with a valid record in the `admins` table.
 
 ## 7. General Permission Rules
 
-- Users must only access functionality permitted by their role.
+- Users must only access functionality permitted by their active role records (`seekers`, `agents`, `landlords`, `admins`).
 - Users must not modify resources owned by other users without authorization.
-- Role assignments must not be self-modifiable.
-- Verification status must not be self-modifiable.
-- Administrative privileges must not be granted through ordinary user actions.
+- Verification status (`verification_status` / `is_verified`) must not be self-modifiable.
+- Administrative records (`admins`) must not be created or granted through ordinary user actions.
 - Users must not access private information without authorization.
 - Permissions should be enforced consistently across the platform.
 

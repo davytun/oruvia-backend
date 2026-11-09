@@ -1,11 +1,17 @@
 import { sign, verify } from 'hono/jwt'
-import type { AuthUser } from '../config/env'
+import { AUTH_CONFIG } from '../config/constants'
+import { AppError } from './errors'
 
+// Cloudflare Workers caps PBKDF2 at 100,000 iterations.
 const PBKDF2_ITERATIONS = 100_000
 const SALT_BYTE_LENGTH = 16
 const KEY_BIT_LENGTH = 256
-const DEFAULT_JWT_SECRET = 'oruvia-dev-jwt-secret-change-in-production'
-const DEFAULT_JWT_EXPIRES_IN_SECONDS = 60 * 60 * 24 * 7 // 7 days
+
+/**
+ * Dummy PBKDF2 hash verified when a login email does not exist,
+ * preventing timing-based email enumeration.
+ */
+export const DUMMY_PASSWORD_HASH = `pbkdf2_sha256$${PBKDF2_ITERATIONS}$${'0'.repeat(32)}$${'0'.repeat(64)}`
 
 function bytesToHex(bytes: Uint8Array): string {
   return Array.from(bytes)
@@ -72,6 +78,14 @@ export async function verifyPassword(
   }
 
   const iterations = parseInt(parts[1], 10)
+  if (
+    !Number.isInteger(iterations) ||
+    iterations < 1 ||
+    iterations > PBKDF2_ITERATIONS
+  ) {
+    return false
+  }
+
   const salt = hexToBytes(parts[2])
   const expectedHash = hexToBytes(parts[3])
 
@@ -98,29 +112,61 @@ export async function verifyPassword(
   return timingSafeEqual(new Uint8Array(derivedBits), expectedHash)
 }
 
+/**
+ * Generate a cryptographically random hex token (for refresh tokens)
+ */
+export function generateRandomToken(byteLength = 32): string {
+  return bytesToHex(crypto.getRandomValues(new Uint8Array(byteLength)))
+}
+
+/**
+ * Compute SHA-256 hex digest of a token or code
+ */
+export async function sha256Hex(value: string): Promise<string> {
+  const digest = await crypto.subtle.digest(
+    'SHA-256',
+    new TextEncoder().encode(value)
+  )
+  return bytesToHex(new Uint8Array(digest))
+}
+
 export interface JwtTokenPayload {
-  id: string
+  sub: string
   email: string
+  sid: string
   iat: number
   exp: number
 }
 
+function resolveJwtSecret(secret?: string): string {
+  if (!secret || secret.trim().length < 16) {
+    throw new AppError(
+      'Server authentication secret is not configured.',
+      500,
+      'INTERNAL_SERVER_ERROR'
+    )
+  }
+  return secret
+}
+
 /**
- * Sign a JWT access token for an authenticated user
+ * Sign a short-lived JWT access token
  */
 export async function signAccessToken(
-  user: AuthUser,
-  secret: string = DEFAULT_JWT_SECRET,
-  expiresInSeconds: number = DEFAULT_JWT_EXPIRES_IN_SECONDS
+  input: { userId: string; email: string; sessionId: string },
+  secret?: string,
+  expiresInSeconds: number = AUTH_CONFIG.ACCESS_TOKEN_TTL_SECONDS
 ): Promise<string> {
+  const validSecret = resolveJwtSecret(secret)
   const now = Math.floor(Date.now() / 1000)
   const payload = {
-    id: user.id,
-    email: user.email,
+    sub: input.userId,
+    email: input.email,
+    sid: input.sessionId,
     iat: now,
     exp: now + expiresInSeconds,
   }
-  return sign(payload, secret, 'HS256')
+  return sign(payload, validSecret, 'HS256')
 }
 
 /**
@@ -128,12 +174,22 @@ export async function signAccessToken(
  */
 export async function verifyAccessToken(
   token: string,
-  secret: string = DEFAULT_JWT_SECRET
+  secret?: string
 ): Promise<JwtTokenPayload> {
-  const payload = await verify(token, secret, 'HS256')
+  const validSecret = resolveJwtSecret(secret)
+  const payload = await verify(token, validSecret, 'HS256')
+  if (
+    typeof payload.sub !== 'string' ||
+    typeof payload.email !== 'string' ||
+    typeof payload.sid !== 'string'
+  ) {
+    throw new Error('Malformed access token payload')
+  }
+
   return {
-    id: String(payload.id),
-    email: String(payload.email),
+    sub: payload.sub,
+    email: payload.email,
+    sid: payload.sid,
     iat: Number(payload.iat),
     exp: Number(payload.exp),
   }
