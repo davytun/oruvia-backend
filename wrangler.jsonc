@@ -6,6 +6,9 @@
   "compatibility_flags": [
     "nodejs_compat"
   ],
+  "define": {
+    "process.env.NODE_ENV": "\"production\""
+  },
   "vars": {
     "APP_NAME": "Oruvia",
     "APP_ENV": "production",
