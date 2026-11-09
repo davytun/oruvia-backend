@@ -21,15 +21,11 @@ app.use('*', dbMiddleware)
 
 // Root status endpoint
 app.get('/', (c) => {
-  return sendSuccess(
-    c,
-    {
-      name: c.env?.APP_NAME || 'Oruvia',
-      tagline: 'Oruvia: Your path to a roof.',
-      version: '1.0.0',
-    },
-    'Welcome to the Oruvia API'
-  )
+  return sendSuccess(c, {
+    name: c.env?.APP_NAME || 'Oruvia',
+    tagline: 'Oruvia: Your path to a roof.',
+    version: '1.0.0',
+  })
 })
 
 // API v1 Routes

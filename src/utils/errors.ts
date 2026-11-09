@@ -2,7 +2,7 @@ import type { ContentfulStatusCode } from 'hono/utils/http-status'
 
 export type ErrorCode =
   | 'BAD_REQUEST'
-  | 'VALIDATION_ERROR'
+  | 'VALIDATION_FAILED'
   | 'UNAUTHORIZED'
   | 'FORBIDDEN'
   | 'NOT_FOUND'
@@ -11,16 +11,21 @@ export type ErrorCode =
   | 'TOO_MANY_REQUESTS'
   | 'INTERNAL_SERVER_ERROR'
 
+export interface ErrorDetail {
+  field: string
+  issue: string
+}
+
 export class AppError extends Error {
   public readonly statusCode: ContentfulStatusCode
   public readonly code: ErrorCode
-  public readonly details?: unknown
+  public readonly details?: ErrorDetail[]
 
   constructor(
     message: string,
     statusCode: ContentfulStatusCode = 500,
     code: ErrorCode = 'INTERNAL_SERVER_ERROR',
-    details?: unknown
+    details?: ErrorDetail[]
   ) {
     super(message)
     this.name = this.constructor.name
@@ -31,47 +36,52 @@ export class AppError extends Error {
 }
 
 export class BadRequestError extends AppError {
-  constructor(message = 'Bad request', details?: unknown) {
+  constructor(message = 'Bad request.', details?: ErrorDetail[]) {
     super(message, 400, 'BAD_REQUEST', details)
   }
 }
 
 export class ValidationError extends AppError {
-  constructor(message = 'Validation failed', details?: unknown) {
-    super(message, 400, 'VALIDATION_ERROR', details)
+  constructor(
+    details?: ErrorDetail[],
+    message = 'The request entity contains invalid parameters.'
+  ) {
+    super(message, 400, 'VALIDATION_FAILED', details)
   }
 }
 
 export class UnauthorizedError extends AppError {
-  constructor(message = 'Authentication required', details?: unknown) {
+  constructor(message = 'Authentication required.', details?: ErrorDetail[]) {
     super(message, 401, 'UNAUTHORIZED', details)
   }
 }
 
 export class ForbiddenError extends AppError {
   constructor(
-    message = 'You do not have permission to perform this action',
-    details?: unknown
+    message = 'You do not have permission to perform this action.',
+    details?: ErrorDetail[]
   ) {
     super(message, 403, 'FORBIDDEN', details)
   }
 }
 
 export class NotFoundError extends AppError {
-  constructor(resource = 'Resource', details?: unknown) {
-    super(`${resource} not found`, 404, 'NOT_FOUND', details)
+  constructor(resource = 'Resource', details?: ErrorDetail[]) {
+    super(`${resource} not found.`, 404, 'NOT_FOUND', details)
   }
 }
 
 export class ConflictError extends AppError {
-  constructor(message = 'Resource already exists', details?: unknown) {
+  constructor(message = 'Resource already exists.', details?: ErrorDetail[]) {
     super(message, 409, 'CONFLICT', details)
   }
 }
 
 export class UnprocessableEntityError extends AppError {
-  constructor(message = 'Unprocessable entity', details?: unknown) {
+  constructor(
+    message = 'The request entity contains invalid parameters.',
+    details?: ErrorDetail[]
+  ) {
     super(message, 422, 'UNPROCESSABLE_ENTITY', details)
   }
 }
-

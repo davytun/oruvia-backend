@@ -12,7 +12,7 @@ import { sendError } from '../utils/response'
 export const notFoundHandler: NotFoundHandler<AppEnv> = (c) => {
   return sendError(
     c,
-    `Route ${c.req.method} ${c.req.path} not found`,
+    `Route ${c.req.method} ${c.req.path} not found.`,
     404,
     'NOT_FOUND'
   )
@@ -27,17 +27,23 @@ export const errorHandler: ErrorHandler<AppEnv> = (err, c) => {
   }
 
   if (err instanceof ZodError) {
-    const details = err.issues.map((issue) => ({
-      field: issue.path.join('.'),
-      message: issue.message,
+    const details = err.issues.map((item) => ({
+      field: item.path.map(String).join('.'),
+      issue: item.message,
     }))
-    return sendError(c, 'Validation failed', 400, 'VALIDATION_ERROR', details)
+    return sendError(
+      c,
+      'The request entity contains invalid parameters.',
+      400,
+      'VALIDATION_FAILED',
+      details
+    )
   }
 
   if (err instanceof HTTPException) {
     return sendError(
       c,
-      err.message || 'HTTP Error',
+      err.message || 'HTTP Error.',
       err.status as ContentfulStatusCode,
       'BAD_REQUEST'
     )
@@ -47,9 +53,8 @@ export const errorHandler: ErrorHandler<AppEnv> = (err, c) => {
   const isDev = c.env?.APP_ENV === 'development'
   return sendError(
     c,
-    isDev && err instanceof Error ? err.message : 'Internal server error',
+    isDev && err instanceof Error ? err.message : 'Internal server error.',
     500,
     'INTERNAL_SERVER_ERROR'
   )
 }
-

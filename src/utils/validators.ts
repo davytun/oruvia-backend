@@ -15,23 +15,23 @@ export function validationHook(
   c: Context
 ) {
   if (!result.success && result.error) {
-    const formattedErrors = result.error.issues.map((issue) => ({
-      field: issue.path.map(String).join('.'),
-      message: issue.message,
+    const details = result.error.issues.map((item) => ({
+      field: item.path.map(String).join('.'),
+      issue: item.message,
     }))
 
     return sendError(
       c,
-      'Validation failed',
+      'The request entity contains invalid parameters.',
       400,
-      'VALIDATION_ERROR',
-      formattedErrors
+      'VALIDATION_FAILED',
+      details
     )
   }
 }
 
 export const idParamSchema = z.object({
-  id: z.string().min(1, 'Resource ID is required'),
+  id: z.string().min(1, 'Resource ID is required.'),
 })
 
 export const paginationQuerySchema = z.object({
@@ -40,10 +40,10 @@ export const paginationQuerySchema = z.object({
     .int()
     .min(1)
     .default(PAGINATION_DEFAULTS.PAGE),
-  limit: z.coerce
+  per_page: z.coerce
     .number()
     .int()
     .min(1)
-    .max(PAGINATION_DEFAULTS.MAX_LIMIT)
-    .default(PAGINATION_DEFAULTS.LIMIT),
+    .max(PAGINATION_DEFAULTS.MAX_PER_PAGE)
+    .default(PAGINATION_DEFAULTS.PER_PAGE),
 })

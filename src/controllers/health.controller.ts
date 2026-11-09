@@ -5,6 +5,5 @@ import { sendSuccess } from '../utils/response'
 
 export function healthCheck(c: Context<AppEnv>) {
   const status = getHealthStatus(c.env)
-  return sendSuccess(c, status, 'Oruvia API is running')
+  return sendSuccess(c, status)
 }
-
