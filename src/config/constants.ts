@@ -2,6 +2,22 @@
  * Oruvia Domain Constants
  */
 
+export const ACCOUNT_TYPES = {
+  SEEKER: 'seeker',
+  AGENT: 'agent',
+  LANDLORD: 'landlord',
+  ADMIN: 'admin',
+} as const
+
+export type AccountType = (typeof ACCOUNT_TYPES)[keyof typeof ACCOUNT_TYPES]
+
+export const CODE_PURPOSES = {
+  EMAIL_VERIFICATION: 'EMAIL_VERIFICATION',
+  PASSWORD_RESET: 'PASSWORD_RESET',
+} as const
+
+export type CodePurpose = (typeof CODE_PURPOSES)[keyof typeof CODE_PURPOSES]
+
 export const LISTING_CLASSIFICATIONS = {
   RENT: 'rent',
   SALE: 'sale',
@@ -72,10 +88,10 @@ export const NOTIFICATION_TYPES = {
 } as const
 
 export const AUTH_CONFIG = {
-  ACCESS_TOKEN_TTL_SECONDS: 60 * 15, // 15 minutes
-  REFRESH_TOKEN_TTL_SECONDS: 60 * 60 * 24 * 30, // 30 days
-  MAX_FAILED_LOGIN_ATTEMPTS: 5,
-  LOCKOUT_DURATION_MINUTES: 15,
+  ACCESS_TOKEN_TTL_SECONDS: 60 * 60 * 24, // 24 hours (1d)
+  CODE_EXPIRY_MINUTES: 15,
+  CODE_RESEND_COOLDOWN_SECONDS: 60,
+  MAX_CODE_ATTEMPTS: 5,
   MIN_PASSWORD_LENGTH: 8,
   MAX_PASSWORD_LENGTH: 128,
 } as const

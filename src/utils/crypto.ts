@@ -1,5 +1,5 @@
 import { sign, verify } from 'hono/jwt'
-import { AUTH_CONFIG } from '../config/constants'
+import { AUTH_CONFIG, type AccountType } from '../config/constants'
 import { AppError } from './errors'
 
 // Cloudflare Workers caps PBKDF2 at 100,000 iterations.
@@ -113,27 +113,54 @@ export async function verifyPassword(
 }
 
 /**
- * Generate a cryptographically random hex token (for refresh tokens)
+ * Generate a cryptographically random 6-digit OTP code (e.g. "482910")
  */
-export function generateRandomToken(byteLength = 32): string {
-  return bytesToHex(crypto.getRandomValues(new Uint8Array(byteLength)))
+export function generateOtpCode(): string {
+  const randomBuffer = new Uint32Array(1)
+  crypto.getRandomValues(randomBuffer)
+  const sixDigits = randomBuffer[0] % 1_000_000
+  return sixDigits.toString().padStart(6, '0')
 }
 
 /**
- * Compute SHA-256 hex digest of a token or code
+ * Hash a 6-digit OTP code with a random salt using SHA-256
+ * Format: `sha256$<salt_hex>$<hash_hex>`
  */
-export async function sha256Hex(value: string): Promise<string> {
+export async function hashOtpCode(code: string): Promise<string> {
+  const salt = crypto.getRandomValues(new Uint8Array(16))
+  const saltHex = bytesToHex(salt)
   const digest = await crypto.subtle.digest(
     'SHA-256',
-    new TextEncoder().encode(value)
+    new TextEncoder().encode(`${saltHex}:${code}`)
   )
-  return bytesToHex(new Uint8Array(digest))
+  return `sha256$${saltHex}$${bytesToHex(new Uint8Array(digest))}`
+}
+
+/**
+ * Constant-time verification of a 6-digit OTP code against its salted SHA-256 hash
+ */
+export async function verifyOtpCode(
+  code: string,
+  storedHash: string
+): Promise<boolean> {
+  const parts = storedHash.split('$')
+  if (parts.length !== 3 || parts[0] !== 'sha256') {
+    return false
+  }
+  const saltHex = parts[1]
+  const expectedBytes = hexToBytes(parts[2])
+  const digest = await crypto.subtle.digest(
+    'SHA-256',
+    new TextEncoder().encode(`${saltHex}:${code}`)
+  )
+  return timingSafeEqual(new Uint8Array(digest), expectedBytes)
 }
 
 export interface JwtTokenPayload {
   sub: string
   email: string
-  sid: string
+  accountType: AccountType
+  tokenVersion: number
   iat: number
   exp: number
 }
@@ -150,10 +177,15 @@ function resolveJwtSecret(secret?: string): string {
 }
 
 /**
- * Sign a short-lived JWT access token
+ * Sign a stateless JWT access token bound to `accountType` and `tokenVersion`
  */
 export async function signAccessToken(
-  input: { userId: string; email: string; sessionId: string },
+  input: {
+    userId: string
+    email: string
+    accountType: AccountType
+    tokenVersion: number
+  },
   secret?: string,
   expiresInSeconds: number = AUTH_CONFIG.ACCESS_TOKEN_TTL_SECONDS
 ): Promise<string> {
@@ -162,7 +194,8 @@ export async function signAccessToken(
   const payload = {
     sub: input.userId,
     email: input.email,
-    sid: input.sessionId,
+    accountType: input.accountType,
+    tokenVersion: input.tokenVersion,
     iat: now,
     exp: now + expiresInSeconds,
   }
@@ -181,7 +214,8 @@ export async function verifyAccessToken(
   if (
     typeof payload.sub !== 'string' ||
     typeof payload.email !== 'string' ||
-    typeof payload.sid !== 'string'
+    typeof payload.accountType !== 'string' ||
+    typeof payload.tokenVersion !== 'number'
   ) {
     throw new Error('Malformed access token payload')
   }
@@ -189,7 +223,8 @@ export async function verifyAccessToken(
   return {
     sub: payload.sub,
     email: payload.email,
-    sid: payload.sid,
+    accountType: payload.accountType as AccountType,
+    tokenVersion: payload.tokenVersion,
     iat: Number(payload.iat),
     exp: Number(payload.exp),
   }

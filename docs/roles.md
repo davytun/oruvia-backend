@@ -8,18 +8,18 @@ This document defines the user roles within Oruvia, how roles are represented in
 
 All role-related functionality must follow the definitions in this document.
 
-## 2. Role Architecture (Separate Role Tables)
+## 2. Role Architecture (Standalone Tables & Auth Flows per Role)
 
-Oruvia supports four primary roles, each stored in its own dedicated table linked to the base `users` authentication table (`user_id`):
+Oruvia supports four primary roles, each stored in its own standalone database table with its own dedicated authentication endpoints:
 
-- **Seeker** (`seekers` table)
-- **Agent** (`agents` table)
-- **Landlord** (`landlords` table)
-- **Admin** (`admins` table)
+- **Seeker** (`seeker_users` & `seeker_verification_codes` -> `/api/v1/seekers/*`)
+- **Agent** (`agent_users` & `agent_verification_codes` -> `/api/v1/agents/*`)
+- **Landlord** (`landlord_users` & `landlord_verification_codes` -> `/api/v1/landlords/*`)
+- **Admin** (`admin_users` -> `/api/v1/admins/*`)
 
-Every registered user receives a `seekers` record by default so they can discover properties, save favorites, and request inspections. Because each role lives in its own table with its own primary key (`seekers.id`, `agents.id`, `landlords.id`, `admins.id`), a Seeker can also onboard as an **Agent** and/or a **Landlord** without role or foreign-key conflicts.
+Users register and log in directly under their role (`/api/v1/seekers/register`, `/api/v1/agents/register`, `/api/v1/landlords/register`) without having to create a Seeker account first. Because each role uses a separate database table, the same person/email can also register in another role table without any conflict.
 
-## 3. Seeker (`seekers`)
+## 3. Seeker (`seeker_users`)
 
 A Seeker is a user looking to rent or purchase a property.
 
@@ -37,15 +37,15 @@ A Seeker is a user looking to rent or purchase a property.
 ### Permissions
 
 - View published listings.
-- Save and remove favorites (`favorites.seeker_id`).
-- Create property inquiries (`conversations.seeker_id`).
-- Request inspections (`inspections.seeker_id`).
+- Save and remove favorites.
+- Create property inquiries.
+- Request inspections.
 - Manage their own inspection requests.
-- Manage their own account and seeker profile.
+- Manage their own seeker account and profile.
 
-A user who only has a `seekers` record must not be able to publish property listings or access administrative functionality until they create an `agents` or `landlords` profile.
+A Seeker must not be able to manage property listings or access administrative functionality.
 
-## 4. Agent (`agents`)
+## 4. Agent (`agent_users`)
 
 An Agent is a real estate professional who represents or manages property listings.
 
@@ -56,12 +56,12 @@ An Agent is a real estate professional who represents or manages property listin
 - Receive inquiries.
 - Respond to inspection requests.
 - Communicate with property seekers.
-- Maintain their agent profile.
+- Maintain their profile.
 - Submit verification requests.
 
 ### Permissions
 
-- Create property listings (`properties.agent_id`).
+- Create property listings.
 - View and manage their own listings.
 - Edit their own listings.
 - Delete their own listings.
@@ -72,7 +72,7 @@ An Agent is a real estate professional who represents or manages property listin
 
 Agents must not manage listings belonging to other users unless explicitly authorized.
 
-## 5. Landlord (`landlords`)
+## 5. Landlord (`landlord_users`)
 
 A Landlord is a property owner who intends to rent or sell a property.
 
@@ -88,7 +88,7 @@ A Landlord is a property owner who intends to rent or sell a property.
 
 ### Permissions
 
-- Create property listings (`properties.landlord_id`).
+- Create property listings.
 - View and manage their own listings.
 - Edit their own listings.
 - Delete their own listings.
@@ -100,7 +100,7 @@ A Landlord is a property owner who intends to rent or sell a property.
 
 Landlords must not manage listings belonging to other users unless explicitly authorized.
 
-## 6. Admin (`admins`)
+## 6. Admin (`admin_users`)
 
 An Admin is responsible for platform administration, moderation, and trust management.
 
@@ -123,14 +123,14 @@ An Admin is responsible for platform administration, moderation, and trust manag
 - Take appropriate administrative action.
 - Manage platform users where authorized.
 
-Administrative permissions must remain restricted to users with a valid record in the `admins` table.
+Administrative permissions must remain restricted to authorized administrators.
 
 ## 7. General Permission Rules
 
-- Users must only access functionality permitted by their active role records (`seekers`, `agents`, `landlords`, `admins`).
+- Users must only access functionality permitted by their role-scoped JWT (`accountType`: `'seeker' | 'agent' | 'landlord' | 'admin'`).
 - Users must not modify resources owned by other users without authorization.
 - Verification status (`verification_status` / `is_verified`) must not be self-modifiable.
-- Administrative records (`admins`) must not be created or granted through ordinary user actions.
+- Administrative privileges must not be granted through ordinary user actions.
 - Users must not access private information without authorization.
 - Permissions should be enforced consistently across the platform.
 

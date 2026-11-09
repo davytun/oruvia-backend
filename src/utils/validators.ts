@@ -48,53 +48,127 @@ export const paginationQuerySchema = z.object({
     .default(PAGINATION_DEFAULTS.PER_PAGE),
 })
 
-export const registerSchema = z
+const baseEmailField = z
+  .email('Please provide a valid email address.')
+  .transform((val) => val.trim().toLowerCase())
+
+const basePasswordField = z
+  .string()
+  .min(
+    AUTH_CONFIG.MIN_PASSWORD_LENGTH,
+    `Password must be at least ${AUTH_CONFIG.MIN_PASSWORD_LENGTH} characters long.`
+  )
+  .max(
+    AUTH_CONFIG.MAX_PASSWORD_LENGTH,
+    `Password must not exceed ${AUTH_CONFIG.MAX_PASSWORD_LENGTH} characters.`
+  )
+
+const otpCodeField = z
+  .string()
+  .trim()
+  .regex(/^\d{6}$/, 'Verification code must be a 6-digit number.')
+
+export const registerSeekerSchema = z
   .object({
     full_name: z
       .string()
       .trim()
       .min(2, 'Full name must be at least 2 characters long.')
       .max(100, 'Full name must not exceed 100 characters.'),
-    email: z
-      .email('Please provide a valid email address.')
-      .transform((val) => val.trim().toLowerCase()),
-    password: z
+    email: baseEmailField,
+    password: basePasswordField,
+    phone: z
       .string()
-      .min(
-        AUTH_CONFIG.MIN_PASSWORD_LENGTH,
-        `Password must be at least ${AUTH_CONFIG.MIN_PASSWORD_LENGTH} characters long.`
-      )
-      .max(
-        AUTH_CONFIG.MAX_PASSWORD_LENGTH,
-        `Password must not exceed ${AUTH_CONFIG.MAX_PASSWORD_LENGTH} characters.`
-      ),
-    phone: z.string().trim().min(7, 'Please provide a valid phone number.').optional(),
-    role: z.enum(['seeker', 'agent', 'landlord']).default('seeker'),
+      .trim()
+      .min(7, 'Please provide a valid phone number.')
+      .optional(),
     preferred_location: z.string().trim().max(120).optional(),
+  })
+  .strict()
+
+export const registerAgentSchema = z
+  .object({
+    full_name: z
+      .string()
+      .trim()
+      .min(2, 'Full name must be at least 2 characters long.')
+      .max(100, 'Full name must not exceed 100 characters.'),
+    email: baseEmailField,
+    password: basePasswordField,
+    phone: z
+      .string()
+      .trim()
+      .min(7, 'Please provide a valid phone number.')
+      .optional(),
+    whatsapp_number: z.string().trim().max(30).optional(),
     agency_name: z.string().trim().max(120).optional(),
     license_number: z.string().trim().max(80).optional(),
+    bio: z.string().trim().max(1000).optional(),
+  })
+  .strict()
+
+export const registerLandlordSchema = z
+  .object({
+    full_name: z
+      .string()
+      .trim()
+      .min(2, 'Full name must be at least 2 characters long.')
+      .max(100, 'Full name must not exceed 100 characters.'),
+    email: baseEmailField,
+    password: basePasswordField,
+    phone: z
+      .string()
+      .trim()
+      .min(7, 'Please provide a valid phone number.')
+      .optional(),
+    whatsapp_number: z.string().trim().max(30).optional(),
     company_name: z.string().trim().max(120).optional(),
     bio: z.string().trim().max(1000).optional(),
-    whatsapp_number: z.string().trim().max(30).optional(),
+  })
+  .strict()
+
+export const verifyEmailSchema = z
+  .object({
+    email: baseEmailField,
+    code: otpCodeField,
+  })
+  .strict()
+
+export const resendVerificationCodeSchema = z
+  .object({
+    email: baseEmailField,
   })
   .strict()
 
 export const loginSchema = z
   .object({
-    email: z
-      .email('Please provide a valid email address.')
-      .transform((val) => val.trim().toLowerCase()),
+    email: baseEmailField,
     password: z.string().min(1, 'Password is required.'),
   })
   .strict()
 
-export const refreshTokenSchema = z
+export const forgotPasswordSchema = z
   .object({
-    refresh_token: z.string().min(1, 'Refresh token is required.'),
+    email: baseEmailField,
   })
   .strict()
 
-export const updateMeSchema = z
+export const resetPasswordSchema = z
+  .object({
+    email: baseEmailField,
+    code: otpCodeField,
+    new_password: basePasswordField,
+  })
+  .strict()
+
+export const changePasswordSchema = z
+  .object({
+    current_password: z.string().min(1, 'Current password is required.'),
+    new_password: basePasswordField,
+  })
+  .strict()
+
+export const updateSeekerSchema = z
   .object({
     full_name: z
       .string()
@@ -108,40 +182,50 @@ export const updateMeSchema = z
   })
   .strict()
 
-export const changePasswordSchema = z
+export const updateAgentSchema = z
   .object({
-    current_password: z.string().min(1, 'Current password is required.'),
-    new_password: z
+    full_name: z
       .string()
-      .min(
-        AUTH_CONFIG.MIN_PASSWORD_LENGTH,
-        `Password must be at least ${AUTH_CONFIG.MIN_PASSWORD_LENGTH} characters long.`
-      )
-      .max(AUTH_CONFIG.MAX_PASSWORD_LENGTH),
+      .trim()
+      .min(2, 'Full name must be at least 2 characters long.')
+      .max(100)
+      .optional(),
+    phone: z.string().trim().min(7).nullable().optional(),
+    whatsapp_number: z.string().trim().max(30).nullable().optional(),
+    agency_name: z.string().trim().max(120).nullable().optional(),
+    license_number: z.string().trim().max(80).nullable().optional(),
+    bio: z.string().trim().max(1000).nullable().optional(),
+    avatar_url: z.url('Avatar URL must be a valid URL.').nullable().optional(),
   })
   .strict()
 
-export const agentProfileSchema = z
+export const updateLandlordSchema = z
   .object({
-    agency_name: z.string().trim().max(120).optional(),
-    license_number: z.string().trim().max(80).optional(),
-    bio: z.string().trim().max(1000).optional(),
-    whatsapp_number: z.string().trim().max(30).optional(),
+    full_name: z
+      .string()
+      .trim()
+      .min(2, 'Full name must be at least 2 characters long.')
+      .max(100)
+      .optional(),
+    phone: z.string().trim().min(7).nullable().optional(),
+    whatsapp_number: z.string().trim().max(30).nullable().optional(),
+    company_name: z.string().trim().max(120).nullable().optional(),
+    bio: z.string().trim().max(1000).nullable().optional(),
+    avatar_url: z.url('Avatar URL must be a valid URL.').nullable().optional(),
   })
   .strict()
 
-export const landlordProfileSchema = z
-  .object({
-    company_name: z.string().trim().max(120).optional(),
-    bio: z.string().trim().max(1000).optional(),
-    whatsapp_number: z.string().trim().max(30).optional(),
-  })
-  .strict()
-
-export type RegisterInput = z.infer<typeof registerSchema>
+export type RegisterSeekerInput = z.infer<typeof registerSeekerSchema>
+export type RegisterAgentInput = z.infer<typeof registerAgentSchema>
+export type RegisterLandlordInput = z.infer<typeof registerLandlordSchema>
+export type VerifyEmailInput = z.infer<typeof verifyEmailSchema>
+export type ResendVerificationCodeInput = z.infer<
+  typeof resendVerificationCodeSchema
+>
 export type LoginInput = z.infer<typeof loginSchema>
-export type RefreshTokenInput = z.infer<typeof refreshTokenSchema>
-export type UpdateMeInput = z.infer<typeof updateMeSchema>
+export type ForgotPasswordInput = z.infer<typeof forgotPasswordSchema>
+export type ResetPasswordInput = z.infer<typeof resetPasswordSchema>
 export type ChangePasswordInput = z.infer<typeof changePasswordSchema>
-export type AgentProfileInput = z.infer<typeof agentProfileSchema>
-export type LandlordProfileInput = z.infer<typeof landlordProfileSchema>
+export type UpdateSeekerInput = z.infer<typeof updateSeekerSchema>
+export type UpdateAgentInput = z.infer<typeof updateAgentSchema>
+export type UpdateLandlordInput = z.infer<typeof updateLandlordSchema>

@@ -2,14 +2,446 @@
  * OpenAPI 3.1 Specification for Oruvia API
  * Served at `/openapi.json` and rendered interactively at `/docs`
  */
-export function buildOpenApiSpec(serverUrl = 'http://localhost:8787') {
+function buildRoleAuthPaths(
+  roleKey: 'seekers' | 'agents' | 'landlords',
+  singularRole: 'seeker' | 'agent' | 'landlord',
+  tagName: string,
+  profileSchemaRef: string,
+  extraRegisterProps: Record<string, unknown>,
+  extraUpdateProps: Record<string, unknown>
+) {
+  const basePath = `/api/v1/${roleKey}`
+  return {
+    [`${basePath}/register`]: {
+      post: {
+        tags: [tagName],
+        summary: `Register a new ${singularRole} account`,
+        description: `Creates a dedicated \`${singularRole}_users\` account, sends a 6-digit verification code via React Email, and returns a role-scoped JWT access token.`,
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                required: ['full_name', 'email', 'password'],
+                properties: {
+                  full_name: { type: 'string', example: 'Ada Okafor' },
+                  email: {
+                    type: 'string',
+                    format: 'email',
+                    example: 'ada@oruvia.ng',
+                  },
+                  password: {
+                    type: 'string',
+                    minLength: 8,
+                    example: 'Password123!',
+                  },
+                  phone: { type: 'string', example: '+2348012345678' },
+                  ...extraRegisterProps,
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          '201': {
+            description: `${singularRole} registered`,
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    success: { type: 'boolean', example: true },
+                    data: {
+                      type: 'object',
+                      properties: {
+                        [singularRole]: { $ref: profileSchemaRef },
+                        access_token: {
+                          type: 'string',
+                          example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
+                        },
+                        expires_in: { type: 'integer', example: 86400 },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          '400': {
+            description: 'Validation failed',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ValidationErrorResponse',
+                },
+              },
+            },
+          },
+          '409': {
+            description: 'Email already registered for this role',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ValidationErrorResponse',
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+    [`${basePath}/verify-email`]: {
+      post: {
+        tags: [tagName],
+        summary: `Verify ${singularRole} email with 6-digit code`,
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                required: ['email', 'code'],
+                properties: {
+                  email: {
+                    type: 'string',
+                    format: 'email',
+                    example: 'ada@oruvia.ng',
+                  },
+                  code: { type: 'string', example: '482910' },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          '200': {
+            description: 'Email verified',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    success: { type: 'boolean', example: true },
+                    data: {
+                      type: 'object',
+                      properties: {
+                        message: {
+                          type: 'string',
+                          example: 'Email verified successfully.',
+                        },
+                        [singularRole]: { $ref: profileSchemaRef },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+    [`${basePath}/resend-verification-code`]: {
+      post: {
+        tags: [tagName],
+        summary: `Resend ${singularRole} email verification code`,
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                required: ['email'],
+                properties: {
+                  email: {
+                    type: 'string',
+                    format: 'email',
+                    example: 'ada@oruvia.ng',
+                  },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          '200': {
+            description: 'Verification code dispatched if unverified account exists',
+            content: {
+              'application/json': {
+                example: {
+                  success: true,
+                  data: {
+                    message: `If an unverified ${singularRole} account exists for this email, a new verification code has been sent.`,
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+    [`${basePath}/login`]: {
+      post: {
+        tags: [tagName],
+        summary: `Login to ${singularRole} account`,
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                required: ['email', 'password'],
+                properties: {
+                  email: {
+                    type: 'string',
+                    format: 'email',
+                    example: 'ada@oruvia.ng',
+                  },
+                  password: { type: 'string', example: 'Password123!' },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          '200': {
+            description: 'Login successful',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    success: { type: 'boolean', example: true },
+                    data: {
+                      type: 'object',
+                      properties: {
+                        [singularRole]: { $ref: profileSchemaRef },
+                        access_token: {
+                          type: 'string',
+                          example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
+                        },
+                        expires_in: { type: 'integer', example: 86400 },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          '401': {
+            description: 'Invalid email or password',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/StandardErrorResponse',
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+    [`${basePath}/forgot-password`]: {
+      post: {
+        tags: [tagName],
+        summary: `Request ${singularRole} password reset code`,
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                required: ['email'],
+                properties: {
+                  email: {
+                    type: 'string',
+                    format: 'email',
+                    example: 'ada@oruvia.ng',
+                  },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          '200': {
+            description: 'Password reset code sent if account exists',
+            content: {
+              'application/json': {
+                example: {
+                  success: true,
+                  data: {
+                    message: `If a ${singularRole} account exists for this email, a password reset code has been sent.`,
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+    [`${basePath}/reset-password`]: {
+      post: {
+        tags: [tagName],
+        summary: `Reset ${singularRole} password with 6-digit code`,
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                required: ['email', 'code', 'new_password'],
+                properties: {
+                  email: {
+                    type: 'string',
+                    format: 'email',
+                    example: 'ada@oruvia.ng',
+                  },
+                  code: { type: 'string', example: '482910' },
+                  new_password: {
+                    type: 'string',
+                    minLength: 8,
+                    example: 'NewStrongPassword456!',
+                  },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          '200': {
+            description: 'Password reset and previous tokens invalidated',
+            content: {
+              'application/json': {
+                example: {
+                  success: true,
+                  data: { message: 'Password reset successfully.' },
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+    [`${basePath}/change-password`]: {
+      post: {
+        tags: [tagName],
+        summary: `Change ${singularRole} password (authenticated)`,
+        security: [{ bearerAuth: [] }],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                required: ['current_password', 'new_password'],
+                properties: {
+                  current_password: {
+                    type: 'string',
+                    example: 'Password123!',
+                  },
+                  new_password: {
+                    type: 'string',
+                    minLength: 8,
+                    example: 'NewStrongPassword456!',
+                  },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          '200': {
+            description: 'Password changed and old tokens invalidated',
+            content: {
+              'application/json': {
+                example: {
+                  success: true,
+                  data: { message: 'Password changed successfully.' },
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+    [`${basePath}/me`]: {
+      get: {
+        tags: [tagName],
+        summary: `Get authenticated ${singularRole} profile`,
+        security: [{ bearerAuth: [] }],
+        responses: {
+          '200': {
+            description: `${singularRole} profile`,
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    success: { type: 'boolean', example: true },
+                    data: { $ref: profileSchemaRef },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+      patch: {
+        tags: [tagName],
+        summary: `Update authenticated ${singularRole} profile`,
+        security: [{ bearerAuth: [] }],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  full_name: { type: 'string', example: 'Adaeze Okafor' },
+                  phone: {
+                    type: ['string', 'null'],
+                    example: '+2348099998888',
+                  },
+                  avatar_url: {
+                    type: ['string', 'null'],
+                    example: 'https://cdn.oruvia.ng/avatars/ada.png',
+                  },
+                  ...extraUpdateProps,
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          '200': {
+            description: 'Updated profile',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    success: { type: 'boolean', example: true },
+                    data: { $ref: profileSchemaRef },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+  }
+}
+
+export function buildOpenApiSpec(serverUrl = 'https://api.oruvia.workers.dev') {
   return {
     openapi: '3.1.0',
     info: {
       title: 'Oruvia API',
       version: '1.0.0',
       description:
-        'Oruvia Proptech & Real Estate Marketplace API — Connecting property seekers with verified landlords and real estate agents across Nigeria.\n\n**Tagline:** Oruvia: Your path to a roof.',
+        'Oruvia Proptech & Real Estate Marketplace API — Connecting property seekers with verified landlords and real estate agents across Nigeria.\n\nEach role (**Seekers**, **Agents**, **Landlords**) has its own standalone database table and direct authentication endpoints.\n\n**Tagline:** Oruvia: Your path to a roof.',
     },
     servers: [
       {
@@ -23,14 +455,19 @@ export function buildOpenApiSpec(serverUrl = 'http://localhost:8787') {
         description: 'Service status and health check endpoints',
       },
       {
-        name: 'Auth',
+        name: 'Seekers Auth & Profile',
         description:
-          'Registration, login, token refresh, and session logout endpoints',
+          'Direct registration, email verification, login, password reset, and profile endpoints for Property Seekers (`/api/v1/seekers/*`)',
       },
       {
-        name: 'Account & Role Profiles',
+        name: 'Agents Auth & Profile',
         description:
-          'Authenticated user profile and dedicated role table management (Seeker, Agent, Landlord)',
+          'Direct registration, email verification, login, password reset, and profile endpoints for Real Estate Agents (`/api/v1/agents/*`)',
+      },
+      {
+        name: 'Landlords Auth & Profile',
+        description:
+          'Direct registration, email verification, login, password reset, and profile endpoints for Landlords (`/api/v1/landlords/*`)',
       },
     ],
     components: {
@@ -40,7 +477,7 @@ export function buildOpenApiSpec(serverUrl = 'http://localhost:8787') {
           scheme: 'bearer',
           bearerFormat: 'JWT',
           description:
-            'Pass the `access_token` returned from `/api/v1/auth/login` or `/api/v1/auth/register`.',
+            'Pass the role-scoped `access_token` returned from `/register` or `/login`.',
         },
       },
       schemas: {
@@ -90,124 +527,88 @@ export function buildOpenApiSpec(serverUrl = 'http://localhost:8787') {
             },
           },
         },
-        UserProfile: {
+        SeekerProfile: {
           type: 'object',
           properties: {
             id: {
               type: 'string',
-              example: 'd8528bf2-8a42-4b02-9a59-349b241f3f19',
+              example: '7c12a102-119b-48ea-89bc-02f1b2411c11',
             },
+            account_type: { type: 'string', example: 'seeker' },
             full_name: { type: 'string', example: 'Ada Okafor' },
             email: { type: 'string', example: 'ada@oruvia.ng' },
-            phone: {
-              type: ['string', 'null'],
-              example: '+2348012345678',
-            },
+            phone: { type: ['string', 'null'], example: '+2348012345678' },
             avatar_url: { type: ['string', 'null'], example: null },
+            preferred_location: {
+              type: ['string', 'null'],
+              example: 'Abeokuta, Ogun',
+            },
+            is_email_verified: { type: 'boolean', example: false },
             email_verified_at: { type: ['string', 'null'], example: null },
-            created_at: {
-              type: 'string',
-              format: 'date-time',
-              example: '2026-11-09T14:47:00.000Z',
-            },
-            updated_at: {
-              type: 'string',
-              format: 'date-time',
-              example: '2026-11-09T14:47:00.000Z',
-            },
-            profiles: {
-              type: 'object',
-              properties: {
-                seeker: {
-                  type: ['object', 'null'],
-                  properties: {
-                    id: {
-                      type: 'string',
-                      example: '7c12a102-119b-48ea-89bc-02f1b2411c11',
-                    },
-                    preferred_location: {
-                      type: ['string', 'null'],
-                      example: 'Abeokuta, Ogun',
-                    },
-                    created_at: { type: 'string', format: 'date-time' },
-                  },
-                },
-                agent: {
-                  type: ['object', 'null'],
-                  properties: {
-                    id: {
-                      type: 'string',
-                      example: '2a91b304-552c-41d0-991a-84c2e1099b22',
-                    },
-                    agency_name: {
-                      type: ['string', 'null'],
-                      example: 'Okafor Realty',
-                    },
-                    license_number: {
-                      type: ['string', 'null'],
-                      example: 'OG-AG-2026-019',
-                    },
-                    bio: { type: ['string', 'null'] },
-                    whatsapp_number: {
-                      type: ['string', 'null'],
-                      example: '+2348011112222',
-                    },
-                    is_verified: { type: 'boolean', example: false },
-                    verification_status: {
-                      type: 'string',
-                      example: 'unverified',
-                    },
-                    created_at: { type: 'string', format: 'date-time' },
-                  },
-                },
-                landlord: {
-                  type: ['object', 'null'],
-                  properties: {
-                    id: {
-                      type: 'string',
-                      example: '9f44d120-883a-47e2-a11c-55b90123c441',
-                    },
-                    company_name: {
-                      type: ['string', 'null'],
-                      example: 'Okafor Estates',
-                    },
-                    bio: { type: ['string', 'null'] },
-                    whatsapp_number: {
-                      type: ['string', 'null'],
-                      example: '+2348011112222',
-                    },
-                    is_verified: { type: 'boolean', example: false },
-                    verification_status: {
-                      type: 'string',
-                      example: 'unverified',
-                    },
-                    created_at: { type: 'string', format: 'date-time' },
-                  },
-                },
-                admin: {
-                  type: ['object', 'null'],
-                  properties: {
-                    id: { type: 'string' },
-                    created_at: { type: 'string', format: 'date-time' },
-                  },
-                },
-              },
-            },
+            created_at: { type: 'string', format: 'date-time' },
+            updated_at: { type: 'string', format: 'date-time' },
           },
         },
-        AuthSuccessData: {
+        AgentProfile: {
           type: 'object',
           properties: {
-            user: { $ref: '#/components/schemas/UserProfile' },
-            access_token: {
+            id: {
               type: 'string',
-              example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
+              example: '2a91b304-552c-41d0-991a-84c2e1099b22',
             },
-            refresh_token: {
+            account_type: { type: 'string', example: 'agent' },
+            full_name: { type: 'string', example: 'Tunde Bakare' },
+            email: { type: 'string', example: 'tunde@oruvia.ng' },
+            phone: { type: ['string', 'null'], example: '+2348022223333' },
+            whatsapp_number: {
+              type: ['string', 'null'],
+              example: '+2348022223333',
+            },
+            agency_name: {
+              type: ['string', 'null'],
+              example: 'Bakare Realty',
+            },
+            license_number: {
+              type: ['string', 'null'],
+              example: 'OG-AG-2026-019',
+            },
+            bio: { type: ['string', 'null'] },
+            avatar_url: { type: ['string', 'null'], example: null },
+            is_email_verified: { type: 'boolean', example: false },
+            email_verified_at: { type: ['string', 'null'], example: null },
+            is_verified: { type: 'boolean', example: false },
+            verification_status: { type: 'string', example: 'unverified' },
+            created_at: { type: 'string', format: 'date-time' },
+            updated_at: { type: 'string', format: 'date-time' },
+          },
+        },
+        LandlordProfile: {
+          type: 'object',
+          properties: {
+            id: {
               type: 'string',
-              example: '9f8e7d6c5b4a3f2e1d0c9b8a7f6e5d4c...',
+              example: '9f44d120-883a-47e2-a11c-55b90123c441',
             },
-            expires_in: { type: 'integer', example: 900 },
+            account_type: { type: 'string', example: 'landlord' },
+            full_name: { type: 'string', example: 'Chidi Nwosu' },
+            email: { type: 'string', example: 'chidi@oruvia.ng' },
+            phone: { type: ['string', 'null'], example: '+2348033334444' },
+            whatsapp_number: {
+              type: ['string', 'null'],
+              example: '+2348033334444',
+            },
+            company_name: {
+              type: ['string', 'null'],
+              example: 'Nwosu Estates',
+            },
+            bio: { type: ['string', 'null'] },
+            avatar_url: { type: ['string', 'null'], example: null },
+            is_email_verified: { type: 'boolean', example: false },
+            email_verified_at: { type: ['string', 'null'], example: null },
+            is_verified: { type: 'boolean', example: false },
+            verification_status: { type: 'string', example: 'unverified' },
+            created_at: { type: 'string', format: 'date-time' },
+            updated_at: { type: 'string', format: 'date-time' },
           },
         },
       },
@@ -217,7 +618,6 @@ export function buildOpenApiSpec(serverUrl = 'http://localhost:8787') {
         get: {
           tags: ['Health'],
           summary: 'Health check',
-          description: 'Returns service health and environment status.',
           responses: {
             '200': {
               description: 'Service is healthy',
@@ -228,9 +628,9 @@ export function buildOpenApiSpec(serverUrl = 'http://localhost:8787') {
                     data: {
                       service: 'Oruvia',
                       tagline: 'Oruvia: Your path to a roof.',
-                      environment: 'development',
+                      environment: 'production',
                       status: 'healthy',
-                      timestamp: '2026-11-09T14:40:52.798Z',
+                      timestamp: '2026-11-09T15:23:48.790Z',
                     },
                   },
                 },
@@ -239,550 +639,79 @@ export function buildOpenApiSpec(serverUrl = 'http://localhost:8787') {
           },
         },
       },
-      '/api/v1/auth/register': {
-        post: {
-          tags: ['Auth'],
-          summary: 'Register a new account',
-          description:
-            'Creates a `users` record and a `seekers` record. If `role` is `"agent"` or `"landlord"`, also creates the corresponding row in `agents` or `landlords`.',
-          requestBody: {
-            required: true,
-            content: {
-              'application/json': {
-                schema: {
-                  type: 'object',
-                  required: ['full_name', 'email', 'password'],
-                  properties: {
-                    full_name: { type: 'string', example: 'Ada Okafor' },
-                    email: {
-                      type: 'string',
-                      format: 'email',
-                      example: 'ada@oruvia.ng',
-                    },
-                    password: {
-                      type: 'string',
-                      minLength: 8,
-                      example: 'Password123!',
-                    },
-                    phone: { type: 'string', example: '+2348012345678' },
-                    role: {
-                      type: 'string',
-                      enum: ['seeker', 'agent', 'landlord'],
-                      default: 'seeker',
-                    },
-                    preferred_location: {
-                      type: 'string',
-                      example: 'Abeokuta, Ogun',
-                    },
-                    agency_name: { type: 'string', example: 'Okafor Realty' },
-                    license_number: {
-                      type: 'string',
-                      example: 'OG-AG-2026-019',
-                    },
-                    company_name: { type: 'string', example: 'Okafor Estates' },
-                    bio: { type: 'string' },
-                    whatsapp_number: {
-                      type: 'string',
-                      example: '+2348011112222',
-                    },
-                  },
-                },
-              },
-            },
-          },
-          responses: {
-            '201': {
-              description: 'Account registered',
-              content: {
-                'application/json': {
-                  schema: {
-                    type: 'object',
-                    properties: {
-                      success: { type: 'boolean', example: true },
-                      data: { $ref: '#/components/schemas/AuthSuccessData' },
-                    },
-                  },
-                },
-              },
-            },
-            '400': {
-              description: 'Validation failed',
-              content: {
-                'application/json': {
-                  schema: {
-                    $ref: '#/components/schemas/ValidationErrorResponse',
-                  },
-                },
-              },
-            },
-            '409': {
-              description: 'Email already registered',
-              content: {
-                'application/json': {
-                  schema: {
-                    $ref: '#/components/schemas/ValidationErrorResponse',
-                  },
-                },
-              },
-            },
+      ...buildRoleAuthPaths(
+        'seekers',
+        'seeker',
+        'Seekers Auth & Profile',
+        '#/components/schemas/SeekerProfile',
+        {
+          preferred_location: {
+            type: 'string',
+            example: 'Abeokuta, Ogun',
           },
         },
-      },
-      '/api/v1/auth/login': {
-        post: {
-          tags: ['Auth'],
-          summary: 'Login with email and password',
-          requestBody: {
-            required: true,
-            content: {
-              'application/json': {
-                schema: {
-                  type: 'object',
-                  required: ['email', 'password'],
-                  properties: {
-                    email: {
-                      type: 'string',
-                      format: 'email',
-                      example: 'ada@oruvia.ng',
-                    },
-                    password: { type: 'string', example: 'Password123!' },
-                  },
-                },
-              },
-            },
+        {
+          preferred_location: {
+            type: ['string', 'null'],
+            example: 'Ikeja, Lagos',
           },
-          responses: {
-            '200': {
-              description: 'Login successful',
-              content: {
-                'application/json': {
-                  schema: {
-                    type: 'object',
-                    properties: {
-                      success: { type: 'boolean', example: true },
-                      data: { $ref: '#/components/schemas/AuthSuccessData' },
-                    },
-                  },
-                },
-              },
-            },
-            '401': {
-              description: 'Invalid credentials',
-              content: {
-                'application/json': {
-                  schema: {
-                    $ref: '#/components/schemas/StandardErrorResponse',
-                  },
-                },
-              },
-            },
-            '403': {
-              description: 'Account suspended or temporarily locked',
-              content: {
-                'application/json': {
-                  schema: {
-                    $ref: '#/components/schemas/StandardErrorResponse',
-                  },
-                },
-              },
-            },
+        }
+      ),
+      ...buildRoleAuthPaths(
+        'agents',
+        'agent',
+        'Agents Auth & Profile',
+        '#/components/schemas/AgentProfile',
+        {
+          whatsapp_number: { type: 'string', example: '+2348022223333' },
+          agency_name: { type: 'string', example: 'Bakare Realty' },
+          license_number: { type: 'string', example: 'OG-AG-2026-019' },
+          bio: {
+            type: 'string',
+            example: 'Licensed residential agent in Ogun State.',
           },
         },
-      },
-      '/api/v1/auth/refresh': {
-        post: {
-          tags: ['Auth'],
-          summary: 'Refresh access token',
-          description:
-            'Rotates the refresh token and returns a new access token and refresh token.',
-          requestBody: {
-            required: true,
-            content: {
-              'application/json': {
-                schema: {
-                  type: 'object',
-                  required: ['refresh_token'],
-                  properties: {
-                    refresh_token: {
-                      type: 'string',
-                      example: '9f8e7d6c5b4a3f2e1d0c9b8a7f6e5d4c...',
-                    },
-                  },
-                },
-              },
-            },
+        {
+          whatsapp_number: {
+            type: ['string', 'null'],
+            example: '+2348022223333',
           },
-          responses: {
-            '200': {
-              description: 'Tokens rotated',
-              content: {
-                'application/json': {
-                  example: {
-                    success: true,
-                    data: {
-                      access_token: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
-                      refresh_token: '1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d...',
-                      expires_in: 900,
-                    },
-                  },
-                },
-              },
-            },
-            '401': {
-              description: 'Invalid or expired refresh token',
-              content: {
-                'application/json': {
-                  schema: {
-                    $ref: '#/components/schemas/StandardErrorResponse',
-                  },
-                },
-              },
-            },
+          agency_name: {
+            type: ['string', 'null'],
+            example: 'Bakare Realty',
+          },
+          license_number: {
+            type: ['string', 'null'],
+            example: 'OG-AG-2026-019',
+          },
+          bio: { type: ['string', 'null'] },
+        }
+      ),
+      ...buildRoleAuthPaths(
+        'landlords',
+        'landlord',
+        'Landlords Auth & Profile',
+        '#/components/schemas/LandlordProfile',
+        {
+          whatsapp_number: { type: 'string', example: '+2348033334444' },
+          company_name: { type: 'string', example: 'Nwosu Estates' },
+          bio: {
+            type: 'string',
+            example: 'Direct property owner across Abeokuta.',
           },
         },
-      },
-      '/api/v1/auth/logout': {
-        post: {
-          tags: ['Auth'],
-          summary: 'Logout current session',
-          security: [{ bearerAuth: [] }],
-          responses: {
-            '200': {
-              description: 'Session revoked',
-              content: {
-                'application/json': {
-                  example: {
-                    success: true,
-                    data: { logged_out: true },
-                  },
-                },
-              },
-            },
-            '401': {
-              description: 'Unauthorized',
-              content: {
-                'application/json': {
-                  schema: {
-                    $ref: '#/components/schemas/StandardErrorResponse',
-                  },
-                },
-              },
-            },
+        {
+          whatsapp_number: {
+            type: ['string', 'null'],
+            example: '+2348033334444',
           },
-        },
-      },
-      '/api/v1/me': {
-        get: {
-          tags: ['Account & Role Profiles'],
-          summary: 'Get current user and role profiles',
-          security: [{ bearerAuth: [] }],
-          responses: {
-            '200': {
-              description: 'Current user profile',
-              content: {
-                'application/json': {
-                  schema: {
-                    type: 'object',
-                    properties: {
-                      success: { type: 'boolean', example: true },
-                      data: { $ref: '#/components/schemas/UserProfile' },
-                    },
-                  },
-                },
-              },
-            },
+          company_name: {
+            type: ['string', 'null'],
+            example: 'Nwosu Estates',
           },
-        },
-        patch: {
-          tags: ['Account & Role Profiles'],
-          summary: 'Update user and seeker profile',
-          security: [{ bearerAuth: [] }],
-          requestBody: {
-            required: true,
-            content: {
-              'application/json': {
-                schema: {
-                  type: 'object',
-                  properties: {
-                    full_name: { type: 'string', example: 'Adaeze Okafor' },
-                    phone: {
-                      type: ['string', 'null'],
-                      example: '+2348099998888',
-                    },
-                    avatar_url: {
-                      type: ['string', 'null'],
-                      example: 'https://cdn.oruvia.ng/avatars/ada.png',
-                    },
-                    preferred_location: {
-                      type: ['string', 'null'],
-                      example: 'Ikeja, Lagos',
-                    },
-                  },
-                },
-              },
-            },
-          },
-          responses: {
-            '200': {
-              description: 'Profile updated',
-              content: {
-                'application/json': {
-                  schema: {
-                    type: 'object',
-                    properties: {
-                      success: { type: 'boolean', example: true },
-                      data: { $ref: '#/components/schemas/UserProfile' },
-                    },
-                  },
-                },
-              },
-            },
-          },
-        },
-      },
-      '/api/v1/me/password': {
-        patch: {
-          tags: ['Account & Role Profiles'],
-          summary: 'Change password',
-          description:
-            'Verifies `current_password`, updates password hash, and revokes all other active sessions.',
-          security: [{ bearerAuth: [] }],
-          requestBody: {
-            required: true,
-            content: {
-              'application/json': {
-                schema: {
-                  type: 'object',
-                  required: ['current_password', 'new_password'],
-                  properties: {
-                    current_password: {
-                      type: 'string',
-                      example: 'Password123!',
-                    },
-                    new_password: {
-                      type: 'string',
-                      minLength: 8,
-                      example: 'NewStrongPassword456!',
-                    },
-                  },
-                },
-              },
-            },
-          },
-          responses: {
-            '200': {
-              description: 'Password updated',
-              content: {
-                'application/json': {
-                  example: {
-                    success: true,
-                    data: { updated: true },
-                  },
-                },
-              },
-            },
-          },
-        },
-      },
-      '/api/v1/me/agent': {
-        post: {
-          tags: ['Account & Role Profiles'],
-          summary: 'Activate Agent profile (Seeker becoming an Agent)',
-          description:
-            'Creates a dedicated row in the `agents` table for the authenticated user without removing their `seekers` record.',
-          security: [{ bearerAuth: [] }],
-          requestBody: {
-            required: true,
-            content: {
-              'application/json': {
-                schema: {
-                  type: 'object',
-                  properties: {
-                    agency_name: { type: 'string', example: 'Okafor Realty' },
-                    license_number: {
-                      type: 'string',
-                      example: 'OG-AG-2026-019',
-                    },
-                    bio: {
-                      type: 'string',
-                      example: 'Licensed residential agent in Ogun State.',
-                    },
-                    whatsapp_number: {
-                      type: 'string',
-                      example: '+2348011112222',
-                    },
-                  },
-                },
-              },
-            },
-          },
-          responses: {
-            '201': {
-              description: 'Agent profile created',
-              content: {
-                'application/json': {
-                  schema: {
-                    type: 'object',
-                    properties: {
-                      success: { type: 'boolean', example: true },
-                      data: { $ref: '#/components/schemas/UserProfile' },
-                    },
-                  },
-                },
-              },
-            },
-            '409': {
-              description: 'Agent profile already exists',
-              content: {
-                'application/json': {
-                  schema: {
-                    $ref: '#/components/schemas/ValidationErrorResponse',
-                  },
-                },
-              },
-            },
-          },
-        },
-        patch: {
-          tags: ['Account & Role Profiles'],
-          summary: 'Update Agent profile',
-          security: [{ bearerAuth: [] }],
-          requestBody: {
-            required: true,
-            content: {
-              'application/json': {
-                schema: {
-                  type: 'object',
-                  properties: {
-                    agency_name: { type: 'string', example: 'Okafor Realty' },
-                    license_number: {
-                      type: 'string',
-                      example: 'OG-AG-2026-019',
-                    },
-                    bio: { type: 'string' },
-                    whatsapp_number: {
-                      type: 'string',
-                      example: '+2348011112222',
-                    },
-                  },
-                },
-              },
-            },
-          },
-          responses: {
-            '200': {
-              description: 'Agent profile updated',
-              content: {
-                'application/json': {
-                  schema: {
-                    type: 'object',
-                    properties: {
-                      success: { type: 'boolean', example: true },
-                      data: { $ref: '#/components/schemas/UserProfile' },
-                    },
-                  },
-                },
-              },
-            },
-          },
-        },
-      },
-      '/api/v1/me/landlord': {
-        post: {
-          tags: ['Account & Role Profiles'],
-          summary: 'Activate Landlord profile (Seeker becoming a Landlord)',
-          description:
-            'Creates a dedicated row in the `landlords` table for the authenticated user without removing their `seekers` record.',
-          security: [{ bearerAuth: [] }],
-          requestBody: {
-            required: true,
-            content: {
-              'application/json': {
-                schema: {
-                  type: 'object',
-                  properties: {
-                    company_name: { type: 'string', example: 'Okafor Estates' },
-                    bio: {
-                      type: 'string',
-                      example: 'Direct property owner across Abeokuta.',
-                    },
-                    whatsapp_number: {
-                      type: 'string',
-                      example: '+2348011112222',
-                    },
-                  },
-                },
-              },
-            },
-          },
-          responses: {
-            '201': {
-              description: 'Landlord profile created',
-              content: {
-                'application/json': {
-                  schema: {
-                    type: 'object',
-                    properties: {
-                      success: { type: 'boolean', example: true },
-                      data: { $ref: '#/components/schemas/UserProfile' },
-                    },
-                  },
-                },
-              },
-            },
-            '409': {
-              description: 'Landlord profile already exists',
-              content: {
-                'application/json': {
-                  schema: {
-                    $ref: '#/components/schemas/ValidationErrorResponse',
-                  },
-                },
-              },
-            },
-          },
-        },
-        patch: {
-          tags: ['Account & Role Profiles'],
-          summary: 'Update Landlord profile',
-          security: [{ bearerAuth: [] }],
-          requestBody: {
-            required: true,
-            content: {
-              'application/json': {
-                schema: {
-                  type: 'object',
-                  properties: {
-                    company_name: { type: 'string', example: 'Okafor Estates' },
-                    bio: { type: 'string' },
-                    whatsapp_number: {
-                      type: 'string',
-                      example: '+2348011112222',
-                    },
-                  },
-                },
-              },
-            },
-          },
-          responses: {
-            '200': {
-              description: 'Landlord profile updated',
-              content: {
-                'application/json': {
-                  schema: {
-                    type: 'object',
-                    properties: {
-                      success: { type: 'boolean', example: true },
-                      data: { $ref: '#/components/schemas/UserProfile' },
-                    },
-                  },
-                },
-              },
-            },
-          },
-        },
-      },
+          bio: { type: ['string', 'null'] },
+        }
+      ),
     },
   }
 }
-

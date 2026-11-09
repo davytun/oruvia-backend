@@ -1,5 +1,6 @@
 import { createFactory } from 'hono/factory'
 import type { Database } from '../database'
+import type { AccountType } from './constants'
 
 /**
  * Authenticated user attached to request context (`c.get('user')`)
@@ -7,7 +8,8 @@ import type { Database } from '../database'
 export interface AuthUser {
   id: string
   email: string
-  sessionId: string
+  accountType: AccountType
+  tokenVersion: number
 }
 
 /**

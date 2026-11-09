@@ -1,12 +1,14 @@
 import { factory } from '../config/env'
 import { healthCheck } from '../controllers/health.controller'
-import authRoutes from './auth.routes'
-import meRoutes from './me.routes'
+import agentRoutes from './agent.routes'
+import landlordRoutes from './landlord.routes'
+import seekerRoutes from './seeker.routes'
 
 const apiRoutes = factory.createApp()
 
 apiRoutes.get('/health', healthCheck)
-apiRoutes.route('/auth', authRoutes)
-apiRoutes.route('/me', meRoutes)
+apiRoutes.route('/seekers', seekerRoutes)
+apiRoutes.route('/agents', agentRoutes)
+apiRoutes.route('/landlords', landlordRoutes)
 
 export default apiRoutes
