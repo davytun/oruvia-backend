@@ -19,6 +19,8 @@ export type AppBindings = Omit<CloudflareBindings, 'APP_ENV'> & {
   APP_ENV?: string
   JWT_SECRET?: string
   JWT_EXPIRES_IN_SECONDS?: string
+  GMAIL_USER?: string
+  GMAIL_APP_PASSWORD?: string
   BREVO_API_KEY?: string
   RESEND_API_KEY?: string
   R2_PUBLIC_URL?: string
