@@ -24,3 +24,4 @@ export const seekerPaths = {
     'seeker.demo@oruvia.ng'
   ),
 }
+
