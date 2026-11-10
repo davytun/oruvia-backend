@@ -30,6 +30,44 @@ export const LISTING_CLASSIFICATIONS = {
   SALE: 'sale',
 } as const
 
+export type ListingClassification =
+  (typeof LISTING_CLASSIFICATIONS)[keyof typeof LISTING_CLASSIFICATIONS]
+
+export const PAYMENT_FREQUENCIES = {
+  YEARLY: 'yearly',
+  MONTHLY: 'monthly',
+  ONE_TIME: 'one_time',
+} as const
+
+export type PaymentFrequency =
+  (typeof PAYMENT_FREQUENCIES)[keyof typeof PAYMENT_FREQUENCIES]
+
+export const MODERATION_STATUSES = {
+  PENDING_REVIEW: 'pending_review',
+  APPROVED: 'approved',
+  REJECTED: 'rejected',
+  SUSPENDED: 'suspended',
+} as const
+
+export type ModerationStatus =
+  (typeof MODERATION_STATUSES)[keyof typeof MODERATION_STATUSES]
+
+export const PROPERTY_CATEGORIES = {
+  RESIDENTIAL: 'residential',
+  COMMERCIAL: 'commercial',
+  LAND: 'land',
+} as const
+
+export type PropertyCategory =
+  (typeof PROPERTY_CATEGORIES)[keyof typeof PROPERTY_CATEGORIES]
+
+export const LISTER_ROLES = {
+  AGENT: 'agent',
+  LANDLORD: 'landlord',
+} as const
+
+export type ListerRole = (typeof LISTER_ROLES)[keyof typeof LISTER_ROLES]
+
 export const PROPERTY_TYPES = {
   APARTMENT: 'apartment',
   SELF_CONTAIN: 'self_contain',

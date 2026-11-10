@@ -2,9 +2,15 @@ import type { Context } from 'hono'
 import { z } from 'zod'
 import {
   AUTH_CONFIG,
+  AVAILABILITY_STATUSES,
   KYC_ID_TYPES,
   LANDLORD_PROOF_TYPES,
+  LISTER_ROLES,
+  LISTING_CLASSIFICATIONS,
+  MODERATION_STATUSES,
   PAGINATION_DEFAULTS,
+  PAYMENT_FREQUENCIES,
+  PROPERTY_CATEGORIES,
   VERIFICATION_STATUSES,
 } from '../config/constants'
 import { sendError } from './response'
@@ -377,6 +383,349 @@ export const updateAdminSuspensionSchema = z
     }),
   })
   .strict()
+
+export type CreateStateInput = z.infer<typeof createStateSchema>
+export type UpdateStateInput = z.infer<typeof updateStateSchema>
+export type CreateCityInput = z.infer<typeof createCitySchema>
+export type UpdateCityInput = z.infer<typeof updateCitySchema>
+export type CityListQueryInput = z.infer<typeof cityListQuerySchema>
+
+export type CreatePropertyTypeInput = z.infer<typeof createPropertyTypeSchema>
+export type UpdatePropertyTypeInput = z.infer<typeof updatePropertyTypeSchema>
+export type PropertyTypeListQueryInput = z.infer<
+  typeof propertyTypeListQuerySchema
+>
+
+export type CreateListingInput = z.infer<typeof createListingSchema>
+export type UpdateListingInput = z.infer<typeof updateListingSchema>
+export type UpdateListingAvailabilityInput = z.infer<
+  typeof updateListingAvailabilitySchema
+>
+export type ReviewListingInput = z.infer<typeof reviewListingSchema>
+export type ListingSearchQueryInput = z.infer<typeof listingSearchQuerySchema>
+export type AdminListingListQueryInput = z.infer<
+  typeof adminListingListQuerySchema
+>
+
+// Locations (States & Cities)
+export const createStateSchema = z
+  .object({
+    name: z
+      .string()
+      .trim()
+      .min(2, 'State name must be at least 2 characters long.')
+      .max(100),
+    slug: z
+      .string()
+      .trim()
+      .min(2)
+      .max(100)
+      .regex(
+        /^[a-z0-9-]+$/,
+        'Slug must only contain lowercase letters, numbers, and hyphens.'
+      )
+      .optional(),
+    is_active: z.boolean().optional(),
+  })
+  .strict()
+
+export const updateStateSchema = z
+  .object({
+    name: z.string().trim().min(2).max(100).optional(),
+    slug: z
+      .string()
+      .trim()
+      .min(2)
+      .max(100)
+      .regex(/^[a-z0-9-]+$/)
+      .optional(),
+    is_active: z.boolean().optional(),
+  })
+  .strict()
+
+export const createCitySchema = z
+  .object({
+    state_id: z.string().min(1, 'State ID is required.'),
+    name: z
+      .string()
+      .trim()
+      .min(2, 'City name must be at least 2 characters long.')
+      .max(100),
+    slug: z
+      .string()
+      .trim()
+      .min(2)
+      .max(100)
+      .regex(
+        /^[a-z0-9-]+$/,
+        'Slug must only contain lowercase letters, numbers, and hyphens.'
+      )
+      .optional(),
+    is_active: z.boolean().optional(),
+  })
+  .strict()
+
+export const updateCitySchema = z
+  .object({
+    name: z.string().trim().min(2).max(100).optional(),
+    slug: z
+      .string()
+      .trim()
+      .min(2)
+      .max(100)
+      .regex(/^[a-z0-9-]+$/)
+      .optional(),
+    is_active: z.boolean().optional(),
+  })
+  .strict()
+
+export const cityListQuerySchema = z.object({
+  state_id: z.string().optional(),
+  is_active: z.enum(['true', 'false']).optional(),
+})
+
+// Property Types
+export const createPropertyTypeSchema = z
+  .object({
+    slug: z
+      .string()
+      .trim()
+      .min(2)
+      .max(60)
+      .regex(
+        /^[a-z0-9_]+$/,
+        'Slug must only contain lowercase letters, numbers, and underscores.'
+      ),
+    name: z
+      .string()
+      .trim()
+      .min(2, 'Name must be at least 2 characters long.')
+      .max(100),
+    category: z.enum([
+      PROPERTY_CATEGORIES.RESIDENTIAL,
+      PROPERTY_CATEGORIES.COMMERCIAL,
+      PROPERTY_CATEGORIES.LAND,
+    ]),
+    description: z.string().trim().max(1000).optional(),
+    default_bedrooms: z.number().int().min(0).max(50).optional(),
+    display_order: z.number().int().min(0).optional(),
+    is_active: z.boolean().optional(),
+  })
+  .strict()
+
+export const updatePropertyTypeSchema = z
+  .object({
+    name: z.string().trim().min(2).max(100).optional(),
+    category: z
+      .enum([
+        PROPERTY_CATEGORIES.RESIDENTIAL,
+        PROPERTY_CATEGORIES.COMMERCIAL,
+        PROPERTY_CATEGORIES.LAND,
+      ])
+      .optional(),
+    description: z.string().trim().max(1000).optional(),
+    default_bedrooms: z.number().int().min(0).max(50).optional(),
+    display_order: z.number().int().min(0).optional(),
+    is_active: z.boolean().optional(),
+  })
+  .strict()
+
+export const propertyTypeListQuerySchema = z.object({
+  category: z
+    .enum([
+      PROPERTY_CATEGORIES.RESIDENTIAL,
+      PROPERTY_CATEGORIES.COMMERCIAL,
+      PROPERTY_CATEGORIES.LAND,
+    ])
+    .optional(),
+  is_active: z.enum(['true', 'false']).optional(),
+})
+
+// Listings
+export const createListingSchema = z
+  .object({
+    title: z
+      .string()
+      .trim()
+      .min(5, 'Title must be at least 5 characters long.')
+      .max(180),
+    description: z
+      .string()
+      .trim()
+      .min(10, 'Description must be at least 10 characters long.')
+      .max(5000),
+    classification: z.enum([
+      LISTING_CLASSIFICATIONS.RENT,
+      LISTING_CLASSIFICATIONS.SALE,
+    ]),
+    property_type_id: z.string().min(1, 'Property type is required.'),
+    state_id: z.string().min(1, 'State is required.'),
+    city_id: z.string().min(1, 'City is required.'),
+    area: z
+      .string()
+      .trim()
+      .min(2, 'Area / landmark must be at least 2 characters long.')
+      .max(120),
+    address: z
+      .string()
+      .trim()
+      .min(3, 'Address must be at least 3 characters long.')
+      .max(250),
+    latitude: z.number().optional(),
+    longitude: z.number().optional(),
+    base_price: z
+      .number()
+      .int()
+      .positive('Base price must be a positive amount in Naira.'),
+    payment_frequency: z
+      .enum([
+        PAYMENT_FREQUENCIES.YEARLY,
+        PAYMENT_FREQUENCIES.MONTHLY,
+        PAYMENT_FREQUENCIES.ONE_TIME,
+      ])
+      .default(PAYMENT_FREQUENCIES.YEARLY),
+    agency_fee: z.number().int().nonnegative().optional().default(0),
+    legal_fee: z.number().int().nonnegative().optional().default(0),
+    caution_fee: z.number().int().nonnegative().optional().default(0),
+    service_charge: z.number().int().nonnegative().optional().default(0),
+    bedrooms: z.number().int().min(0).max(50).optional().default(1),
+    bathrooms: z.number().int().min(0).max(50).optional().default(1),
+    toilets: z.number().int().min(0).max(50).optional().default(1),
+    amenities: z.array(z.string().trim().min(1)).optional().default([]),
+    images: z
+      .array(z.string().url('Image must be a valid URL.'))
+      .min(3, 'At least 3 property photos are required.')
+      .max(10, 'A maximum of 10 photos are allowed.'),
+    video_tour_url: z.string().url().nullable().optional(),
+  })
+  .strict()
+
+export const updateListingSchema = z
+  .object({
+    title: z.string().trim().min(5).max(180).optional(),
+    description: z.string().trim().min(10).max(5000).optional(),
+    classification: z
+      .enum([LISTING_CLASSIFICATIONS.RENT, LISTING_CLASSIFICATIONS.SALE])
+      .optional(),
+    property_type_id: z.string().min(1).optional(),
+    state_id: z.string().min(1).optional(),
+    city_id: z.string().min(1).optional(),
+    area: z.string().trim().min(2).max(120).optional(),
+    address: z.string().trim().min(3).max(250).optional(),
+    latitude: z.number().nullable().optional(),
+    longitude: z.number().nullable().optional(),
+    base_price: z.number().int().positive().optional(),
+    payment_frequency: z
+      .enum([
+        PAYMENT_FREQUENCIES.YEARLY,
+        PAYMENT_FREQUENCIES.MONTHLY,
+        PAYMENT_FREQUENCIES.ONE_TIME,
+      ])
+      .optional(),
+    agency_fee: z.number().int().nonnegative().optional(),
+    legal_fee: z.number().int().nonnegative().optional(),
+    caution_fee: z.number().int().nonnegative().optional(),
+    service_charge: z.number().int().nonnegative().optional(),
+    bedrooms: z.number().int().min(0).max(50).optional(),
+    bathrooms: z.number().int().min(0).max(50).optional(),
+    toilets: z.number().int().min(0).max(50).optional(),
+    amenities: z.array(z.string().trim().min(1)).optional(),
+    images: z.array(z.string().url()).min(3).max(10).optional(),
+    video_tour_url: z.string().url().nullable().optional(),
+  })
+  .strict()
+
+export const updateListingAvailabilitySchema = z
+  .object({
+    availability_status: z.enum(
+      [
+        AVAILABILITY_STATUSES.AVAILABLE,
+        AVAILABILITY_STATUSES.RENTED,
+        AVAILABILITY_STATUSES.SOLD,
+        AVAILABILITY_STATUSES.UNAVAILABLE,
+      ],
+      {
+        message:
+          'availability_status must be one of: available, rented, sold, unavailable.',
+      }
+    ),
+  })
+  .strict()
+
+export const reviewListingSchema = z
+  .object({
+    status: z.enum(
+      [
+        MODERATION_STATUSES.APPROVED,
+        MODERATION_STATUSES.REJECTED,
+        MODERATION_STATUSES.SUSPENDED,
+      ],
+      {
+        message: 'status must be one of: approved, rejected, suspended.',
+      }
+    ),
+    rejection_reason: z.string().trim().max(1000).optional(),
+  })
+  .strict()
+  .superRefine((data, ctx) => {
+    if (
+      (data.status === MODERATION_STATUSES.REJECTED ||
+        data.status === MODERATION_STATUSES.SUSPENDED) &&
+      (!data.rejection_reason || data.rejection_reason.length < 3)
+    ) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['rejection_reason'],
+        message:
+          'A rejection_reason is required when rejecting or suspending a listing.',
+      })
+    }
+  })
+
+export const listingSearchQuerySchema = paginationQuerySchema.extend({
+  state_id: z.string().optional(),
+  city_id: z.string().optional(),
+  city_slug: z.string().optional(),
+  classification: z
+    .enum([LISTING_CLASSIFICATIONS.RENT, LISTING_CLASSIFICATIONS.SALE])
+    .optional(),
+  property_type_id: z.string().optional(),
+  property_type_slug: z.string().optional(),
+  category: z
+    .enum([
+      PROPERTY_CATEGORIES.RESIDENTIAL,
+      PROPERTY_CATEGORIES.COMMERCIAL,
+      PROPERTY_CATEGORIES.LAND,
+    ])
+    .optional(),
+  min_price: z.coerce.number().int().nonnegative().optional(),
+  max_price: z.coerce.number().int().positive().optional(),
+  bedrooms: z.coerce.number().int().min(0).optional(),
+  bathrooms: z.coerce.number().int().min(0).optional(),
+  q: z.string().trim().optional(),
+  sort: z.enum(['newest', 'price_asc', 'price_desc']).default('newest'),
+})
+
+export const adminListingListQuerySchema = paginationQuerySchema.extend({
+  moderation_status: z
+    .enum([
+      MODERATION_STATUSES.PENDING_REVIEW,
+      MODERATION_STATUSES.APPROVED,
+      MODERATION_STATUSES.REJECTED,
+      MODERATION_STATUSES.SUSPENDED,
+    ])
+    .optional(),
+  availability_status: z
+    .enum([
+      AVAILABILITY_STATUSES.AVAILABLE,
+      AVAILABILITY_STATUSES.RENTED,
+      AVAILABILITY_STATUSES.SOLD,
+      AVAILABILITY_STATUSES.UNAVAILABLE,
+    ])
+    .optional(),
+  city_id: z.string().optional(),
+  lister_role: z.enum([LISTER_ROLES.AGENT, LISTER_ROLES.LANDLORD]).optional(),
+})
 
 export type RegisterSeekerInput = z.infer<typeof registerSeekerSchema>
 export type RegisterAgentInput = z.infer<typeof registerAgentSchema>

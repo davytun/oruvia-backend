@@ -13,15 +13,28 @@ import {
   updateAgentMeHandler,
   verifyAgentEmailHandler,
 } from '../controllers/agent.controller'
+import {
+  createAgentListingHandler,
+  deleteAgentListingHandler,
+  getAgentListingByIdHandler,
+  listAgentListingsHandler,
+  updateAgentListingAvailabilityHandler,
+  updateAgentListingHandler,
+  uploadListingMediaHandler,
+} from '../controllers/listing.controller'
 import { authenticateAgent } from '../middleware/auth.middleware'
 import {
   changePasswordSchema,
+  createListingSchema,
   forgotPasswordSchema,
   loginSchema,
+  paginationQuerySchema,
   registerAgentSchema,
   resendVerificationCodeSchema,
   resetPasswordSchema,
   updateAgentSchema,
+  updateListingAvailabilitySchema,
+  updateListingSchema,
   validationHook,
   verifyEmailSchema,
 } from '../utils/validators'
@@ -83,6 +96,49 @@ agentRoutes.patch(
 agentRoutes.get('/kyc', authenticateAgent, getAgentKycHandler)
 
 agentRoutes.post('/kyc', authenticateAgent, submitAgentKycHandler)
+
+// Agent Property Listings
+agentRoutes.post(
+  '/listings/media',
+  authenticateAgent,
+  uploadListingMediaHandler
+)
+
+agentRoutes.post(
+  '/listings',
+  authenticateAgent,
+  zValidator('json', createListingSchema, validationHook),
+  createAgentListingHandler
+)
+
+agentRoutes.get(
+  '/listings',
+  authenticateAgent,
+  zValidator('query', paginationQuerySchema, validationHook),
+  listAgentListingsHandler
+)
+
+agentRoutes.get('/listings/:id', authenticateAgent, getAgentListingByIdHandler)
+
+agentRoutes.patch(
+  '/listings/:id',
+  authenticateAgent,
+  zValidator('json', updateListingSchema, validationHook),
+  updateAgentListingHandler
+)
+
+agentRoutes.patch(
+  '/listings/:id/availability',
+  authenticateAgent,
+  zValidator('json', updateListingAvailabilitySchema, validationHook),
+  updateAgentListingAvailabilityHandler
+)
+
+agentRoutes.delete(
+  '/listings/:id',
+  authenticateAgent,
+  deleteAgentListingHandler
+)
 
 export default agentRoutes
 

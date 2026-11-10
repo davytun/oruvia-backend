@@ -13,15 +13,28 @@ import {
   updateLandlordMeHandler,
   verifyLandlordEmailHandler,
 } from '../controllers/landlord.controller'
+import {
+  createLandlordListingHandler,
+  deleteLandlordListingHandler,
+  getLandlordListingByIdHandler,
+  listLandlordListingsHandler,
+  updateLandlordListingAvailabilityHandler,
+  updateLandlordListingHandler,
+  uploadListingMediaHandler,
+} from '../controllers/listing.controller'
 import { authenticateLandlord } from '../middleware/auth.middleware'
 import {
   changePasswordSchema,
+  createListingSchema,
   forgotPasswordSchema,
   loginSchema,
+  paginationQuerySchema,
   registerLandlordSchema,
   resendVerificationCodeSchema,
   resetPasswordSchema,
   updateLandlordSchema,
+  updateListingAvailabilitySchema,
+  updateListingSchema,
   validationHook,
   verifyEmailSchema,
 } from '../utils/validators'
@@ -83,6 +96,49 @@ landlordRoutes.patch(
 landlordRoutes.get('/kyc', authenticateLandlord, getLandlordKycHandler)
 
 landlordRoutes.post('/kyc', authenticateLandlord, submitLandlordKycHandler)
+
+// Landlord Property Listings
+landlordRoutes.post(
+  '/listings/media',
+  authenticateLandlord,
+  uploadListingMediaHandler
+)
+
+landlordRoutes.post(
+  '/listings',
+  authenticateLandlord,
+  zValidator('json', createListingSchema, validationHook),
+  createLandlordListingHandler
+)
+
+landlordRoutes.get(
+  '/listings',
+  authenticateLandlord,
+  zValidator('query', paginationQuerySchema, validationHook),
+  listLandlordListingsHandler
+)
+
+landlordRoutes.get('/listings/:id', authenticateLandlord, getLandlordListingByIdHandler)
+
+landlordRoutes.patch(
+  '/listings/:id',
+  authenticateLandlord,
+  zValidator('json', updateListingSchema, validationHook),
+  updateLandlordListingHandler
+)
+
+landlordRoutes.patch(
+  '/listings/:id/availability',
+  authenticateLandlord,
+  zValidator('json', updateListingAvailabilitySchema, validationHook),
+  updateLandlordListingAvailabilityHandler
+)
+
+landlordRoutes.delete(
+  '/listings/:id',
+  authenticateLandlord,
+  deleteLandlordListingHandler
+)
 
 export default landlordRoutes
 
