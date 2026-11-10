@@ -40,8 +40,10 @@ Each role (**Seekers**, **Agents**, **Landlords**) has its own standalone databa
 | `POST` | `/api/v1/agents/forgot-password` | Public | Send 6-digit password reset code |
 | `POST` | `/api/v1/agents/reset-password` | Public | Reset Agent password with 6-digit code & revoke old tokens |
 | `POST` | `/api/v1/agents/change-password` | Bearer JWT | Change Agent password & revoke old tokens |
-| `GET` | `/api/v1/agents/me` | Bearer JWT | Get current Agent profile |
+| `GET` | `/api/v1/agents/me` | Bearer JWT | Get current Agent profile (includes `verification_badge`) |
 | `PATCH` | `/api/v1/agents/me` | Bearer JWT | Update current Agent profile |
+| `GET` | `/api/v1/agents/kyc` | Bearer JWT | Get Agent KYC status, badge tier, and submission details |
+| `POST` | `/api/v1/agents/kyc` | Bearer JWT | Submit Agent KYC (`multipart/form-data`: `id_document`, `selfie`, optional `license_document`) |
 
 ---
 
@@ -55,5 +57,29 @@ Each role (**Seekers**, **Agents**, **Landlords**) has its own standalone databa
 | `POST` | `/api/v1/landlords/forgot-password` | Public | Send 6-digit password reset code |
 | `POST` | `/api/v1/landlords/reset-password` | Public | Reset Landlord password with 6-digit code & revoke old tokens |
 | `POST` | `/api/v1/landlords/change-password` | Bearer JWT | Change Landlord password & revoke old tokens |
-| `GET` | `/api/v1/landlords/me` | Bearer JWT | Get current Landlord profile |
+| `GET` | `/api/v1/landlords/me` | Bearer JWT | Get current Landlord profile (includes `verification_badge`) |
 | `PATCH` | `/api/v1/landlords/me` | Bearer JWT | Update current Landlord profile |
+| `GET` | `/api/v1/landlords/kyc` | Bearer JWT | Get Landlord KYC status, badge tier, and submission details |
+| `POST` | `/api/v1/landlords/kyc` | Bearer JWT | Submit Landlord KYC (`multipart/form-data`: `id_document`, `selfie`, `proof_document`) |
+
+---
+
+## 5. KYC Badges for Listing Cards (`verification_badge`)
+| Role | KYC Proof Submitted | `verification_badge` | Listing Card UI Badge |
+|---|---|---|---|
+| Any | Unverified / Pending / Rejected | `null` | *(No badge)* |
+| Agent | Government ID + Selfie | `'verified_agent'` | **Verified Agent** |
+| Agent | Government ID + Selfie + CAC / License Document | `'licensed_agent'` | **Licensed Agent** |
+| Landlord | Government ID + Selfie + Utility Bill (`utility_bill`) | `'verified_landlord'` | **Verified Landlord** |
+| Landlord | Government ID + Selfie + Title Document (`c_of_o`, `deed_of_assignment`, `survey_plan`, `governors_consent`) | `'verified_owner'` | **Verified Property Owner** |
+
+---
+
+## 6. Pre-Verified Demo & Tester Accounts (`Password123!`)
+| Role | Email | Password | `verification_status` | `verification_badge` |
+|---|---|---|---|---|
+| **Agent (Licensed)** | `agent.verified@oruvia.ng` | `Password123!` | `approved` | `licensed_agent` |
+| **Agent (Standard)** | `agent.standard@oruvia.ng` | `Password123!` | `approved` | `verified_agent` |
+| **Landlord (Property Owner)** | `landlord.verified@oruvia.ng` | `Password123!` | `approved` | `verified_owner` |
+| **Landlord (Address Proof)** | `landlord.standard@oruvia.ng` | `Password123!` | `approved` | `verified_landlord` |
+| **Seeker** | `seeker.demo@oruvia.ng` | `Password123!` | N/A | N/A |

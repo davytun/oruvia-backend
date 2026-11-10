@@ -64,6 +64,49 @@ export const VERIFICATION_STATUSES = {
   REJECTED: 'rejected',
 } as const
 
+export type VerificationStatus =
+  (typeof VERIFICATION_STATUSES)[keyof typeof VERIFICATION_STATUSES]
+
+export const VERIFICATION_BADGES = {
+  VERIFIED_AGENT: 'verified_agent',
+  LICENSED_AGENT: 'licensed_agent',
+  VERIFIED_LANDLORD: 'verified_landlord',
+  VERIFIED_OWNER: 'verified_owner',
+} as const
+
+export type VerificationBadge =
+  (typeof VERIFICATION_BADGES)[keyof typeof VERIFICATION_BADGES]
+
+export const KYC_ID_TYPES = {
+  NIN: 'nin',
+  INTERNATIONAL_PASSPORT: 'international_passport',
+  DRIVERS_LICENSE: 'drivers_license',
+  VOTERS_CARD: 'voters_card',
+} as const
+
+export type KycIdType = (typeof KYC_ID_TYPES)[keyof typeof KYC_ID_TYPES]
+
+export const LANDLORD_PROOF_TYPES = {
+  UTILITY_BILL: 'utility_bill',
+  C_OF_O: 'c_of_o',
+  DEED_OF_ASSIGNMENT: 'deed_of_assignment',
+  SURVEY_PLAN: 'survey_plan',
+  GOVERNORS_CONSENT: 'governors_consent',
+} as const
+
+export type LandlordProofType =
+  (typeof LANDLORD_PROOF_TYPES)[keyof typeof LANDLORD_PROOF_TYPES]
+
+export const UPLOAD_CONFIG = {
+  MAX_FILE_SIZE_BYTES: 5 * 1024 * 1024, // 5 MB
+  ALLOWED_MIME_TYPES: [
+    'image/jpeg',
+    'image/png',
+    'image/webp',
+    'application/pdf',
+  ] as const,
+} as const
+
 export const REPORT_TARGET_TYPES = {
   LISTING: 'listing',
   USER: 'user',

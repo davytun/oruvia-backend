@@ -3,11 +3,13 @@ import { factory } from '../config/env'
 import {
   changeLandlordPasswordHandler,
   forgotLandlordPasswordHandler,
+  getLandlordKycHandler,
   getLandlordMeHandler,
   loginLandlordHandler,
   registerLandlordHandler,
   resendLandlordCodeHandler,
   resetLandlordPasswordHandler,
+  submitLandlordKycHandler,
   updateLandlordMeHandler,
   verifyLandlordEmailHandler,
 } from '../controllers/landlord.controller'
@@ -77,6 +79,10 @@ landlordRoutes.patch(
   zValidator('json', updateLandlordSchema, validationHook),
   updateLandlordMeHandler
 )
+
+landlordRoutes.get('/kyc', authenticateLandlord, getLandlordKycHandler)
+
+landlordRoutes.post('/kyc', authenticateLandlord, submitLandlordKycHandler)
 
 export default landlordRoutes
 

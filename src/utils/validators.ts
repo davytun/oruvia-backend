@@ -1,6 +1,11 @@
 import type { Context } from 'hono'
 import { z } from 'zod'
-import { AUTH_CONFIG, PAGINATION_DEFAULTS } from '../config/constants'
+import {
+  AUTH_CONFIG,
+  KYC_ID_TYPES,
+  LANDLORD_PROOF_TYPES,
+  PAGINATION_DEFAULTS,
+} from '../config/constants'
 import { sendError } from './response'
 
 /**
@@ -215,6 +220,91 @@ export const updateLandlordSchema = z
   })
   .strict()
 
+export const submitAgentKycFieldsSchema = z.object({
+  id_type: z.enum(
+    [
+      KYC_ID_TYPES.NIN,
+      KYC_ID_TYPES.INTERNATIONAL_PASSPORT,
+      KYC_ID_TYPES.DRIVERS_LICENSE,
+      KYC_ID_TYPES.VOTERS_CARD,
+    ],
+    {
+      message:
+        'id_type must be one of: nin, international_passport, drivers_license, voters_card.',
+    }
+  ),
+  id_number: z
+    .string()
+    .trim()
+    .min(3, 'ID number must be at least 3 characters long.')
+    .max(60, 'ID number must not exceed 60 characters.'),
+  agency_name: z.string().trim().max(120).optional(),
+  license_number: z.string().trim().max(80).optional(),
+  office_address: z
+    .string()
+    .trim()
+    .min(5, 'Office address must be at least 5 characters long.')
+    .max(250, 'Office address must not exceed 250 characters.'),
+  city: z
+    .string()
+    .trim()
+    .min(2, 'City must be at least 2 characters long.')
+    .max(100),
+  state: z
+    .string()
+    .trim()
+    .min(2, 'State must be at least 2 characters long.')
+    .max(100),
+})
+
+export const submitLandlordKycFieldsSchema = z.object({
+  id_type: z.enum(
+    [
+      KYC_ID_TYPES.NIN,
+      KYC_ID_TYPES.INTERNATIONAL_PASSPORT,
+      KYC_ID_TYPES.DRIVERS_LICENSE,
+      KYC_ID_TYPES.VOTERS_CARD,
+    ],
+    {
+      message:
+        'id_type must be one of: nin, international_passport, drivers_license, voters_card.',
+    }
+  ),
+  id_number: z
+    .string()
+    .trim()
+    .min(3, 'ID number must be at least 3 characters long.')
+    .max(60, 'ID number must not exceed 60 characters.'),
+  proof_type: z.enum(
+    [
+      LANDLORD_PROOF_TYPES.UTILITY_BILL,
+      LANDLORD_PROOF_TYPES.C_OF_O,
+      LANDLORD_PROOF_TYPES.DEED_OF_ASSIGNMENT,
+      LANDLORD_PROOF_TYPES.SURVEY_PLAN,
+      LANDLORD_PROOF_TYPES.GOVERNORS_CONSENT,
+    ],
+    {
+      message:
+        'proof_type must be one of: utility_bill, c_of_o, deed_of_assignment, survey_plan, governors_consent.',
+    }
+  ),
+  residential_address: z
+    .string()
+    .trim()
+    .min(5, 'Residential address must be at least 5 characters long.')
+    .max(250, 'Residential address must not exceed 250 characters.'),
+  city: z
+    .string()
+    .trim()
+    .min(2, 'City must be at least 2 characters long.')
+    .max(100),
+  state: z
+    .string()
+    .trim()
+    .min(2, 'State must be at least 2 characters long.')
+    .max(100),
+})
+
 export type RegisterSeekerInput = z.infer<typeof registerSeekerSchema>
 export type RegisterAgentInput = z.infer<typeof registerAgentSchema>
 export type RegisterLandlordInput = z.infer<typeof registerLandlordSchema>
@@ -229,3 +319,9 @@ export type ChangePasswordInput = z.infer<typeof changePasswordSchema>
 export type UpdateSeekerInput = z.infer<typeof updateSeekerSchema>
 export type UpdateAgentInput = z.infer<typeof updateAgentSchema>
 export type UpdateLandlordInput = z.infer<typeof updateLandlordSchema>
+export type SubmitAgentKycFieldsInput = z.infer<
+  typeof submitAgentKycFieldsSchema
+>
+export type SubmitLandlordKycFieldsInput = z.infer<
+  typeof submitLandlordKycFieldsSchema
+>

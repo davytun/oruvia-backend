@@ -3,11 +3,13 @@ import { factory } from '../config/env'
 import {
   changeAgentPasswordHandler,
   forgotAgentPasswordHandler,
+  getAgentKycHandler,
   getAgentMeHandler,
   loginAgentHandler,
   registerAgentHandler,
   resendAgentCodeHandler,
   resetAgentPasswordHandler,
+  submitAgentKycHandler,
   updateAgentMeHandler,
   verifyAgentEmailHandler,
 } from '../controllers/agent.controller'
@@ -77,6 +79,10 @@ agentRoutes.patch(
   zValidator('json', updateAgentSchema, validationHook),
   updateAgentMeHandler
 )
+
+agentRoutes.get('/kyc', authenticateAgent, getAgentKycHandler)
+
+agentRoutes.post('/kyc', authenticateAgent, submitAgentKycHandler)
 
 export default agentRoutes
 

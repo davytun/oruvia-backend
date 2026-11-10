@@ -4,12 +4,16 @@ import {
   ACCOUNT_TYPES,
   AUTH_CONFIG,
   CODE_PURPOSES,
+  VERIFICATION_BADGES,
+  VERIFICATION_STATUSES,
 } from '../config/constants'
 import type { AppBindings } from '../config/env'
 import type { Database } from '../database'
 import {
+  agentKycSubmissions,
   agentUsers,
   agentVerificationCodes,
+  type AgentKycSubmission,
   type AgentUser,
 } from '../models'
 import { PasswordResetEmail, VerificationEmail } from '../templates'
@@ -29,18 +33,21 @@ import {
   ForbiddenError,
   NotFoundError,
   UnauthorizedError,
+  ValidationError,
 } from '../utils/errors'
-import type {
-  ChangePasswordInput,
-  ForgotPasswordInput,
-  LoginInput,
-  RegisterAgentInput,
-  ResendVerificationCodeInput,
-  ResetPasswordInput,
-  UpdateAgentInput,
-  VerifyEmailInput,
+import {
+  submitAgentKycFieldsSchema,
+  type ChangePasswordInput,
+  type ForgotPasswordInput,
+  type LoginInput,
+  type RegisterAgentInput,
+  type ResendVerificationCodeInput,
+  type ResetPasswordInput,
+  type UpdateAgentInput,
+  type VerifyEmailInput,
 } from '../utils/validators'
 import { sendEmail } from './email.service'
+import { uploadFileToCloudinary, validateUploadedFile } from './storage.service'
 
 export function toAgentProfile(agent: AgentUser) {
   return {
@@ -58,8 +65,33 @@ export function toAgentProfile(agent: AgentUser) {
     email_verified_at: agent.emailVerifiedAt,
     is_verified: agent.isVerified,
     verification_status: agent.verificationStatus,
+    verification_badge: agent.verificationBadge,
     created_at: agent.createdAt,
     updated_at: agent.updatedAt,
+  }
+}
+
+export function toAgentKycRecord(submission: AgentKycSubmission) {
+  return {
+    id: submission.id,
+    agent_id: submission.agentId,
+    id_type: submission.idType,
+    id_number: submission.idNumber,
+    id_document_url: submission.idDocumentUrl,
+    selfie_url: submission.selfieUrl,
+    agency_name: submission.agencyName,
+    license_number: submission.licenseNumber,
+    license_document_url: submission.licenseDocumentUrl,
+    office_address: submission.officeAddress,
+    city: submission.city,
+    state: submission.state,
+    status: submission.status,
+    qualified_badge: submission.qualifiedBadge,
+    rejection_reason: submission.rejectionReason,
+    submitted_at: submission.submittedAt,
+    reviewed_at: submission.reviewedAt,
+    created_at: submission.createdAt,
+    updated_at: submission.updatedAt,
   }
 }
 
@@ -579,5 +611,176 @@ export async function updateAgentProfile(
     .where(eq(agentUsers.id, agentId))
 
   return getAgentProfile(db, agentId)
+}
+
+export async function getAgentKyc(db: Database, agentId: string) {
+  const [agent] = await db
+    .select()
+    .from(agentUsers)
+    .where(eq(agentUsers.id, agentId))
+    .limit(1)
+
+  if (!agent) {
+    throw new NotFoundError('Agent')
+  }
+
+  const [submission] = await db
+    .select()
+    .from(agentKycSubmissions)
+    .where(eq(agentKycSubmissions.agentId, agentId))
+    .limit(1)
+
+  return {
+    is_verified: agent.isVerified,
+    verification_status: agent.verificationStatus,
+    verification_badge: agent.verificationBadge,
+    kyc_submission: submission ? toAgentKycRecord(submission) : null,
+  }
+}
+
+export async function submitAgentKyc(
+  db: Database,
+  env: AppBindings,
+  agentId: string,
+  formBody: Record<string, unknown>
+) {
+  const [agent] = await db
+    .select()
+    .from(agentUsers)
+    .where(eq(agentUsers.id, agentId))
+    .limit(1)
+
+  if (!agent) {
+    throw new NotFoundError('Agent')
+  }
+
+  if (
+    agent.isVerified ||
+    agent.verificationStatus === VERIFICATION_STATUSES.APPROVED
+  ) {
+    throw new ConflictError('Your agent KYC is already approved.')
+  }
+
+  const parsedFields = submitAgentKycFieldsSchema.safeParse({
+    id_type:
+      typeof formBody.id_type === 'string' ? formBody.id_type : undefined,
+    id_number:
+      typeof formBody.id_number === 'string' ? formBody.id_number : undefined,
+    agency_name:
+      typeof formBody.agency_name === 'string' &&
+      formBody.agency_name.trim().length > 0
+        ? formBody.agency_name
+        : undefined,
+    license_number:
+      typeof formBody.license_number === 'string' &&
+      formBody.license_number.trim().length > 0
+        ? formBody.license_number
+        : undefined,
+    office_address:
+      typeof formBody.office_address === 'string'
+        ? formBody.office_address
+        : undefined,
+    city: typeof formBody.city === 'string' ? formBody.city : undefined,
+    state: typeof formBody.state === 'string' ? formBody.state : undefined,
+  })
+
+  if (!parsedFields.success) {
+    throw new ValidationError(
+      parsedFields.error.issues.map((item) => ({
+        field: item.path.length > 0 ? item.path.map(String).join('.') : 'body',
+        issue: item.message,
+      }))
+    )
+  }
+
+  const fields = parsedFields.data
+  const idDocumentFile = validateUploadedFile(
+    formBody.id_document,
+    'id_document',
+    true
+  )!
+  const selfieFile = validateUploadedFile(formBody.selfie, 'selfie', true)!
+  const licenseDocumentFile = validateUploadedFile(
+    formBody.license_document,
+    'license_document',
+    false
+  )
+
+  const folder = `oruvia/kyc/agents/${agentId}`
+  const [idDocumentUrl, selfieUrl, licenseDocumentUrl] = await Promise.all([
+    uploadFileToCloudinary(env, idDocumentFile, folder),
+    uploadFileToCloudinary(env, selfieFile, folder),
+    licenseDocumentFile
+      ? uploadFileToCloudinary(env, licenseDocumentFile, folder)
+      : Promise.resolve(null),
+  ])
+
+  const qualifiedBadge =
+    licenseDocumentUrl && (fields.license_number || agent.licenseNumber)
+      ? VERIFICATION_BADGES.LICENSED_AGENT
+      : VERIFICATION_BADGES.VERIFIED_AGENT
+
+  const now = new Date().toISOString()
+
+  const [existingSubmission] = await db
+    .select({ id: agentKycSubmissions.id })
+    .from(agentKycSubmissions)
+    .where(eq(agentKycSubmissions.agentId, agentId))
+    .limit(1)
+
+  if (existingSubmission) {
+    await db
+      .update(agentKycSubmissions)
+      .set({
+        idType: fields.id_type,
+        idNumber: fields.id_number,
+        idDocumentUrl,
+        selfieUrl,
+        agencyName: fields.agency_name ?? agent.agencyName ?? null,
+        licenseNumber: fields.license_number ?? agent.licenseNumber ?? null,
+        licenseDocumentUrl,
+        officeAddress: fields.office_address,
+        city: fields.city,
+        state: fields.state,
+        status: VERIFICATION_STATUSES.PENDING,
+        qualifiedBadge,
+        rejectionReason: null,
+        submittedAt: now,
+        reviewedAt: null,
+        updatedAt: now,
+      })
+      .where(eq(agentKycSubmissions.id, existingSubmission.id))
+  } else {
+    await db.insert(agentKycSubmissions).values({
+      agentId,
+      idType: fields.id_type,
+      idNumber: fields.id_number,
+      idDocumentUrl,
+      selfieUrl,
+      agencyName: fields.agency_name ?? agent.agencyName ?? null,
+      licenseNumber: fields.license_number ?? agent.licenseNumber ?? null,
+      licenseDocumentUrl,
+      officeAddress: fields.office_address,
+      city: fields.city,
+      state: fields.state,
+      status: VERIFICATION_STATUSES.PENDING,
+      qualifiedBadge,
+      submittedAt: now,
+    })
+  }
+
+  await db
+    .update(agentUsers)
+    .set({
+      verificationStatus: VERIFICATION_STATUSES.PENDING,
+      ...(fields.agency_name ? { agencyName: fields.agency_name } : {}),
+      ...(fields.license_number
+        ? { licenseNumber: fields.license_number }
+        : {}),
+      updatedAt: now,
+    })
+    .where(eq(agentUsers.id, agentId))
+
+  return getAgentKyc(db, agentId)
 }
 

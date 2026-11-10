@@ -3,11 +3,13 @@ import type { AppEnv } from '../config/env'
 import {
   changeAgentPassword,
   forgotAgentPassword,
+  getAgentKyc,
   getAgentProfile,
   loginAgent,
   registerAgent,
   resendAgentVerificationCode,
   resetAgentPassword,
+  submitAgentKyc,
   updateAgentProfile,
   verifyAgentEmail,
 } from '../services/agent.service'
@@ -86,5 +88,18 @@ export async function updateAgentMeHandler(c: Context<AppEnv>) {
   const input = await c.req.json<UpdateAgentInput>()
   const result = await updateAgentProfile(c.get('db'), user.id, input)
   return sendSuccess(c, result)
+}
+
+export async function getAgentKycHandler(c: Context<AppEnv>) {
+  const user = requireAgentUser(c)
+  const result = await getAgentKyc(c.get('db'), user.id)
+  return sendSuccess(c, result)
+}
+
+export async function submitAgentKycHandler(c: Context<AppEnv>) {
+  const user = requireAgentUser(c)
+  const formBody = await c.req.parseBody()
+  const result = await submitAgentKyc(c.get('db'), c.env, user.id, formBody)
+  return sendCreated(c, result)
 }
 

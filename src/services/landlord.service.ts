@@ -4,12 +4,17 @@ import {
   ACCOUNT_TYPES,
   AUTH_CONFIG,
   CODE_PURPOSES,
+  LANDLORD_PROOF_TYPES,
+  VERIFICATION_BADGES,
+  VERIFICATION_STATUSES,
 } from '../config/constants'
 import type { AppBindings } from '../config/env'
 import type { Database } from '../database'
 import {
+  landlordKycSubmissions,
   landlordUsers,
   landlordVerificationCodes,
+  type LandlordKycSubmission,
   type LandlordUser,
 } from '../models'
 import { PasswordResetEmail, VerificationEmail } from '../templates'
@@ -29,18 +34,21 @@ import {
   ForbiddenError,
   NotFoundError,
   UnauthorizedError,
+  ValidationError,
 } from '../utils/errors'
-import type {
-  ChangePasswordInput,
-  ForgotPasswordInput,
-  LoginInput,
-  RegisterLandlordInput,
-  ResendVerificationCodeInput,
-  ResetPasswordInput,
-  UpdateLandlordInput,
-  VerifyEmailInput,
+import {
+  submitLandlordKycFieldsSchema,
+  type ChangePasswordInput,
+  type ForgotPasswordInput,
+  type LoginInput,
+  type RegisterLandlordInput,
+  type ResendVerificationCodeInput,
+  type ResetPasswordInput,
+  type UpdateLandlordInput,
+  type VerifyEmailInput,
 } from '../utils/validators'
 import { sendEmail } from './email.service'
+import { uploadFileToCloudinary, validateUploadedFile } from './storage.service'
 
 export function toLandlordProfile(landlord: LandlordUser) {
   return {
@@ -57,8 +65,32 @@ export function toLandlordProfile(landlord: LandlordUser) {
     email_verified_at: landlord.emailVerifiedAt,
     is_verified: landlord.isVerified,
     verification_status: landlord.verificationStatus,
+    verification_badge: landlord.verificationBadge,
     created_at: landlord.createdAt,
     updated_at: landlord.updatedAt,
+  }
+}
+
+export function toLandlordKycRecord(submission: LandlordKycSubmission) {
+  return {
+    id: submission.id,
+    landlord_id: submission.landlordId,
+    id_type: submission.idType,
+    id_number: submission.idNumber,
+    id_document_url: submission.idDocumentUrl,
+    selfie_url: submission.selfieUrl,
+    proof_type: submission.proofType,
+    proof_document_url: submission.proofDocumentUrl,
+    residential_address: submission.residentialAddress,
+    city: submission.city,
+    state: submission.state,
+    status: submission.status,
+    qualified_badge: submission.qualifiedBadge,
+    rejection_reason: submission.rejectionReason,
+    submitted_at: submission.submittedAt,
+    reviewed_at: submission.reviewedAt,
+    created_at: submission.createdAt,
+    updated_at: submission.updatedAt,
   }
 }
 
@@ -588,5 +620,160 @@ export async function updateLandlordProfile(
     .where(eq(landlordUsers.id, landlordId))
 
   return getLandlordProfile(db, landlordId)
+}
+
+export async function getLandlordKyc(db: Database, landlordId: string) {
+  const [landlord] = await db
+    .select()
+    .from(landlordUsers)
+    .where(eq(landlordUsers.id, landlordId))
+    .limit(1)
+
+  if (!landlord) {
+    throw new NotFoundError('Landlord')
+  }
+
+  const [submission] = await db
+    .select()
+    .from(landlordKycSubmissions)
+    .where(eq(landlordKycSubmissions.landlordId, landlordId))
+    .limit(1)
+
+  return {
+    is_verified: landlord.isVerified,
+    verification_status: landlord.verificationStatus,
+    verification_badge: landlord.verificationBadge,
+    kyc_submission: submission ? toLandlordKycRecord(submission) : null,
+  }
+}
+
+export async function submitLandlordKyc(
+  db: Database,
+  env: AppBindings,
+  landlordId: string,
+  formBody: Record<string, unknown>
+) {
+  const [landlord] = await db
+    .select()
+    .from(landlordUsers)
+    .where(eq(landlordUsers.id, landlordId))
+    .limit(1)
+
+  if (!landlord) {
+    throw new NotFoundError('Landlord')
+  }
+
+  if (
+    landlord.isVerified ||
+    landlord.verificationStatus === VERIFICATION_STATUSES.APPROVED
+  ) {
+    throw new ConflictError('Your landlord KYC is already approved.')
+  }
+
+  const parsedFields = submitLandlordKycFieldsSchema.safeParse({
+    id_type:
+      typeof formBody.id_type === 'string' ? formBody.id_type : undefined,
+    id_number:
+      typeof formBody.id_number === 'string' ? formBody.id_number : undefined,
+    proof_type:
+      typeof formBody.proof_type === 'string' ? formBody.proof_type : undefined,
+    residential_address:
+      typeof formBody.residential_address === 'string'
+        ? formBody.residential_address
+        : undefined,
+    city: typeof formBody.city === 'string' ? formBody.city : undefined,
+    state: typeof formBody.state === 'string' ? formBody.state : undefined,
+  })
+
+  if (!parsedFields.success) {
+    throw new ValidationError(
+      parsedFields.error.issues.map((item) => ({
+        field: item.path.length > 0 ? item.path.map(String).join('.') : 'body',
+        issue: item.message,
+      }))
+    )
+  }
+
+  const fields = parsedFields.data
+  const idDocumentFile = validateUploadedFile(
+    formBody.id_document,
+    'id_document',
+    true
+  )!
+  const selfieFile = validateUploadedFile(formBody.selfie, 'selfie', true)!
+  const proofDocumentFile = validateUploadedFile(
+    formBody.proof_document,
+    'proof_document',
+    true
+  )!
+
+  const folder = `oruvia/kyc/landlords/${landlordId}`
+  const [idDocumentUrl, selfieUrl, proofDocumentUrl] = await Promise.all([
+    uploadFileToCloudinary(env, idDocumentFile, folder),
+    uploadFileToCloudinary(env, selfieFile, folder),
+    uploadFileToCloudinary(env, proofDocumentFile, folder),
+  ])
+
+  const qualifiedBadge =
+    fields.proof_type === LANDLORD_PROOF_TYPES.UTILITY_BILL
+      ? VERIFICATION_BADGES.VERIFIED_LANDLORD
+      : VERIFICATION_BADGES.VERIFIED_OWNER
+
+  const now = new Date().toISOString()
+
+  const [existingSubmission] = await db
+    .select({ id: landlordKycSubmissions.id })
+    .from(landlordKycSubmissions)
+    .where(eq(landlordKycSubmissions.landlordId, landlordId))
+    .limit(1)
+
+  if (existingSubmission) {
+    await db
+      .update(landlordKycSubmissions)
+      .set({
+        idType: fields.id_type,
+        idNumber: fields.id_number,
+        idDocumentUrl,
+        selfieUrl,
+        proofType: fields.proof_type,
+        proofDocumentUrl,
+        residentialAddress: fields.residential_address,
+        city: fields.city,
+        state: fields.state,
+        status: VERIFICATION_STATUSES.PENDING,
+        qualifiedBadge,
+        rejectionReason: null,
+        submittedAt: now,
+        reviewedAt: null,
+        updatedAt: now,
+      })
+      .where(eq(landlordKycSubmissions.id, existingSubmission.id))
+  } else {
+    await db.insert(landlordKycSubmissions).values({
+      landlordId,
+      idType: fields.id_type,
+      idNumber: fields.id_number,
+      idDocumentUrl,
+      selfieUrl,
+      proofType: fields.proof_type,
+      proofDocumentUrl,
+      residentialAddress: fields.residential_address,
+      city: fields.city,
+      state: fields.state,
+      status: VERIFICATION_STATUSES.PENDING,
+      qualifiedBadge,
+      submittedAt: now,
+    })
+  }
+
+  await db
+    .update(landlordUsers)
+    .set({
+      verificationStatus: VERIFICATION_STATUSES.PENDING,
+      updatedAt: now,
+    })
+    .where(eq(landlordUsers.id, landlordId))
+
+  return getLandlordKyc(db, landlordId)
 }
 

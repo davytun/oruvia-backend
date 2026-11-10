@@ -3,11 +3,13 @@ import type { AppEnv } from '../config/env'
 import {
   changeLandlordPassword,
   forgotLandlordPassword,
+  getLandlordKyc,
   getLandlordProfile,
   loginLandlord,
   registerLandlord,
   resendLandlordVerificationCode,
   resetLandlordPassword,
+  submitLandlordKyc,
   updateLandlordProfile,
   verifyLandlordEmail,
 } from '../services/landlord.service'
@@ -86,5 +88,18 @@ export async function updateLandlordMeHandler(c: Context<AppEnv>) {
   const input = await c.req.json<UpdateLandlordInput>()
   const result = await updateLandlordProfile(c.get('db'), user.id, input)
   return sendSuccess(c, result)
+}
+
+export async function getLandlordKycHandler(c: Context<AppEnv>) {
+  const user = requireLandlordUser(c)
+  const result = await getLandlordKyc(c.get('db'), user.id)
+  return sendSuccess(c, result)
+}
+
+export async function submitLandlordKycHandler(c: Context<AppEnv>) {
+  const user = requireLandlordUser(c)
+  const formBody = await c.req.parseBody()
+  const result = await submitLandlordKyc(c.get('db'), c.env, user.id, formBody)
+  return sendCreated(c, result)
 }
 

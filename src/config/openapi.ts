@@ -576,8 +576,13 @@ export function buildOpenApiSpec(serverUrl = 'https://api.oruvia.workers.dev') {
             avatar_url: { type: ['string', 'null'], example: null },
             is_email_verified: { type: 'boolean', example: false },
             email_verified_at: { type: ['string', 'null'], example: null },
-            is_verified: { type: 'boolean', example: false },
-            verification_status: { type: 'string', example: 'unverified' },
+            is_verified: { type: 'boolean', example: true },
+            verification_status: { type: 'string', example: 'approved' },
+            verification_badge: {
+              type: ['string', 'null'],
+              enum: ['verified_agent', 'licensed_agent', null],
+              example: 'licensed_agent',
+            },
             created_at: { type: 'string', format: 'date-time' },
             updated_at: { type: 'string', format: 'date-time' },
           },
@@ -603,12 +608,132 @@ export function buildOpenApiSpec(serverUrl = 'https://api.oruvia.workers.dev') {
             },
             bio: { type: ['string', 'null'] },
             avatar_url: { type: ['string', 'null'], example: null },
-            is_email_verified: { type: 'boolean', example: false },
+            is_email_verified: { type: 'boolean', example: true },
             email_verified_at: { type: ['string', 'null'], example: null },
-            is_verified: { type: 'boolean', example: false },
-            verification_status: { type: 'string', example: 'unverified' },
+            is_verified: { type: 'boolean', example: true },
+            verification_status: { type: 'string', example: 'approved' },
+            verification_badge: {
+              type: ['string', 'null'],
+              enum: ['verified_landlord', 'verified_owner', null],
+              example: 'verified_owner',
+            },
             created_at: { type: 'string', format: 'date-time' },
             updated_at: { type: 'string', format: 'date-time' },
+          },
+        },
+        AgentKycStatusResponse: {
+          type: 'object',
+          properties: {
+            is_verified: { type: 'boolean', example: false },
+            verification_status: {
+              type: 'string',
+              enum: ['unverified', 'pending', 'approved', 'rejected'],
+              example: 'pending',
+            },
+            verification_badge: {
+              type: ['string', 'null'],
+              enum: ['verified_agent', 'licensed_agent', null],
+              example: null,
+            },
+            kyc_submission: {
+              type: ['object', 'null'],
+              properties: {
+                id: { type: 'string' },
+                agent_id: { type: 'string' },
+                id_type: {
+                  type: 'string',
+                  enum: [
+                    'nin',
+                    'international_passport',
+                    'drivers_license',
+                    'voters_card',
+                  ],
+                  example: 'nin',
+                },
+                id_number: { type: 'string', example: '48291038475' },
+                id_document_url: { type: 'string' },
+                selfie_url: { type: 'string' },
+                agency_name: { type: ['string', 'null'] },
+                license_number: { type: ['string', 'null'] },
+                license_document_url: { type: ['string', 'null'] },
+                office_address: { type: 'string' },
+                city: { type: 'string', example: 'Abeokuta' },
+                state: { type: 'string', example: 'Ogun' },
+                status: { type: 'string', example: 'pending' },
+                qualified_badge: {
+                  type: 'string',
+                  enum: ['verified_agent', 'licensed_agent'],
+                  example: 'licensed_agent',
+                },
+                rejection_reason: { type: ['string', 'null'] },
+                submitted_at: { type: 'string', format: 'date-time' },
+                reviewed_at: { type: ['string', 'null'], format: 'date-time' },
+                created_at: { type: 'string', format: 'date-time' },
+                updated_at: { type: 'string', format: 'date-time' },
+              },
+            },
+          },
+        },
+        LandlordKycStatusResponse: {
+          type: 'object',
+          properties: {
+            is_verified: { type: 'boolean', example: false },
+            verification_status: {
+              type: 'string',
+              enum: ['unverified', 'pending', 'approved', 'rejected'],
+              example: 'pending',
+            },
+            verification_badge: {
+              type: ['string', 'null'],
+              enum: ['verified_landlord', 'verified_owner', null],
+              example: null,
+            },
+            kyc_submission: {
+              type: ['object', 'null'],
+              properties: {
+                id: { type: 'string' },
+                landlord_id: { type: 'string' },
+                id_type: {
+                  type: 'string',
+                  enum: [
+                    'nin',
+                    'international_passport',
+                    'drivers_license',
+                    'voters_card',
+                  ],
+                  example: 'nin',
+                },
+                id_number: { type: 'string', example: '61928374650' },
+                id_document_url: { type: 'string' },
+                selfie_url: { type: 'string' },
+                proof_type: {
+                  type: 'string',
+                  enum: [
+                    'utility_bill',
+                    'c_of_o',
+                    'deed_of_assignment',
+                    'survey_plan',
+                    'governors_consent',
+                  ],
+                  example: 'c_of_o',
+                },
+                proof_document_url: { type: 'string' },
+                residential_address: { type: 'string' },
+                city: { type: 'string', example: 'Abeokuta' },
+                state: { type: 'string', example: 'Ogun' },
+                status: { type: 'string', example: 'pending' },
+                qualified_badge: {
+                  type: 'string',
+                  enum: ['verified_landlord', 'verified_owner'],
+                  example: 'verified_owner',
+                },
+                rejection_reason: { type: ['string', 'null'] },
+                submitted_at: { type: 'string', format: 'date-time' },
+                reviewed_at: { type: ['string', 'null'], format: 'date-time' },
+                created_at: { type: 'string', format: 'date-time' },
+                updated_at: { type: 'string', format: 'date-time' },
+              },
+            },
           },
         },
       },
@@ -712,6 +837,239 @@ export function buildOpenApiSpec(serverUrl = 'https://api.oruvia.workers.dev') {
           bio: { type: ['string', 'null'] },
         }
       ),
+      '/api/v1/agents/kyc': {
+        get: {
+          tags: ['Agents Auth & Profile'],
+          summary: 'Get authenticated agent KYC status & badge info',
+          security: [{ bearerAuth: [] }],
+          responses: {
+            '200': {
+              description: 'Agent KYC status and submission record',
+              content: {
+                'application/json': {
+                  schema: {
+                    type: 'object',
+                    properties: {
+                      success: { type: 'boolean', example: true },
+                      data: {
+                        $ref: '#/components/schemas/AgentKycStatusResponse',
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+        post: {
+          tags: ['Agents Auth & Profile'],
+          summary: 'Submit agent KYC documents (multipart/form-data)',
+          description:
+            'Uploads government ID (`id_document`), live selfie (`selfie`), and optional agency CAC/license (`license_document`) to Cloudinary. Computes `qualified_badge` (`verified_agent` or `licensed_agent`) and sets `verification_status` to `pending`.',
+          security: [{ bearerAuth: [] }],
+          requestBody: {
+            required: true,
+            content: {
+              'multipart/form-data': {
+                schema: {
+                  type: 'object',
+                  required: [
+                    'id_type',
+                    'id_number',
+                    'office_address',
+                    'city',
+                    'state',
+                    'id_document',
+                    'selfie',
+                  ],
+                  properties: {
+                    id_type: {
+                      type: 'string',
+                      enum: [
+                        'nin',
+                        'international_passport',
+                        'drivers_license',
+                        'voters_card',
+                      ],
+                      example: 'nin',
+                    },
+                    id_number: { type: 'string', example: '48291038475' },
+                    agency_name: {
+                      type: 'string',
+                      example: 'Crown Roof Realty Limited',
+                    },
+                    license_number: {
+                      type: 'string',
+                      example: 'OG-RE-2026-0481',
+                    },
+                    office_address: {
+                      type: 'string',
+                      example: '14 Presidential Boulevard, Ibara',
+                    },
+                    city: { type: 'string', example: 'Abeokuta' },
+                    state: { type: 'string', example: 'Ogun' },
+                    id_document: {
+                      type: 'string',
+                      format: 'binary',
+                      description:
+                        'Government ID image or PDF (max 5 MB: JPEG, PNG, WebP, PDF)',
+                    },
+                    selfie: {
+                      type: 'string',
+                      format: 'binary',
+                      description:
+                        'Clear portrait/selfie photo (max 5 MB: JPEG, PNG, WebP)',
+                    },
+                    license_document: {
+                      type: 'string',
+                      format: 'binary',
+                      description:
+                        'Optional CAC certificate or real estate license document (qualifies for `licensed_agent` badge)',
+                    },
+                  },
+                },
+              },
+            },
+          },
+          responses: {
+            '201': {
+              description: 'Agent KYC submitted successfully',
+              content: {
+                'application/json': {
+                  schema: {
+                    type: 'object',
+                    properties: {
+                      success: { type: 'boolean', example: true },
+                      data: {
+                        $ref: '#/components/schemas/AgentKycStatusResponse',
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+      '/api/v1/landlords/kyc': {
+        get: {
+          tags: ['Landlords Auth & Profile'],
+          summary: 'Get authenticated landlord KYC status & badge info',
+          security: [{ bearerAuth: [] }],
+          responses: {
+            '200': {
+              description: 'Landlord KYC status and submission record',
+              content: {
+                'application/json': {
+                  schema: {
+                    type: 'object',
+                    properties: {
+                      success: { type: 'boolean', example: true },
+                      data: {
+                        $ref: '#/components/schemas/LandlordKycStatusResponse',
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+        post: {
+          tags: ['Landlords Auth & Profile'],
+          summary: 'Submit landlord KYC documents (multipart/form-data)',
+          description:
+            'Uploads government ID (`id_document`), live selfie (`selfie`), and proof of address/ownership (`proof_document`) to Cloudinary. Computes `qualified_badge` (`verified_landlord` for `utility_bill`, or `verified_owner` for title documents) and sets `verification_status` to `pending`.',
+          security: [{ bearerAuth: [] }],
+          requestBody: {
+            required: true,
+            content: {
+              'multipart/form-data': {
+                schema: {
+                  type: 'object',
+                  required: [
+                    'id_type',
+                    'id_number',
+                    'proof_type',
+                    'residential_address',
+                    'city',
+                    'state',
+                    'id_document',
+                    'selfie',
+                    'proof_document',
+                  ],
+                  properties: {
+                    id_type: {
+                      type: 'string',
+                      enum: [
+                        'nin',
+                        'international_passport',
+                        'drivers_license',
+                        'voters_card',
+                      ],
+                      example: 'international_passport',
+                    },
+                    id_number: { type: 'string', example: 'B04928173' },
+                    proof_type: {
+                      type: 'string',
+                      enum: [
+                        'utility_bill',
+                        'c_of_o',
+                        'deed_of_assignment',
+                        'survey_plan',
+                        'governors_consent',
+                      ],
+                      example: 'c_of_o',
+                    },
+                    residential_address: {
+                      type: 'string',
+                      example: 'Plot 8, Kemta Idi-Aba GRA',
+                    },
+                    city: { type: 'string', example: 'Abeokuta' },
+                    state: { type: 'string', example: 'Ogun' },
+                    id_document: {
+                      type: 'string',
+                      format: 'binary',
+                      description:
+                        'Government ID image or PDF (max 5 MB: JPEG, PNG, WebP, PDF)',
+                    },
+                    selfie: {
+                      type: 'string',
+                      format: 'binary',
+                      description:
+                        'Clear portrait/selfie photo (max 5 MB: JPEG, PNG, WebP)',
+                    },
+                    proof_document: {
+                      type: 'string',
+                      format: 'binary',
+                      description:
+                        'Utility bill (`verified_landlord`) or property title document (`verified_owner`) (max 5 MB: JPEG, PNG, WebP, PDF)',
+                    },
+                  },
+                },
+              },
+            },
+          },
+          responses: {
+            '201': {
+              description: 'Landlord KYC submitted successfully',
+              content: {
+                'application/json': {
+                  schema: {
+                    type: 'object',
+                    properties: {
+                      success: { type: 'boolean', example: true },
+                      data: {
+                        $ref: '#/components/schemas/LandlordKycStatusResponse',
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
     },
   }
 }
