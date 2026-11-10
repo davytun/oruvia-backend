@@ -204,6 +204,7 @@ export const authenticateAdmin = factory.createMiddleware(async (c, next) => {
         id: adminUsers.id,
         email: adminUsers.email,
         tokenVersion: adminUsers.tokenVersion,
+        isSuspended: adminUsers.isSuspended,
       })
       .from(adminUsers)
       .where(eq(adminUsers.id, payload.sub))
@@ -211,6 +212,10 @@ export const authenticateAdmin = factory.createMiddleware(async (c, next) => {
 
     if (!admin || admin.tokenVersion !== payload.tokenVersion) {
       throw new UnauthorizedError('Session has expired or been revoked.')
+    }
+
+    if (admin.isSuspended) {
+      throw new ForbiddenError('Your administrator account has been suspended.')
     }
   }
 

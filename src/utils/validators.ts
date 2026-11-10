@@ -5,6 +5,7 @@ import {
   KYC_ID_TYPES,
   LANDLORD_PROOF_TYPES,
   PAGINATION_DEFAULTS,
+  VERIFICATION_STATUSES,
 } from '../config/constants'
 import { sendError } from './response'
 
@@ -305,6 +306,85 @@ export const submitLandlordKycFieldsSchema = z.object({
     .max(100),
 })
 
+export const createAdminSchema = z
+  .object({
+    full_name: z
+      .string()
+      .trim()
+      .min(2, 'Full name must be at least 2 characters long.')
+      .max(100, 'Full name must not exceed 100 characters.'),
+    email: baseEmailField,
+    password: basePasswordField,
+    phone: z
+      .string()
+      .trim()
+      .min(7, 'Please provide a valid phone number.')
+      .optional(),
+  })
+  .strict()
+
+export const updateAdminSchema = z
+  .object({
+    full_name: z
+      .string()
+      .trim()
+      .min(2, 'Full name must be at least 2 characters long.')
+      .max(100)
+      .optional(),
+    phone: z.string().trim().min(7).nullable().optional(),
+    avatar_url: z.url('Avatar URL must be a valid URL.').nullable().optional(),
+  })
+  .strict()
+
+export const kycListQuerySchema = paginationQuerySchema.extend({
+  status: z
+    .enum([
+      VERIFICATION_STATUSES.PENDING,
+      VERIFICATION_STATUSES.APPROVED,
+      VERIFICATION_STATUSES.REJECTED,
+    ])
+    .optional(),
+})
+
+export const reviewKycSchema = z
+  .object({
+    status: z.enum(
+      [VERIFICATION_STATUSES.APPROVED, VERIFICATION_STATUSES.REJECTED],
+      {
+        message: 'status must be either approved or rejected.',
+      }
+    ),
+    rejection_reason: z.string().trim().max(500).optional(),
+  })
+  .strict()
+  .superRefine((data, ctx) => {
+    if (
+      data.status === VERIFICATION_STATUSES.REJECTED &&
+      (!data.rejection_reason || data.rejection_reason.length < 3)
+    ) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['rejection_reason'],
+        message: 'A rejection_reason is required when rejecting KYC.',
+      })
+    }
+  })
+
+export const userRoleParamSchema = z.object({
+  role: z.enum(['seekers', 'agents', 'landlords'], {
+    message: 'role must be one of: seekers, agents, landlords.',
+  }),
+  id: z.string().min(1, 'User ID is required.'),
+})
+
+export const updateUserSuspensionSchema = z
+  .object({
+    is_suspended: z.boolean({
+      message: 'is_suspended must be a boolean.',
+    }),
+  })
+  .strict()
+
 export type RegisterSeekerInput = z.infer<typeof registerSeekerSchema>
 export type RegisterAgentInput = z.infer<typeof registerAgentSchema>
 export type RegisterLandlordInput = z.infer<typeof registerLandlordSchema>
@@ -325,3 +405,12 @@ export type SubmitAgentKycFieldsInput = z.infer<
 export type SubmitLandlordKycFieldsInput = z.infer<
   typeof submitLandlordKycFieldsSchema
 >
+export type CreateAdminInput = z.infer<typeof createAdminSchema>
+export type UpdateAdminInput = z.infer<typeof updateAdminSchema>
+export type KycListQueryInput = z.infer<typeof kycListQuerySchema>
+export type ReviewKycInput = z.infer<typeof reviewKycSchema>
+export type UserRoleParamInput = z.infer<typeof userRoleParamSchema>
+export type UpdateUserSuspensionInput = z.infer<
+  typeof updateUserSuspensionSchema
+>
+export type PaginationQueryInput = z.infer<typeof paginationQuerySchema>

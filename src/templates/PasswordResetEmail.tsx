@@ -14,7 +14,7 @@ import type { CSSProperties } from 'react'
 
 export interface PasswordResetEmailProps {
   code: string
-  accountType?: 'seeker' | 'agent' | 'landlord'
+  accountType?: 'seeker' | 'agent' | 'landlord' | 'admin'
 }
 
 export function PasswordResetEmail({

@@ -150,6 +150,23 @@ export const openApiSchemas = {
       updated_at: { type: 'string', format: 'date-time' },
     },
   },
+  AdminProfile: {
+    type: 'object',
+    properties: {
+      id: {
+        type: 'string',
+        example: '00000000-0000-4000-d000-000000000101',
+      },
+      account_type: { type: 'string', example: 'admin' },
+      full_name: { type: 'string', example: 'Oruvia Super Admin' },
+      email: { type: 'string', example: 'admin@oruvia.ng' },
+      phone: { type: ['string', 'null'], example: '+2348010000000' },
+      avatar_url: { type: ['string', 'null'], example: null },
+      is_suspended: { type: 'boolean', example: false },
+      created_at: { type: 'string', format: 'date-time' },
+      updated_at: { type: 'string', format: 'date-time' },
+    },
+  },
   AgentKycStatusResponse: {
     type: 'object',
     properties: {
