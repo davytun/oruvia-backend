@@ -776,3 +776,4 @@ export async function getPublicPropertyListing(
 
   return formatListingResponse(row)
 }
+

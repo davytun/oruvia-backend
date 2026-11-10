@@ -80,3 +80,4 @@ adminCatalogRoutes.patch(
 )
 
 export default adminCatalogRoutes
+

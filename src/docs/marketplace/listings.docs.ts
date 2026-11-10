@@ -389,3 +389,4 @@ function buildListerListingPaths(role: 'agents' | 'landlords', tag: string) {
 
 export const agentListingPaths = buildListerListingPaths('agents', 'Agent Listings')
 export const landlordListingPaths = buildListerListingPaths('landlords', 'Landlord Listings')
+

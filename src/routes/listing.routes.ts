@@ -17,3 +17,4 @@ publicListingRoutes.get(
 publicListingRoutes.get('/:idOrSlug', getPublicListingHandler)
 
 export default publicListingRoutes
+

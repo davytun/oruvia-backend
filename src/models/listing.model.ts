@@ -174,3 +174,4 @@ export type PropertyType = typeof propertyTypes.$inferSelect
 export type NewPropertyType = typeof propertyTypes.$inferInsert
 export type PropertyListing = typeof propertyListings.$inferSelect
 export type NewPropertyListing = typeof propertyListings.$inferInsert
+

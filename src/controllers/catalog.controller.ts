@@ -25,3 +25,4 @@ export async function getActivePropertyTypesHandler(c: Context<AppEnv>) {
   const result = await getActivePropertyTypes(c.get('db'), category)
   return sendSuccess(c, result)
 }
+

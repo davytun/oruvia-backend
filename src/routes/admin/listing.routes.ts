@@ -37,3 +37,4 @@ adminListingRoutes.patch(
 )
 
 export default adminListingRoutes
+

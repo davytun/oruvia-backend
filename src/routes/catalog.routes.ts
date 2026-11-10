@@ -10,3 +10,4 @@ catalogRoutes.get('/locations', getActiveLocationsHandler)
 catalogRoutes.get('/property-types', getActivePropertyTypesHandler)
 
 export default catalogRoutes
+

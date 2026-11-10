@@ -63,3 +63,4 @@ export async function getActivePropertyTypes(
     .where(and(...conditions))
     .orderBy(asc(propertyTypes.displayOrder), asc(propertyTypes.name))
 }
+

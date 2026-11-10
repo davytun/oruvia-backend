@@ -355,3 +355,4 @@ export async function adminUpdatePropertyType(
 
   return updated
 }
+
