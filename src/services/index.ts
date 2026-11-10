@@ -1,4 +1,4 @@
-export * from './admin.service'
+export * from './admin'
 export * from './agent.service'
 export * from './email.service'
 export * from './health.service'

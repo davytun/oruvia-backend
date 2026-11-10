@@ -1,5 +1,5 @@
 import { eq } from 'drizzle-orm'
-import { ACCOUNT_TYPES } from '../config/constants'
+import { ACCOUNT_TYPES, ADMIN_ROLES, type AdminRole } from '../config/constants'
 import { factory } from '../config/env'
 import {
   adminUsers,
@@ -198,11 +198,13 @@ export const authenticateAdmin = factory.createMiddleware(async (c, next) => {
   }
 
   const db = c.get('db')
+  let adminRole: AdminRole = ADMIN_ROLES.ADMIN
   if (db) {
     const [admin] = await db
       .select({
         id: adminUsers.id,
         email: adminUsers.email,
+        role: adminUsers.role,
         tokenVersion: adminUsers.tokenVersion,
         isSuspended: adminUsers.isSuspended,
       })
@@ -217,6 +219,8 @@ export const authenticateAdmin = factory.createMiddleware(async (c, next) => {
     if (admin.isSuspended) {
       throw new ForbiddenError('Your administrator account has been suspended.')
     }
+
+    adminRole = (admin.role as AdminRole) || ADMIN_ROLES.ADMIN
   }
 
   c.set('user', {
@@ -224,7 +228,26 @@ export const authenticateAdmin = factory.createMiddleware(async (c, next) => {
     email: payload.email,
     accountType: payload.accountType,
     tokenVersion: payload.tokenVersion,
+    adminRole,
   })
 
+  await next()
+})
+
+/**
+ * Require the authenticated Admin to hold the `super_admin` role
+ * (must be chained after `authenticateAdmin`)
+ */
+export const requireSuperAdmin = factory.createMiddleware(async (c, next) => {
+  const user = c.get('user')
+  if (
+    !user ||
+    user.accountType !== ACCOUNT_TYPES.ADMIN ||
+    user.adminRole !== ADMIN_ROLES.SUPER_ADMIN
+  ) {
+    throw new ForbiddenError(
+      'Access restricted to Super Administrator accounts.'
+    )
+  }
   await next()
 })

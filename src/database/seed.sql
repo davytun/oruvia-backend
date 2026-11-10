@@ -366,13 +366,14 @@ INSERT OR REPLACE INTO seeker_users (
   '2026-11-10T08:00:00.000Z'
 );
 
--- 6. Root Admin Account
+-- 6. Root Super Admin & Regular Admin Accounts
 INSERT OR REPLACE INTO admin_users (
   id,
   full_name,
   email,
   phone,
   avatar_url,
+  role,
   password_hash,
   token_version,
   is_suspended,
@@ -384,6 +385,33 @@ INSERT OR REPLACE INTO admin_users (
   'admin@oruvia.ng',
   '+2348010000000',
   NULL,
+  'super_admin',
+  'pbkdf2_sha256$100000$a1b2c3d4e5f60718293a4b5c6d7e8f90$22911cec9bd43f5444fc8b668fab502a1ec4f2e2257ceff6e9f1cc77cdc2ad34',
+  0,
+  0,
+  '2026-11-10T08:00:00.000Z',
+  '2026-11-10T08:00:00.000Z'
+);
+
+INSERT OR REPLACE INTO admin_users (
+  id,
+  full_name,
+  email,
+  phone,
+  avatar_url,
+  role,
+  password_hash,
+  token_version,
+  is_suspended,
+  created_at,
+  updated_at
+) VALUES (
+  '00000000-0000-4000-d000-000000000102',
+  'Chidinma Okafor',
+  'kyc.admin@oruvia.ng',
+  '+2348010000002',
+  NULL,
+  'admin',
   'pbkdf2_sha256$100000$a1b2c3d4e5f60718293a4b5c6d7e8f90$22911cec9bd43f5444fc8b668fab502a1ec4f2e2257ceff6e9f1cc77cdc2ad34',
   0,
   0,

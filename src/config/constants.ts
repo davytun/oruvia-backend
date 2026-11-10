@@ -11,6 +11,13 @@ export const ACCOUNT_TYPES = {
 
 export type AccountType = (typeof ACCOUNT_TYPES)[keyof typeof ACCOUNT_TYPES]
 
+export const ADMIN_ROLES = {
+  SUPER_ADMIN: 'super_admin',
+  ADMIN: 'admin',
+} as const
+
+export type AdminRole = (typeof ADMIN_ROLES)[keyof typeof ADMIN_ROLES]
+
 export const CODE_PURPOSES = {
   EMAIL_VERIFICATION: 'EMAIL_VERIFICATION',
   PASSWORD_RESET: 'PASSWORD_RESET',

@@ -1,4 +1,5 @@
-import { adminPaths } from './auth/admins.docs'
+import { adminAuthPaths } from './admin/auth.docs'
+import { adminKycPaths } from './admin/kyc.docs'
 import { agentPaths } from './auth/agents.docs'
 import { landlordPaths } from './auth/landlords.docs'
 import { seekerPaths } from './auth/seekers.docs'
@@ -7,7 +8,7 @@ import { healthPaths } from './system/health.docs'
 
 /**
  * Assemble the complete OpenAPI 3.1 specification from modular domain folders
- * with `x-tagGroups` so Scalar renders nested folders (`System`, `Auth & KYC` -> `Seekers`, `Agents`, `Landlords`, `Admins`).
+ * with `x-tagGroups` so Scalar renders nested folders (`System`, `Auth & KYC`, `Admin`).
  */
 export function buildOpenApiSpec(serverUrl = 'https://api.oruvia.workers.dev') {
   return {
@@ -16,7 +17,7 @@ export function buildOpenApiSpec(serverUrl = 'https://api.oruvia.workers.dev') {
       title: 'Oruvia API',
       version: '1.0.0',
       description:
-        'Oruvia Proptech & Real Estate Marketplace API — Connecting property seekers with verified landlords and real estate agents across Nigeria.\n\n### Pre-Verified Demo Accounts (Password: `Password123!`)\n| Role | Email | Badge |\n| :--- | :--- | :--- |\n| **Super Admin** | `admin@oruvia.ng` | — |\n| **Licensed Agent** | `agent.verified@oruvia.ng` | `licensed_agent` |\n| **Verified Agent** | `agent.standard@oruvia.ng` | `verified_agent` |\n| **Pending Agent** | `agent.pending@oruvia.ng` | *(pending KYC)* |\n| **Verified Owner (Landlord)** | `landlord.verified@oruvia.ng` | `verified_owner` |\n| **Verified Landlord** | `landlord.standard@oruvia.ng` | `verified_landlord` |\n| **Pending Landlord** | `landlord.pending@oruvia.ng` | *(pending KYC)* |\n| **Seeker** | `seeker.demo@oruvia.ng` | — |\n\n**Tagline:** Oruvia: Your path to a roof.',
+        'Oruvia Proptech & Real Estate Marketplace API — Connecting property seekers with verified landlords and real estate agents across Nigeria.\n\n### Pre-Verified Demo Accounts (Password: `Password123!`)\n| Role | Email | Badge / Admin Role |\n| :--- | :--- | :--- |\n| **Super Admin** | `admin@oruvia.ng` | `super_admin` |\n| **Regular Admin** | `kyc.admin@oruvia.ng` | `admin` |\n| **Licensed Agent** | `agent.verified@oruvia.ng` | `licensed_agent` |\n| **Verified Agent** | `agent.standard@oruvia.ng` | `verified_agent` |\n| **Pending Agent** | `agent.pending@oruvia.ng` | *(pending KYC)* |\n| **Verified Owner (Landlord)** | `landlord.verified@oruvia.ng` | `verified_owner` |\n| **Verified Landlord** | `landlord.standard@oruvia.ng` | `verified_landlord` |\n| **Pending Landlord** | `landlord.pending@oruvia.ng` | *(pending KYC)* |\n| **Seeker** | `seeker.demo@oruvia.ng` | — |\n\n**Tagline:** Oruvia: Your path to a roof.',
     },
     servers: [
       {
@@ -45,9 +46,14 @@ export function buildOpenApiSpec(serverUrl = 'https://api.oruvia.workers.dev') {
           'Authentication, profile, and KYC verification endpoints for Property Owners & Landlords (`/api/v1/landlords/*`)',
       },
       {
-        name: 'Admins',
+        name: 'Admin Auth & Management',
         description:
-          'Admin authentication, account provisioning, KYC review, and user suspension management (`/api/v1/admins/*`)',
+          'Admin authentication, profile, and Super Admin provisioning/suspension of Admin accounts (`/api/v1/admins/*`)',
+      },
+      {
+        name: 'Admin KYC Verification',
+        description:
+          'Admin KYC document verification for Agents and Landlords (`/api/v1/admins/kyc/*`)',
       },
     ],
     'x-tagGroups': [
@@ -57,7 +63,11 @@ export function buildOpenApiSpec(serverUrl = 'https://api.oruvia.workers.dev') {
       },
       {
         name: 'Auth & KYC',
-        tags: ['Seekers', 'Agents', 'Landlords', 'Admins'],
+        tags: ['Seekers', 'Agents', 'Landlords'],
+      },
+      {
+        name: 'Admin',
+        tags: ['Admin Auth & Management', 'Admin KYC Verification'],
       },
     ],
     components: {
@@ -77,7 +87,8 @@ export function buildOpenApiSpec(serverUrl = 'https://api.oruvia.workers.dev') {
       ...seekerPaths,
       ...agentPaths,
       ...landlordPaths,
-      ...adminPaths,
+      ...adminAuthPaths,
+      ...adminKycPaths,
     },
   }
 }

@@ -7,6 +7,7 @@ export const adminUsers = sqliteTable('admin_users', {
   email: text('email').notNull().unique(),
   phone: text('phone'),
   avatarUrl: text('avatar_url'),
+  role: text('role').notNull().default('admin'), // 'super_admin' | 'admin'
   passwordHash: text('password_hash').notNull(),
   tokenVersion: integer('token_version').notNull().default(0),
   isSuspended: integer('is_suspended', { mode: 'boolean' })

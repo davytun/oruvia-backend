@@ -370,14 +370,7 @@ export const reviewKycSchema = z
     }
   })
 
-export const userRoleParamSchema = z.object({
-  role: z.enum(['seekers', 'agents', 'landlords'], {
-    message: 'role must be one of: seekers, agents, landlords.',
-  }),
-  id: z.string().min(1, 'User ID is required.'),
-})
-
-export const updateUserSuspensionSchema = z
+export const updateAdminSuspensionSchema = z
   .object({
     is_suspended: z.boolean({
       message: 'is_suspended must be a boolean.',
@@ -409,8 +402,7 @@ export type CreateAdminInput = z.infer<typeof createAdminSchema>
 export type UpdateAdminInput = z.infer<typeof updateAdminSchema>
 export type KycListQueryInput = z.infer<typeof kycListQuerySchema>
 export type ReviewKycInput = z.infer<typeof reviewKycSchema>
-export type UserRoleParamInput = z.infer<typeof userRoleParamSchema>
-export type UpdateUserSuspensionInput = z.infer<
-  typeof updateUserSuspensionSchema
+export type UpdateAdminSuspensionInput = z.infer<
+  typeof updateAdminSuspensionSchema
 >
 export type PaginationQueryInput = z.infer<typeof paginationQuerySchema>

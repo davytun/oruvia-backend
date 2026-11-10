@@ -1,6 +1,6 @@
 import { factory } from '../config/env'
 import { healthCheck } from '../controllers/health.controller'
-import adminRoutes from './admin.routes'
+import adminRoutes from './admin'
 import agentRoutes from './agent.routes'
 import landlordRoutes from './landlord.routes'
 import seekerRoutes from './seeker.routes'

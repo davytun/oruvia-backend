@@ -1,4 +1,4 @@
-export * from './admin.controller'
+export * from './admin'
 export * from './agent.controller'
 export * from './health.controller'
 export * from './landlord.controller'

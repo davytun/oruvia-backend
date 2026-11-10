@@ -65,25 +65,31 @@ Each role (**Seekers**, **Agents**, **Landlords**, **Admins**) has its own stand
 
 ---
 
-## 5. Admins (`/api/v1/admins`)
-Following `docs/roles.md` (*"Administrative privileges must not be granted through ordinary user actions"*), there is no public admin self-registration endpoint. A root Admin is seeded, and authenticated Admins can provision additional Admin accounts.
+## 5. Admin (`/api/v1/admins`)
+All Admin routes link together under `/api/v1/admins` using modular sub-routers (`src/routes/admin/auth.routes.ts` and `src/routes/admin/kyc.routes.ts`).
 
+### 5.1 Admin Auth & Super Admin Management
 | Method | Endpoint | Auth | Description |
 |---|---|---|---|
-| `POST` | `/api/v1/admins/login` | Public | Authenticate Admin & return JWT `access_token` |
+| `POST` | `/api/v1/admins/login` | Public | Authenticate Admin (`super_admin` or `admin`) & return JWT `access_token` |
 | `POST` | `/api/v1/admins/forgot-password` | Public | Send 6-digit password reset code |
 | `POST` | `/api/v1/admins/reset-password` | Public | Reset Admin password with 6-digit code & revoke old tokens |
-| `POST` | `/api/v1/admins/change-password` | Bearer JWT (Admin) | Change Admin password & revoke old tokens |
-| `GET` | `/api/v1/admins/me` | Bearer JWT (Admin) | Get current Admin profile |
-| `PATCH` | `/api/v1/admins/me` | Bearer JWT (Admin) | Update current Admin profile |
-| `GET` | `/api/v1/admins` | Bearer JWT (Admin) | List all Admin accounts (paginated) |
-| `POST` | `/api/v1/admins` | Bearer JWT (Admin) | Create a new Admin account |
-| `GET` | `/api/v1/admins/kyc/agents` | Bearer JWT (Admin) | List Agent KYC submissions (`?status=pending\|approved\|rejected`) |
-| `PATCH` | `/api/v1/admins/kyc/agents/:id/review` | Bearer JWT (Admin) | Approve or reject Agent KYC submission & activate `verification_badge` |
-| `GET` | `/api/v1/admins/kyc/landlords` | Bearer JWT (Admin) | List Landlord KYC submissions (`?status=pending\|approved\|rejected`) |
-| `PATCH` | `/api/v1/admins/kyc/landlords/:id/review` | Bearer JWT (Admin) | Approve or reject Landlord KYC submission & activate `verification_badge` |
-| `GET` | `/api/v1/admins/users/:role` | Bearer JWT (Admin) | List users by role (`seekers`, `agents`, `landlords`) |
-| `PATCH` | `/api/v1/admins/users/:role/:id/status` | Bearer JWT (Admin) | Suspend or unsuspend a user account & revoke active tokens on suspension |
+| `POST` | `/api/v1/admins/change-password` | `admin` / `super_admin` | Change Admin password & revoke old tokens |
+| `GET` | `/api/v1/admins/me` | `admin` / `super_admin` | Get current Admin profile (includes `role`) |
+| `PATCH` | `/api/v1/admins/me` | `admin` / `super_admin` | Update current Admin profile |
+| `GET` | `/api/v1/admins` | **`super_admin` only** | List all Admin accounts (paginated) |
+| `POST` | `/api/v1/admins` | **`super_admin` only** | Create a new `admin` account |
+| `PATCH` | `/api/v1/admins/:id/status` | **`super_admin` only** | Suspend or unsuspend a regular `admin` account & revoke active tokens |
+
+### 5.2 Admin KYC Verification (`/api/v1/admins/kyc`)
+| Method | Endpoint | Auth | Description |
+|---|---|---|---|
+| `GET` | `/api/v1/admins/kyc/agents` | `admin` / `super_admin` | List Agent KYC submissions (`?status=pending\|approved\|rejected`) |
+| `GET` | `/api/v1/admins/kyc/agents/:id` | `admin` / `super_admin` | Get a single Agent KYC submission by ID |
+| `PATCH` | `/api/v1/admins/kyc/agents/:id/review` | `admin` / `super_admin` | Approve or reject Agent KYC submission & activate `verification_badge` |
+| `GET` | `/api/v1/admins/kyc/landlords` | `admin` / `super_admin` | List Landlord KYC submissions (`?status=pending\|approved\|rejected`) |
+| `GET` | `/api/v1/admins/kyc/landlords/:id` | `admin` / `super_admin` | Get a single Landlord KYC submission by ID |
+| `PATCH` | `/api/v1/admins/kyc/landlords/:id/review` | `admin` / `super_admin` | Approve or reject Landlord KYC submission & activate `verification_badge` |
 
 ---
 
@@ -101,7 +107,8 @@ Following `docs/roles.md` (*"Administrative privileges must not be granted throu
 ## 7. Pre-Verified Demo & Tester Accounts (`Password123!`)
 | Role | Email | Password | `verification_status` | `verification_badge` |
 |---|---|---|---|---|
-| **Super Admin** | `admin@oruvia.ng` | `Password123!` | N/A | N/A |
+| **Super Admin** | `admin@oruvia.ng` | `Password123!` | `super_admin` | N/A |
+| **Regular Admin** | `kyc.admin@oruvia.ng` | `Password123!` | `admin` | N/A |
 | **Agent (Licensed)** | `agent.verified@oruvia.ng` | `Password123!` | `approved` | `licensed_agent` |
 | **Agent (Standard)** | `agent.standard@oruvia.ng` | `Password123!` | `approved` | `verified_agent` |
 | **Agent (Pending KYC)** | `agent.pending@oruvia.ng` | `Password123!` | `pending` | `null` (qualifies for `licensed_agent`) |

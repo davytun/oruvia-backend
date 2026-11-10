@@ -35,6 +35,14 @@ Do not begin implementation before completing this review.
 
 If any required document or relevant skill is unavailable, inform the user rather than silently ignoring the requirement.
 
+## Mandatory Planning and User Approval Workflow
+
+**Before writing or modifying any implementation code for a feature or architectural change, the AI agent MUST:**
+
+1. **Ask Clarifying Questions First**: Never assume requirements or jump straight into writing code. Ask the user clear, focused questions to gather all necessary details about how the feature should work.
+2. **Write a Plan Artifact**: Once all questions are answered and requirements are clear, write a structured implementation plan (covering database schema, endpoints, permissions, and file structure) and present it to the user for review.
+3. **Wait for Explicit Approval**: Do NOT execute or write code until the user explicitly approves the plan.
+
 ## General Rules
 
 ### 1. Understand Before Acting

@@ -158,6 +158,11 @@ export const openApiSchemas = {
         example: '00000000-0000-4000-d000-000000000101',
       },
       account_type: { type: 'string', example: 'admin' },
+      role: {
+        type: 'string',
+        enum: ['super_admin', 'admin'],
+        example: 'super_admin',
+      },
       full_name: { type: 'string', example: 'Oruvia Super Admin' },
       email: { type: 'string', example: 'admin@oruvia.ng' },
       phone: { type: ['string', 'null'], example: '+2348010000000' },

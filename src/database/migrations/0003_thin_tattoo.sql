@@ -1,0 +1,1 @@
+ALTER TABLE `admin_users` ADD `role` text DEFAULT 'admin' NOT NULL;

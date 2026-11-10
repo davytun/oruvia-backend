@@ -104,6 +104,10 @@ Landlords must not manage listings belonging to other users unless explicitly au
 
 An Admin is responsible for platform administration, moderation, and trust management.
 
+Within `admin_users`, each account has a `role` field (`'super_admin' | 'admin'`):
+- **`super_admin`**: Root administrator with full control over all admin modules and exclusive permission to create, list, and suspend/unsuspend regular `admin` accounts.
+- **`admin`**: Administrator created by a `super_admin` to perform operational tasks (such as reviewing and verifying Agent and Landlord KYC submissions). Regular admins cannot create or suspend other admins.
+
 ### Responsibilities
 
 - Manage users.
