@@ -13,11 +13,51 @@ import { sendSuccess } from './utils/response'
 
 const app = factory.createApp()
 
+const ALLOWED_ORIGINS = [
+  'http://localhost:5173',
+  'http://localhost:5174',
+  'http://localhost:3000',
+  'http://127.0.0.1:5173',
+  'http://127.0.0.1:5174',
+  'http://127.0.0.1:3000',
+]
+
 // Global Middlewares
 app.use('*', requestId())
 app.use('*', logger())
 app.use('*', secureHeaders())
-app.use('*', cors())
+app.use(
+  '*',
+  cors({
+    origin: (origin, c) => {
+      if (!origin) return undefined
+
+      if (ALLOWED_ORIGINS.includes(origin)) {
+        return origin
+      }
+
+      const envFrontend = c.env?.FRONTEND_URL
+      if (envFrontend && origin === envFrontend) {
+        return origin
+      }
+
+      if (/^https:\/\/([a-z0-9-]+\.)?oruvia\.ng$/.test(origin)) {
+        return origin
+      }
+
+      if (/^https:\/\/[a-z0-9-]+\.oruvia\.pages\.dev$/.test(origin)) {
+        return origin
+      }
+
+      return undefined
+    },
+    allowMethods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin'],
+    exposeHeaders: ['Content-Length', 'X-Request-Id'],
+    credentials: true,
+    maxAge: 86400,
+  })
+)
 app.use('*', prettyJSON())
 app.use('*', dbMiddleware)
 
