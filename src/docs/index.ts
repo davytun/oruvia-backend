@@ -7,7 +7,11 @@ import { agentPaths } from './auth/agents.docs'
 import { landlordPaths } from './auth/landlords.docs'
 import { seekerPaths } from './auth/seekers.docs'
 import { publicCatalogPaths } from './marketplace/catalog.docs'
-import { inspectionPaths } from './marketplace/inspections.docs'
+import {
+  agentInspectionPaths,
+  inspectionPaths,
+  landlordInspectionPaths,
+} from './marketplace/inspections.docs'
 import {
   agentListingPaths,
   landlordListingPaths,
@@ -106,6 +110,16 @@ export function buildOpenApiSpec(serverUrl = 'https://api.oruvia.workers.dev') {
           'Inspection requests, reschedule proposals, cancellations, and timeline tracking for verified Seekers (`/api/v1/seekers/inspections/*`)',
       },
       {
+        name: 'Inspections - Agents',
+        description:
+          'Inspection scheduling configuration, weekly availability windows, blackout dates, booking approvals, reschedule negotiation, and fee auditing for verified Agents (`/api/v1/agents/inspections/*`, `/api/v1/agents/inspection-settings`, etc.)',
+      },
+      {
+        name: 'Inspections - Landlords',
+        description:
+          'Inspection scheduling configuration, weekly availability windows, blackout dates, booking approvals, reschedule negotiation, and fee auditing for verified Landlords (`/api/v1/landlords/inspections/*`, `/api/v1/landlords/inspection-settings`, etc.)',
+      },
+      {
         name: 'Admin - Inspection Moderation',
         description:
           'Admin oversight, status override, direct reschedule, cancellation, and fee auditing for property inspections (`/api/v1/admins/inspections/*`)',
@@ -131,7 +145,12 @@ export function buildOpenApiSpec(serverUrl = 'https://api.oruvia.workers.dev') {
       },
       {
         name: 'Inspections',
-        tags: ['Inspections - Public Slots', 'Inspections - Seekers'],
+        tags: [
+          'Inspections - Public Slots',
+          'Inspections - Seekers',
+          'Inspections - Agents',
+          'Inspections - Landlords',
+        ],
       },
       {
         name: 'Admin',
@@ -166,6 +185,8 @@ export function buildOpenApiSpec(serverUrl = 'https://api.oruvia.workers.dev') {
       ...agentListingPaths,
       ...landlordListingPaths,
       ...inspectionPaths,
+      ...agentInspectionPaths,
+      ...landlordInspectionPaths,
       ...adminAuthPaths,
       ...adminKycPaths,
       ...adminCatalogPaths,
