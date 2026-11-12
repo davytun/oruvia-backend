@@ -172,3 +172,55 @@ $$\text{Total Initial Package} = \text{Base Price} + \text{Agency Fee} + \text{L
 | **Landlord (Address Proof)** | `landlord.standard@oruvia.ng` | `Password123!` | `approved` | `verified_landlord` |
 | **Landlord (Pending KYC)** | `landlord.pending@oruvia.ng` | `Password123!` | `pending` | `null` (qualifies for `verified_owner`) |
 | **Seeker** | `seeker.demo@oruvia.ng` | `Password123!` | N/A | N/A |
+
+---
+
+## 11. Inspection Booking System & Scheduling
+
+Oruvia provides a full-lifecycle inspection scheduling system supporting:
+- **Physical Inspections** on-site with address and lister phone/WhatsApp contact.
+- **Virtual Inspections** with dual method support: `live_video_call` (meeting link) and `recorded_walkthrough` (video tour link) for fallback in low-bandwidth network areas.
+- **Hybrid Availability**: Weekly recurring windows (Mon–Sat 09:00–17:00 WAT default), blocked calendar dates, and manual confirmation.
+- **Reschedule Negotiation**: Two-way propose / accept / reject workflow.
+- **Audit Timeline**: Immutable event log tracking every action (`requested`, `confirmed`, `declined`, `reschedule_proposed`, `reschedule_accepted`, `cancelled`, `completed`, `no_show`, `admin_rescheduled`, `admin_cancelled`, `admin_status_override`).
+- **Offline Inspection Fee**: Optional fee set by lister, marked `paid` or `waived` offline.
+- **Cron Automation**: Hourly trigger sending 24h reminders and expiring unconfirmed past bookings.
+
+### Endpoints Summary
+
+#### Public
+- `GET /api/v1/listings/:idOrSlug/inspection-slots?from=&to=` — Calculate open inspection slots.
+
+#### Seeker (`/api/v1/seekers/inspections`)
+- `POST /api/v1/seekers/inspections` — Request an inspection (`listing_id`, `mode`, `virtual_method`, `scheduled_at`, `note`).
+- `GET /api/v1/seekers/inspections` — List my bookings (`?status=&listing_id=&page=&per_page=`).
+- `GET /api/v1/seekers/inspections/:id` — Get booking detail with lister contact and audit timeline.
+- `POST /api/v1/seekers/inspections/:id/reschedule` — Propose a new date & time (`proposed_at`, `reason`).
+- `POST /api/v1/seekers/inspections/:id/reschedule/accept` — Accept lister's proposed time.
+- `POST /api/v1/seekers/inspections/:id/reschedule/reject` — Reject lister's proposed time.
+- `POST /api/v1/seekers/inspections/:id/cancel` — Cancel booking (`reason`).
+
+#### Lister (`/api/v1/{agents|landlords}/...`)
+- `GET /inspection-settings` & `PUT /inspection-settings` — Manage slot duration, max per slot, min notice hours, virtual acceptance.
+- `GET /inspection-availability` & `PUT /inspection-availability` — Manage weekly recurring availability windows.
+- `GET /inspection-blocked-dates`, `POST /inspection-blocked-dates`, `DELETE /inspection-blocked-dates/:id` — Blocked calendar dates.
+- `PATCH /listings/:id/inspection-options` — Configure listing inspection fee and allowed modes without triggering re-review.
+- `GET /inspections` & `GET /inspections/:id` — Incoming inspection requests.
+- `POST /inspections/:id/confirm` — Confirm booking (`meeting_link`, `recorded_video_url`, `lister_note`).
+- `POST /inspections/:id/decline` — Decline booking with reason.
+- `POST /inspections/:id/reschedule` — Propose new time to seeker.
+- `POST /inspections/:id/reschedule/accept` & `POST /inspections/:id/reschedule/reject` — Handle seeker reschedule proposals.
+- `POST /inspections/:id/cancel` — Cancel booking.
+- `PATCH /inspections/:id/virtual-details` — Switch virtual method or update link/video for network fallback.
+- `POST /inspections/:id/complete` — Mark inspection completed.
+- `POST /inspections/:id/no-show` — Mark seeker absent.
+- `PATCH /inspections/:id/fee` — Update offline fee status (`paid`, `waived`, `unpaid`).
+
+#### Admin (`/api/v1/admins/inspections`)
+- `GET /api/v1/admins/inspections` — Platform-wide inspection list with multi-role filters.
+- `GET /api/v1/admins/inspections/:id` — Full details of both parties and audit timeline.
+- `POST /api/v1/admins/inspections/:id/cancel` — Admin cancellation with audit reason.
+- `POST /api/v1/admins/inspections/:id/reschedule` — Direct administrative reschedule.
+- `PATCH /api/v1/admins/inspections/:id/status` — Status override for dispute resolution.
+- `PATCH /api/v1/admins/inspections/:id/fee` — Offline fee status override.
+

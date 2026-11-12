@@ -4,11 +4,12 @@ import { logger } from 'hono/logger'
 import { prettyJSON } from 'hono/pretty-json'
 import { requestId } from 'hono/request-id'
 import { secureHeaders } from 'hono/secure-headers'
-import { factory } from './config/env'
+import { type AppEnv, factory } from './config/env'
 import { buildOpenApiSpec } from './config/openapi'
-import { dbMiddleware } from './database'
+import { createDb, dbMiddleware } from './database'
 import { errorHandler, notFoundHandler } from './middleware'
 import apiRoutes from './routes'
+import { processScheduledInspectionTasks } from './services/cron.service'
 import { sendSuccess } from './utils/response'
 
 const app = factory.createApp()
@@ -96,4 +97,28 @@ app.notFound(notFoundHandler)
 app.onError(errorHandler)
 
 export type AppType = typeof app
-export default app
+
+const worker = Object.assign(app, {
+  async scheduled(
+    _event: unknown,
+    env: AppEnv['Bindings'],
+    ctx: ExecutionContext
+  ) {
+    if (env.DB) {
+      const db = createDb(env.DB)
+      ctx.waitUntil(
+        processScheduledInspectionTasks(db, env)
+          .then((res) => {
+            console.log(
+              `[Cron] Hourly inspection tasks: ${res.remindersSent} reminders sent, ${res.expiredCount} expired.`
+            )
+          })
+          .catch((err) => {
+            console.error('[Cron] Error processing inspection tasks:', err)
+          })
+      )
+    }
+  },
+})
+
+export default worker

@@ -93,14 +93,91 @@ export const INSPECTION_MODES = {
   VIRTUAL: 'virtual',
 } as const
 
+export type InspectionMode =
+  (typeof INSPECTION_MODES)[keyof typeof INSPECTION_MODES]
+
+export const VIRTUAL_INSPECTION_METHODS = {
+  LIVE_VIDEO_CALL: 'live_video_call',
+  RECORDED_WALKTHROUGH: 'recorded_walkthrough',
+} as const
+
+export type VirtualInspectionMethod =
+  (typeof VIRTUAL_INSPECTION_METHODS)[keyof typeof VIRTUAL_INSPECTION_METHODS]
+
 export const INSPECTION_STATUSES = {
   PENDING: 'pending',
   CONFIRMED: 'confirmed',
   DECLINED: 'declined',
-  RESCHEDULED: 'rescheduled',
+  RESCHEDULE_REQUESTED: 'reschedule_requested',
   CANCELLED: 'cancelled',
   COMPLETED: 'completed',
+  NO_SHOW: 'no_show',
+  EXPIRED: 'expired',
 } as const
+
+export type InspectionStatus =
+  (typeof INSPECTION_STATUSES)[keyof typeof INSPECTION_STATUSES]
+
+export const INSPECTION_FEE_STATUSES = {
+  NOT_REQUIRED: 'not_required',
+  UNPAID: 'unpaid',
+  PAID: 'paid',
+  WAIVED: 'waived',
+} as const
+
+export type InspectionFeeStatus =
+  (typeof INSPECTION_FEE_STATUSES)[keyof typeof INSPECTION_FEE_STATUSES]
+
+export const INSPECTION_ACTOR_TYPES = {
+  SEEKER: 'seeker',
+  AGENT: 'agent',
+  LANDLORD: 'landlord',
+  ADMIN: 'admin',
+  SYSTEM: 'system',
+} as const
+
+export type InspectionActorType =
+  (typeof INSPECTION_ACTOR_TYPES)[keyof typeof INSPECTION_ACTOR_TYPES]
+
+export const INSPECTION_PROPOSED_BY = {
+  SEEKER: 'seeker',
+  LISTER: 'lister',
+} as const
+
+export type InspectionProposedBy =
+  (typeof INSPECTION_PROPOSED_BY)[keyof typeof INSPECTION_PROPOSED_BY]
+
+export const INSPECTION_CANCELLED_BY = {
+  SEEKER: 'seeker',
+  LISTER: 'lister',
+  ADMIN: 'admin',
+  SYSTEM: 'system',
+} as const
+
+export type InspectionCancelledBy =
+  (typeof INSPECTION_CANCELLED_BY)[keyof typeof INSPECTION_CANCELLED_BY]
+
+export const INSPECTION_ACTIONS = {
+  REQUESTED: 'requested',
+  CONFIRMED: 'confirmed',
+  DECLINED: 'declined',
+  RESCHEDULE_PROPOSED: 'reschedule_proposed',
+  RESCHEDULE_ACCEPTED: 'reschedule_accepted',
+  RESCHEDULE_REJECTED: 'reschedule_rejected',
+  CANCELLED: 'cancelled',
+  COMPLETED: 'completed',
+  NO_SHOW: 'no_show',
+  VIRTUAL_DETAILS_UPDATED: 'virtual_details_updated',
+  FEE_UPDATED: 'fee_updated',
+  ADMIN_RESCHEDULED: 'admin_rescheduled',
+  ADMIN_CANCELLED: 'admin_cancelled',
+  ADMIN_STATUS_OVERRIDE: 'admin_status_override',
+  ADMIN_FEE_OVERRIDE: 'admin_fee_override',
+  EXPIRED: 'expired',
+} as const
+
+export type InspectionAction =
+  (typeof INSPECTION_ACTIONS)[keyof typeof INSPECTION_ACTIONS]
 
 export const VERIFICATION_STATUSES = {
   UNVERIFIED: 'unverified',
@@ -171,6 +248,7 @@ export const NOTIFICATION_TYPES = {
   INSPECTION_DECLINED: 'inspection_declined',
   INSPECTION_RESCHEDULED: 'inspection_rescheduled',
   INSPECTION_CANCELLED: 'inspection_cancelled',
+  INSPECTION_REMINDER: 'inspection_reminder',
   VERIFICATION_UPDATE: 'verification_update',
   LISTING_UPDATE: 'listing_update',
 } as const

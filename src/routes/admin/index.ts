@@ -1,6 +1,7 @@
 import { factory } from '../../config/env'
 import adminAuthRoutes from './auth.routes'
 import adminCatalogRoutes from './catalog.routes'
+import adminInspectionRoutes from './inspection.routes'
 import adminKycRoutes from './kyc.routes'
 import adminListingRoutes from './listing.routes'
 
@@ -14,5 +15,6 @@ adminRoutes.route('/', adminAuthRoutes)
 adminRoutes.route('/kyc', adminKycRoutes)
 adminRoutes.route('/', adminCatalogRoutes)
 adminRoutes.route('/listings', adminListingRoutes)
+adminRoutes.route('/inspections', adminInspectionRoutes)
 
 export default adminRoutes

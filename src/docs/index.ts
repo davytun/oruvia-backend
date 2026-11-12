@@ -1,11 +1,13 @@
 import { adminAuthPaths } from './admin/auth.docs'
 import { adminCatalogPaths } from './admin/catalog.docs'
+import { adminInspectionPaths } from './admin/inspections.docs'
 import { adminKycPaths } from './admin/kyc.docs'
 import { adminListingPaths } from './admin/listings.docs'
 import { agentPaths } from './auth/agents.docs'
 import { landlordPaths } from './auth/landlords.docs'
 import { seekerPaths } from './auth/seekers.docs'
 import { publicCatalogPaths } from './marketplace/catalog.docs'
+import { inspectionPaths } from './marketplace/inspections.docs'
 import {
   agentListingPaths,
   landlordListingPaths,
@@ -93,6 +95,21 @@ export function buildOpenApiSpec(serverUrl = 'https://api.oruvia.workers.dev') {
         description:
           'Admin review queue, approval, rejection, and suspension of property listings (`/api/v1/admins/listings/*`)',
       },
+      {
+        name: 'Inspections - Public Slots',
+        description:
+          'Public inspection slot calculation taking into account windows, blocked dates, notice hours, and conflicts (`/api/v1/listings/:idOrSlug/inspection-slots`)',
+      },
+      {
+        name: 'Inspections - Seekers',
+        description:
+          'Inspection requests, reschedule proposals, cancellations, and timeline tracking for verified Seekers (`/api/v1/seekers/inspections/*`)',
+      },
+      {
+        name: 'Admin - Inspection Moderation',
+        description:
+          'Admin oversight, status override, direct reschedule, cancellation, and fee auditing for property inspections (`/api/v1/admins/inspections/*`)',
+      },
     ],
     'x-tagGroups': [
       {
@@ -113,12 +130,17 @@ export function buildOpenApiSpec(serverUrl = 'https://api.oruvia.workers.dev') {
         ],
       },
       {
+        name: 'Inspections',
+        tags: ['Inspections - Public Slots', 'Inspections - Seekers'],
+      },
+      {
         name: 'Admin',
         tags: [
           'Admin Auth & Management',
           'Admin KYC Verification',
           'Admin Locations & House Types',
           'Admin Listing Moderation',
+          'Admin - Inspection Moderation',
         ],
       },
     ],
@@ -143,10 +165,12 @@ export function buildOpenApiSpec(serverUrl = 'https://api.oruvia.workers.dev') {
       ...publicListingPaths,
       ...agentListingPaths,
       ...landlordListingPaths,
+      ...inspectionPaths,
       ...adminAuthPaths,
       ...adminKycPaths,
       ...adminCatalogPaths,
       ...adminListingPaths,
+      ...adminInspectionPaths,
     },
   }
 }

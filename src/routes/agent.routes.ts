@@ -22,19 +22,53 @@ import {
   updateAgentListingHandler,
   uploadListingMediaHandler,
 } from '../controllers/listing.controller'
+import {
+  addBlockedDateHandler,
+  getAvailabilityWindowsHandler,
+  getBlockedDatesHandler,
+  getListerInspectionByIdHandler,
+  getListerSettingsHandler,
+  listListerInspectionsHandler,
+  listerAcceptRescheduleHandler,
+  listerCancelInspectionHandler,
+  listerCompleteInspectionHandler,
+  listerConfirmInspectionHandler,
+  listerDeclineInspectionHandler,
+  listerMarkNoShowHandler,
+  listerProposeRescheduleHandler,
+  listerRejectRescheduleHandler,
+  listerUpdateFeeStatusHandler,
+  listerUpdateVirtualDetailsHandler,
+  removeBlockedDateHandler,
+  setAvailabilityWindowsHandler,
+  updateListingInspectionOptionsHandler,
+  updateListerSettingsHandler,
+} from '../controllers/inspection.controller'
 import { authenticateAgent } from '../middleware/auth.middleware'
 import {
+  cancelInspectionBookingSchema,
   changePasswordSchema,
+  confirmInspectionBookingSchema,
+  createBlockedDateSchema,
   createListingSchema,
+  declineInspectionBookingSchema,
   forgotPasswordSchema,
+  inspectionBookingQuerySchema,
   loginSchema,
   paginationQuerySchema,
+  proposeRescheduleSchema,
   registerAgentSchema,
+  rejectRescheduleSchema,
   resendVerificationCodeSchema,
   resetPasswordSchema,
+  setAvailabilityWindowsSchema,
   updateAgentSchema,
+  updateInspectionFeeStatusSchema,
+  updateInspectionSettingsSchema,
   updateListingAvailabilitySchema,
+  updateListingInspectionOptionsSchema,
   updateListingSchema,
+  updateVirtualDetailsSchema,
   validationHook,
   verifyEmailSchema,
 } from '../utils/validators'
@@ -138,6 +172,136 @@ agentRoutes.delete(
   '/listings/:id',
   authenticateAgent,
   deleteAgentListingHandler
+)
+
+// Agent Inspection Settings & Schedule Management
+agentRoutes.get('/inspection-settings', authenticateAgent, getListerSettingsHandler)
+
+agentRoutes.put(
+  '/inspection-settings',
+  authenticateAgent,
+  zValidator('json', updateInspectionSettingsSchema, validationHook),
+  updateListerSettingsHandler
+)
+
+agentRoutes.get(
+  '/inspection-availability',
+  authenticateAgent,
+  getAvailabilityWindowsHandler
+)
+
+agentRoutes.put(
+  '/inspection-availability',
+  authenticateAgent,
+  zValidator('json', setAvailabilityWindowsSchema, validationHook),
+  setAvailabilityWindowsHandler
+)
+
+agentRoutes.get(
+  '/inspection-blocked-dates',
+  authenticateAgent,
+  getBlockedDatesHandler
+)
+
+agentRoutes.post(
+  '/inspection-blocked-dates',
+  authenticateAgent,
+  zValidator('json', createBlockedDateSchema, validationHook),
+  addBlockedDateHandler
+)
+
+agentRoutes.delete(
+  '/inspection-blocked-dates/:id',
+  authenticateAgent,
+  removeBlockedDateHandler
+)
+
+agentRoutes.patch(
+  '/listings/:id/inspection-options',
+  authenticateAgent,
+  zValidator('json', updateListingInspectionOptionsSchema, validationHook),
+  updateListingInspectionOptionsHandler
+)
+
+// Agent Inspection Bookings Management
+agentRoutes.get(
+  '/inspections',
+  authenticateAgent,
+  zValidator('query', inspectionBookingQuerySchema, validationHook),
+  listListerInspectionsHandler
+)
+
+agentRoutes.get(
+  '/inspections/:id',
+  authenticateAgent,
+  getListerInspectionByIdHandler
+)
+
+agentRoutes.post(
+  '/inspections/:id/confirm',
+  authenticateAgent,
+  zValidator('json', confirmInspectionBookingSchema, validationHook),
+  listerConfirmInspectionHandler
+)
+
+agentRoutes.post(
+  '/inspections/:id/decline',
+  authenticateAgent,
+  zValidator('json', declineInspectionBookingSchema, validationHook),
+  listerDeclineInspectionHandler
+)
+
+agentRoutes.post(
+  '/inspections/:id/reschedule',
+  authenticateAgent,
+  zValidator('json', proposeRescheduleSchema, validationHook),
+  listerProposeRescheduleHandler
+)
+
+agentRoutes.post(
+  '/inspections/:id/reschedule/accept',
+  authenticateAgent,
+  listerAcceptRescheduleHandler
+)
+
+agentRoutes.post(
+  '/inspections/:id/reschedule/reject',
+  authenticateAgent,
+  zValidator('json', rejectRescheduleSchema, validationHook),
+  listerRejectRescheduleHandler
+)
+
+agentRoutes.post(
+  '/inspections/:id/cancel',
+  authenticateAgent,
+  zValidator('json', cancelInspectionBookingSchema, validationHook),
+  listerCancelInspectionHandler
+)
+
+agentRoutes.patch(
+  '/inspections/:id/virtual-details',
+  authenticateAgent,
+  zValidator('json', updateVirtualDetailsSchema, validationHook),
+  listerUpdateVirtualDetailsHandler
+)
+
+agentRoutes.post(
+  '/inspections/:id/complete',
+  authenticateAgent,
+  listerCompleteInspectionHandler
+)
+
+agentRoutes.post(
+  '/inspections/:id/no-show',
+  authenticateAgent,
+  listerMarkNoShowHandler
+)
+
+agentRoutes.patch(
+  '/inspections/:id/fee',
+  authenticateAgent,
+  zValidator('json', updateInspectionFeeStatusSchema, validationHook),
+  listerUpdateFeeStatusHandler
 )
 
 export default agentRoutes

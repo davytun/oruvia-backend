@@ -1,6 +1,7 @@
 export * from './admin.model'
 export * from './agent.model'
 export * from './common'
+export * from './inspection.model'
 export * from './landlord.model'
 export * from './listing.model'
 export * from './seeker.model'

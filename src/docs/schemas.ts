@@ -516,5 +516,126 @@ export const openApiSchemas = {
       updated_at: { type: 'string', format: 'date-time' },
     },
   },
+
+  InspectionSettings: {
+    type: 'object',
+    properties: {
+      slot_duration_minutes: { type: 'integer', example: 30 },
+      max_bookings_per_slot: { type: 'integer', example: 1 },
+      min_notice_hours: { type: 'integer', example: 2 },
+      accepts_virtual: { type: 'boolean', example: true },
+    },
+  },
+
+  ListerAvailabilityWindow: {
+    type: 'object',
+    properties: {
+      id: { type: 'string', format: 'uuid' },
+      day_of_week: { type: 'integer', example: 1, description: '0=Sun, 1=Mon, ..., 6=Sat' },
+      start_time: { type: 'string', example: '09:00', description: 'WAT 24-hr format' },
+      end_time: { type: 'string', example: '17:00', description: 'WAT 24-hr format' },
+      is_active: { type: 'boolean', example: true },
+    },
+  },
+
+  ListerBlockedDate: {
+    type: 'object',
+    properties: {
+      id: { type: 'string', format: 'uuid' },
+      date: { type: 'string', example: '2026-11-20', description: 'YYYY-MM-DD' },
+      reason: { type: ['string', 'null'], example: 'Travelling' },
+      created_at: { type: 'string', format: 'date-time' },
+    },
+  },
+
+  InspectionBooking: {
+    type: 'object',
+    properties: {
+      id: { type: 'string', format: 'uuid' },
+      reference: { type: 'string', example: 'ORV-INS-7K2M9Q' },
+      listing: {
+        type: 'object',
+        properties: {
+          id: { type: 'string', format: 'uuid' },
+          title: { type: 'string', example: 'Executive Room & Parlour Self-Contain at Ibara Housing Estate' },
+          slug: { type: 'string', example: 'executive-room-and-parlour-self-contain-ibara-01' },
+          area: { type: 'string', example: 'Ibara Housing Estate' },
+          address: { type: 'string', example: '12 Presidential Boulevard, Ibara' },
+          images: { type: 'array', items: { type: 'string' } },
+        },
+      },
+      seeker: {
+        type: ['object', 'null'],
+        properties: {
+          id: { type: 'string', format: 'uuid' },
+          full_name: { type: 'string', example: 'Babatunde Fashola' },
+          email: { type: 'string', example: 'seeker@oruvia.ng' },
+          phone: { type: ['string', 'null'], example: '+2348011223344' },
+        },
+      },
+      lister: {
+        type: ['object', 'null'],
+        properties: {
+          id: { type: 'string', format: 'uuid' },
+          role: { type: 'string', enum: ['agent', 'landlord'], example: 'agent' },
+          name: { type: 'string', example: 'Tunde Adeyemi' },
+          email: { type: 'string', example: 'agent.verified@oruvia.ng' },
+          phone: { type: ['string', 'null'], example: '+2348021112233' },
+          whatsapp: { type: ['string', 'null'], example: '+2348021112233' },
+          agency_name: { type: ['string', 'null'], example: 'Crown Roof Realty Limited' },
+        },
+      },
+      mode: { type: 'string', enum: ['physical', 'virtual'], example: 'physical' },
+      virtual_method: { type: ['string', 'null'], enum: ['live_video_call', 'recorded_walkthrough', null], example: null },
+      meeting_link: { type: ['string', 'null'], example: null },
+      recorded_video_url: { type: ['string', 'null'], example: null },
+      scheduled_at: { type: 'string', format: 'date-time', example: '2026-11-16T09:30:00.000Z' },
+      scheduled_at_wat: { type: 'string', example: 'Monday, 16 Nov 2026 at 10:30 AM' },
+      duration_minutes: { type: 'integer', example: 30 },
+      status: {
+        type: 'string',
+        enum: [
+          'pending',
+          'confirmed',
+          'declined',
+          'reschedule_requested',
+          'cancelled',
+          'completed',
+          'no_show',
+          'expired',
+        ],
+        example: 'confirmed',
+      },
+      proposed_at: { type: ['string', 'null'], format: 'date-time' },
+      proposed_by: { type: ['string', 'null'], enum: ['seeker', 'lister', null] },
+      reschedule_reason: { type: ['string', 'null'] },
+      seeker_note: { type: ['string', 'null'], example: 'I will be coming with my spouse.' },
+      lister_note: { type: ['string', 'null'] },
+      decline_reason: { type: ['string', 'null'] },
+      cancel_reason: { type: ['string', 'null'] },
+      cancelled_by: { type: ['string', 'null'], enum: ['seeker', 'lister', 'admin', 'system', null] },
+      inspection_fee: { type: 'integer', example: 0, description: 'NGN' },
+      fee_status: { type: 'string', enum: ['not_required', 'unpaid', 'paid', 'waived'], example: 'not_required' },
+      confirmed_at: { type: ['string', 'null'], format: 'date-time' },
+      completed_at: { type: ['string', 'null'], format: 'date-time' },
+      cancelled_at: { type: ['string', 'null'], format: 'date-time' },
+      created_at: { type: 'string', format: 'date-time' },
+      updated_at: { type: 'string', format: 'date-time' },
+    },
+  },
+
+  InspectionBookingEvent: {
+    type: 'object',
+    properties: {
+      id: { type: 'string', format: 'uuid' },
+      actor_type: { type: 'string', enum: ['seeker', 'agent', 'landlord', 'admin', 'system'], example: 'seeker' },
+      action: { type: 'string', example: 'requested' },
+      from_status: { type: ['string', 'null'] },
+      to_status: { type: ['string', 'null'] },
+      note: { type: ['string', 'null'] },
+      metadata: { type: ['object', 'null'] },
+      created_at: { type: 'string', format: 'date-time' },
+    },
+  },
 }
 

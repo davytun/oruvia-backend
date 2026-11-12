@@ -916,3 +916,244 @@ INSERT OR REPLACE INTO property_listings (
   '2026-11-10T09:10:00.000Z'
 );
 
+-- =============================================================================
+-- 6. Demo Inspection Settings & Availability Windows
+-- =============================================================================
+
+INSERT OR REPLACE INTO inspection_settings (
+  id,
+  lister_role,
+  lister_id,
+  slot_duration_minutes,
+  max_bookings_per_slot,
+  min_notice_hours,
+  accepts_virtual,
+  created_at,
+  updated_at
+) VALUES (
+  '00000000-0000-4000-c000-000000000001',
+  'agent',
+  '00000000-0000-4000-a000-000000000101',
+  30,
+  1,
+  2,
+  1,
+  '2026-11-10T08:00:00.000Z',
+  '2026-11-10T08:00:00.000Z'
+);
+
+-- Mon - Sat 09:00 - 17:00 WAT windows for Agent Tunde
+INSERT OR REPLACE INTO lister_availability_windows (
+  id,
+  lister_role,
+  lister_id,
+  day_of_week,
+  start_time,
+  end_time,
+  is_active,
+  created_at,
+  updated_at
+) VALUES
+  ('00000000-0000-4000-c000-000000000011', 'agent', '00000000-0000-4000-a000-000000000101', 1, '09:00', '17:00', 1, '2026-11-10T08:00:00.000Z', '2026-11-10T08:00:00.000Z'),
+  ('00000000-0000-4000-c000-000000000012', 'agent', '00000000-0000-4000-a000-000000000101', 2, '09:00', '17:00', 1, '2026-11-10T08:00:00.000Z', '2026-11-10T08:00:00.000Z'),
+  ('00000000-0000-4000-c000-000000000013', 'agent', '00000000-0000-4000-a000-000000000101', 3, '09:00', '17:00', 1, '2026-11-10T08:00:00.000Z', '2026-11-10T08:00:00.000Z'),
+  ('00000000-0000-4000-c000-000000000014', 'agent', '00000000-0000-4000-a000-000000000101', 4, '09:00', '17:00', 1, '2026-11-10T08:00:00.000Z', '2026-11-10T08:00:00.000Z'),
+  ('00000000-0000-4000-c000-000000000015', 'agent', '00000000-0000-4000-a000-000000000101', 5, '09:00', '17:00', 1, '2026-11-10T08:00:00.000Z', '2026-11-10T08:00:00.000Z'),
+  ('00000000-0000-4000-c000-000000000016', 'agent', '00000000-0000-4000-a000-000000000101', 6, '10:00', '16:00', 1, '2026-11-10T08:00:00.000Z', '2026-11-10T08:00:00.000Z');
+
+-- =============================================================================
+-- 7. Demo Inspection Bookings & Audit Events
+-- =============================================================================
+
+-- Booking 1: Confirmed Physical Inspection
+INSERT OR REPLACE INTO inspection_bookings (
+  id,
+  reference,
+  listing_id,
+  seeker_id,
+  lister_role,
+  lister_id,
+  mode,
+  virtual_method,
+  meeting_link,
+  recorded_video_url,
+  scheduled_at,
+  duration_minutes,
+  status,
+  status_before_reschedule,
+  proposed_at,
+  proposed_by,
+  reschedule_reason,
+  seeker_note,
+  lister_note,
+  decline_reason,
+  cancel_reason,
+  cancelled_by,
+  inspection_fee,
+  fee_status,
+  reminder_sent_at,
+  confirmed_at,
+  completed_at,
+  cancelled_at,
+  created_at,
+  updated_at
+) VALUES (
+  '00000000-0000-4000-d000-000000000001',
+  'ORV-INS-DEMO01',
+  '00000000-0000-4000-1000-000000000001',
+  '00000000-0000-4000-c000-000000000101',
+  'agent',
+  '00000000-0000-4000-a000-000000000101',
+  'physical',
+  NULL,
+  NULL,
+  NULL,
+  '2026-11-16T10:00:00.000Z',
+  30,
+  'confirmed',
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  'I will be coming with my family to inspect the mini-flat.',
+  'Looking forward to showing you the property at Ibara Estate.',
+  NULL,
+  NULL,
+  NULL,
+  0,
+  'not_required',
+  NULL,
+  '2026-11-10T10:00:00.000Z',
+  NULL,
+  NULL,
+  '2026-11-10T09:30:00.000Z',
+  '2026-11-10T10:00:00.000Z'
+);
+
+INSERT OR REPLACE INTO inspection_booking_events (
+  id,
+  booking_id,
+  actor_type,
+  actor_id,
+  action,
+  from_status,
+  to_status,
+  note,
+  metadata,
+  created_at
+) VALUES
+  (
+    '00000000-0000-4000-d100-000000000001',
+    '00000000-0000-4000-d000-000000000001',
+    'seeker',
+    '00000000-0000-4000-c000-000000000101',
+    'requested',
+    NULL,
+    'pending',
+    'I will be coming with my family to inspect the mini-flat.',
+    '{"mode":"physical","scheduled_at":"2026-11-16T10:00:00.000Z"}',
+    '2026-11-10T09:30:00.000Z'
+  ),
+  (
+    '00000000-0000-4000-d100-000000000002',
+    '00000000-0000-4000-d000-000000000001',
+    'agent',
+    '00000000-0000-4000-a000-000000000101',
+    'confirmed',
+    'pending',
+    'confirmed',
+    'Looking forward to showing you the property at Ibara Estate.',
+    '{}',
+    '2026-11-10T10:00:00.000Z'
+  );
+
+-- Booking 2: Pending Virtual Inspection
+INSERT OR REPLACE INTO inspection_bookings (
+  id,
+  reference,
+  listing_id,
+  seeker_id,
+  lister_role,
+  lister_id,
+  mode,
+  virtual_method,
+  meeting_link,
+  recorded_video_url,
+  scheduled_at,
+  duration_minutes,
+  status,
+  status_before_reschedule,
+  proposed_at,
+  proposed_by,
+  reschedule_reason,
+  seeker_note,
+  lister_note,
+  decline_reason,
+  cancel_reason,
+  cancelled_by,
+  inspection_fee,
+  fee_status,
+  reminder_sent_at,
+  confirmed_at,
+  completed_at,
+  cancelled_at,
+  created_at,
+  updated_at
+) VALUES (
+  '00000000-0000-4000-d000-000000000002',
+  'ORV-INS-DEMO02',
+  '00000000-0000-4000-1000-000000000002',
+  '00000000-0000-4000-c000-000000000101',
+  'agent',
+  '00000000-0000-4000-a000-000000000102',
+  'virtual',
+  'live_video_call',
+  NULL,
+  NULL,
+  '2026-11-17T14:00:00.000Z',
+  30,
+  'pending',
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  'Requesting live WhatsApp video call tour because I am currently in Lagos.',
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  0,
+  'not_required',
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  '2026-11-10T11:00:00.000Z',
+  '2026-11-10T11:00:00.000Z'
+);
+
+INSERT OR REPLACE INTO inspection_booking_events (
+  id,
+  booking_id,
+  actor_type,
+  actor_id,
+  action,
+  from_status,
+  to_status,
+  note,
+  metadata,
+  created_at
+) VALUES (
+  '00000000-0000-4000-d100-000000000003',
+  '00000000-0000-4000-d000-000000000002',
+  'seeker',
+  '00000000-0000-4000-c000-000000000101',
+  'requested',
+  NULL,
+  'pending',
+  'Requesting live WhatsApp video call tour because I am currently in Lagos.',
+  '{"mode":"virtual","virtual_method":"live_video_call"}',
+  '2026-11-10T11:00:00.000Z'
+);
+
+

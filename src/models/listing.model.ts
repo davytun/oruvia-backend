@@ -136,6 +136,19 @@ export const propertyListings = sqliteTable(
       .notNull(),
     videoTourUrl: text('video_tour_url'),
 
+    // Inspection Options
+    inspectionFee: integer('inspection_fee').notNull().default(0),
+    allowsPhysicalInspection: integer('allows_physical_inspection', {
+      mode: 'boolean',
+    })
+      .notNull()
+      .default(true),
+    allowsVirtualInspection: integer('allows_virtual_inspection', {
+      mode: 'boolean',
+    })
+      .notNull()
+      .default(true),
+
     // Status & Moderation
     availabilityStatus: text('availability_status')
       .notNull()

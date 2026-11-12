@@ -3,6 +3,9 @@ import { z } from 'zod'
 import {
   AUTH_CONFIG,
   AVAILABILITY_STATUSES,
+  INSPECTION_FEE_STATUSES,
+  INSPECTION_MODES,
+  INSPECTION_STATUSES,
   KYC_ID_TYPES,
   LANDLORD_PROOF_TYPES,
   LISTER_ROLES,
@@ -12,6 +15,7 @@ import {
   PAYMENT_FREQUENCIES,
   PROPERTY_CATEGORIES,
   VERIFICATION_STATUSES,
+  VIRTUAL_INSPECTION_METHODS,
 } from '../config/constants'
 import { sendError } from './response'
 
@@ -755,3 +759,261 @@ export type UpdateAdminSuspensionInput = z.infer<
   typeof updateAdminSuspensionSchema
 >
 export type PaginationQueryInput = z.infer<typeof paginationQuerySchema>
+
+// =============================================================================
+// Inspection Booking & Scheduling Validation Schemas
+// =============================================================================
+
+export const updateInspectionSettingsSchema = z.object({
+  slot_duration_minutes: z
+    .number()
+    .int()
+    .min(15, 'Slot duration must be at least 15 minutes.')
+    .max(180, 'Slot duration cannot exceed 180 minutes.')
+    .optional(),
+  max_bookings_per_slot: z
+    .number()
+    .int()
+    .min(1, 'Max bookings per slot must be at least 1.')
+    .max(20, 'Max bookings per slot cannot exceed 20.')
+    .optional(),
+  min_notice_hours: z
+    .number()
+    .int()
+    .min(0, 'Minimum notice hours cannot be negative.')
+    .max(168, 'Minimum notice hours cannot exceed 168 (7 days).')
+    .optional(),
+  accepts_virtual: z.boolean().optional(),
+})
+
+export const availabilityWindowItemSchema = z.object({
+  day_of_week: z
+    .number()
+    .int()
+    .min(0, 'Day of week must be between 0 (Sunday) and 6 (Saturday).')
+    .max(6, 'Day of week must be between 0 and 6.'),
+  start_time: z
+    .string()
+    .regex(/^([01]\d|2[0-3]):[0-5]\d$/, 'Start time must be in HH:MM format (24-hour).'),
+  end_time: z
+    .string()
+    .regex(/^([01]\d|2[0-3]):[0-5]\d$/, 'End time must be in HH:MM format (24-hour).'),
+  is_active: z.boolean().default(true),
+})
+
+export const setAvailabilityWindowsSchema = z.object({
+  windows: z
+    .array(availabilityWindowItemSchema)
+    .max(28, 'Cannot specify more than 28 time windows.'),
+})
+
+export const createBlockedDateSchema = z.object({
+  date: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/, 'Date must be in YYYY-MM-DD format.'),
+  reason: z.string().trim().max(255).optional(),
+})
+
+export const updateListingInspectionOptionsSchema = z.object({
+  inspection_fee: z
+    .number()
+    .int()
+    .min(0, 'Inspection fee cannot be negative.')
+    .optional(),
+  allows_physical_inspection: z.boolean().optional(),
+  allows_virtual_inspection: z.boolean().optional(),
+})
+
+export const createInspectionBookingSchema = z.object({
+  listing_id: z.string().min(1, 'Listing ID is required.'),
+  mode: z.enum([INSPECTION_MODES.PHYSICAL, INSPECTION_MODES.VIRTUAL]),
+  virtual_method: z
+    .enum([
+      VIRTUAL_INSPECTION_METHODS.LIVE_VIDEO_CALL,
+      VIRTUAL_INSPECTION_METHODS.RECORDED_WALKTHROUGH,
+    ])
+    .optional(),
+  scheduled_at: z
+    .string()
+    .min(1, 'Scheduled date & time is required.')
+    .refine((val) => !isNaN(Date.parse(val)), {
+      message: 'scheduled_at must be a valid ISO-8601 date string.',
+    }),
+  note: z.string().trim().max(500, 'Note cannot exceed 500 characters.').optional(),
+})
+
+export const confirmInspectionBookingSchema = z.object({
+  meeting_link: z.string().trim().url('Must be a valid URL.').optional().or(z.literal('')),
+  recorded_video_url: z.string().trim().url('Must be a valid URL.').optional().or(z.literal('')),
+  lister_note: z.string().trim().max(500).optional(),
+})
+
+export const declineInspectionBookingSchema = z.object({
+  reason: z
+    .string()
+    .trim()
+    .min(3, 'Decline reason must be at least 3 characters long.')
+    .max(500, 'Decline reason cannot exceed 500 characters.'),
+})
+
+export const proposeRescheduleSchema = z.object({
+  proposed_at: z
+    .string()
+    .min(1, 'Proposed date & time is required.')
+    .refine((val) => !isNaN(Date.parse(val)), {
+      message: 'proposed_at must be a valid ISO-8601 date string.',
+    }),
+  reason: z.string().trim().max(500).optional(),
+})
+
+export const rejectRescheduleSchema = z.object({
+  reason: z.string().trim().max(500).optional(),
+})
+
+export const cancelInspectionBookingSchema = z.object({
+  reason: z.string().trim().max(500).optional(),
+})
+
+export const updateVirtualDetailsSchema = z.object({
+  virtual_method: z
+    .enum([
+      VIRTUAL_INSPECTION_METHODS.LIVE_VIDEO_CALL,
+      VIRTUAL_INSPECTION_METHODS.RECORDED_WALKTHROUGH,
+    ])
+    .optional(),
+  meeting_link: z.string().trim().url('Must be a valid URL.').optional().or(z.literal('')),
+  recorded_video_url: z.string().trim().url('Must be a valid URL.').optional().or(z.literal('')),
+})
+
+export const updateInspectionFeeStatusSchema = z.object({
+  fee_status: z.enum([
+    INSPECTION_FEE_STATUSES.PAID,
+    INSPECTION_FEE_STATUSES.WAIVED,
+    INSPECTION_FEE_STATUSES.UNPAID,
+  ]),
+  note: z.string().trim().max(255).optional(),
+})
+
+export const adminRescheduleInspectionSchema = z.object({
+  scheduled_at: z
+    .string()
+    .min(1, 'Scheduled date & time is required.')
+    .refine((val) => !isNaN(Date.parse(val)), {
+      message: 'scheduled_at must be a valid ISO-8601 date string.',
+    }),
+  reason: z
+    .string()
+    .trim()
+    .min(3, 'Reschedule reason is required for administrative audit.')
+    .max(500),
+})
+
+export const adminOverrideInspectionStatusSchema = z.object({
+  status: z.enum([
+    INSPECTION_STATUSES.PENDING,
+    INSPECTION_STATUSES.CONFIRMED,
+    INSPECTION_STATUSES.DECLINED,
+    INSPECTION_STATUSES.CANCELLED,
+    INSPECTION_STATUSES.COMPLETED,
+    INSPECTION_STATUSES.NO_SHOW,
+    INSPECTION_STATUSES.EXPIRED,
+  ]),
+  reason: z
+    .string()
+    .trim()
+    .min(3, 'Override reason is required for administrative audit.')
+    .max(500),
+})
+
+export const adminOverrideFeeStatusSchema = z.object({
+  fee_status: z.enum([
+    INSPECTION_FEE_STATUSES.NOT_REQUIRED,
+    INSPECTION_FEE_STATUSES.UNPAID,
+    INSPECTION_FEE_STATUSES.PAID,
+    INSPECTION_FEE_STATUSES.WAIVED,
+  ]),
+  reason: z
+    .string()
+    .trim()
+    .min(3, 'Reason is required for administrative audit.')
+    .max(500),
+})
+
+export const adminCancelInspectionSchema = z.object({
+  reason: z
+    .string()
+    .trim()
+    .min(3, 'Cancellation reason is required for administrative audit.')
+    .max(500),
+})
+
+export const inspectionBookingQuerySchema = paginationQuerySchema.extend({
+  status: z.string().optional(),
+  listing_id: z.string().optional(),
+})
+
+export const adminInspectionQuerySchema = paginationQuerySchema.extend({
+  status: z.string().optional(),
+  lister_role: z.enum([LISTER_ROLES.AGENT, LISTER_ROLES.LANDLORD]).optional(),
+  listing_id: z.string().optional(),
+  seeker_id: z.string().optional(),
+  from: z.string().optional(),
+  to: z.string().optional(),
+})
+
+export const inspectionSlotsQuerySchema = z.object({
+  from: z.string().optional(),
+  to: z.string().optional(),
+})
+
+export type UpdateInspectionSettingsInput = z.infer<
+  typeof updateInspectionSettingsSchema
+>
+export type SetAvailabilityWindowsInput = z.infer<
+  typeof setAvailabilityWindowsSchema
+>
+export type CreateBlockedDateInput = z.infer<typeof createBlockedDateSchema>
+export type UpdateListingInspectionOptionsInput = z.infer<
+  typeof updateListingInspectionOptionsSchema
+>
+export type CreateInspectionBookingInput = z.infer<
+  typeof createInspectionBookingSchema
+>
+export type ConfirmInspectionBookingInput = z.infer<
+  typeof confirmInspectionBookingSchema
+>
+export type DeclineInspectionBookingInput = z.infer<
+  typeof declineInspectionBookingSchema
+>
+export type ProposeRescheduleInput = z.infer<typeof proposeRescheduleSchema>
+export type RejectRescheduleInput = z.infer<typeof rejectRescheduleSchema>
+export type CancelInspectionBookingInput = z.infer<
+  typeof cancelInspectionBookingSchema
+>
+export type UpdateVirtualDetailsInput = z.infer<
+  typeof updateVirtualDetailsSchema
+>
+export type UpdateInspectionFeeStatusInput = z.infer<
+  typeof updateInspectionFeeStatusSchema
+>
+export type AdminRescheduleInspectionInput = z.infer<
+  typeof adminRescheduleInspectionSchema
+>
+export type AdminOverrideInspectionStatusInput = z.infer<
+  typeof adminOverrideInspectionStatusSchema
+>
+export type AdminOverrideFeeStatusInput = z.infer<
+  typeof adminOverrideFeeStatusSchema
+>
+export type AdminCancelInspectionInput = z.infer<
+  typeof adminCancelInspectionSchema
+>
+export type InspectionBookingQueryInput = z.infer<
+  typeof inspectionBookingQuerySchema
+>
+export type AdminInspectionQueryInput = z.infer<
+  typeof adminInspectionQuerySchema
+>
+export type InspectionSlotsQueryInput = z.infer<
+  typeof inspectionSlotsQuerySchema
+>
