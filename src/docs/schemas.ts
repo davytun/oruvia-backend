@@ -512,6 +512,8 @@ export const openApiSchemas = {
           published_at: { type: ['string', 'null'], format: 'date-time' },
         },
       },
+      favorites_count: { type: 'integer', example: 4 },
+      is_favorited: { type: 'boolean', example: false },
       created_at: { type: 'string', format: 'date-time' },
       updated_at: { type: 'string', format: 'date-time' },
     },
@@ -635,6 +637,16 @@ export const openApiSchemas = {
       note: { type: ['string', 'null'] },
       metadata: { type: ['object', 'null'] },
       created_at: { type: 'string', format: 'date-time' },
+    },
+  },
+
+  FavoriteActionResponse: {
+    type: 'object',
+    properties: {
+      listing_id: { type: 'string', format: 'uuid' },
+      is_favorited: { type: 'boolean', example: true },
+      favorites_count: { type: 'integer', example: 5 },
+      favorited_at: { type: 'string', format: 'date-time' },
     },
   },
 }

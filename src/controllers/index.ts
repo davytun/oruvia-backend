@@ -1,6 +1,7 @@
 export * from './admin'
 export * from './agent.controller'
 export * from './catalog.controller'
+export * from './favorite.controller'
 export * from './health.controller'
 export * from './inspection.controller'
 export * from './landlord.controller'

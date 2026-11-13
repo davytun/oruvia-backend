@@ -43,6 +43,13 @@
       "when": 1794478717437,
       "tag": "0005_peaceful_payback",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "6",
+      "when": 1794575226895,
+      "tag": "0006_easy_killraven",
+      "breakpoints": true
     }
   ]
 }

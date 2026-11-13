@@ -72,6 +72,62 @@ export const authenticateSeeker = factory.createMiddleware(async (c, next) => {
 })
 
 /**
+ * Optionally authenticate a Seeker if a valid Seeker Bearer token is provided.
+ * Does not throw if the token is missing, invalid, expired, or belongs to another role.
+ */
+export const optionalAuthenticateSeeker = factory.createMiddleware(
+  async (c, next) => {
+    const token = extractBearerToken(c.req.header('Authorization'))
+    if (!token) {
+      await next()
+      return
+    }
+
+    try {
+      const payload = await verifyAccessToken(token, c.env?.JWT_SECRET)
+      if (payload.accountType !== ACCOUNT_TYPES.SEEKER) {
+        await next()
+        return
+      }
+
+      const db = c.get('db')
+      if (db) {
+        const [seeker] = await db
+          .select({
+            id: seekerUsers.id,
+            email: seekerUsers.email,
+            tokenVersion: seekerUsers.tokenVersion,
+            isSuspended: seekerUsers.isSuspended,
+          })
+          .from(seekerUsers)
+          .where(eq(seekerUsers.id, payload.sub))
+          .limit(1)
+
+        if (
+          !seeker ||
+          seeker.tokenVersion !== payload.tokenVersion ||
+          seeker.isSuspended
+        ) {
+          await next()
+          return
+        }
+      }
+
+      c.set('user', {
+        id: payload.sub,
+        email: payload.email,
+        accountType: payload.accountType,
+        tokenVersion: payload.tokenVersion,
+      })
+    } catch {
+      // Ignore invalid/expired tokens on optional public routes
+    }
+
+    await next()
+  }
+)
+
+/**
  * Require a valid Agent JWT Bearer token (`accountType === 'agent'`)
  * and verify `tokenVersion` against `agent_users`
  */

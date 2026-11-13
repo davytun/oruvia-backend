@@ -224,3 +224,17 @@ Oruvia provides a full-lifecycle inspection scheduling system supporting:
 - `PATCH /api/v1/admins/inspections/:id/status` — Status override for dispute resolution.
 - `PATCH /api/v1/admins/inspections/:id/fee` — Offline fee status override.
 
+---
+
+## 12. Favorites & Saved Properties
+
+#### Seeker (`/api/v1/seekers/favorites`)
+- `GET /api/v1/seekers/favorites` — List saved properties (paginated, newest first; optional `?availability_status=`). Keeps taken properties (`rented`, `sold`, `unavailable`) in the list so seekers know when a shortlisted property is no longer available.
+- `POST /api/v1/seekers/favorites` — Save a property to favorites (`listing_id`, idempotent).
+- `POST /api/v1/seekers/favorites/toggle` — Toggle save/unsave for a property (`listing_id`).
+- `DELETE /api/v1/seekers/favorites/:listingId` — Remove a property from favorites.
+
+#### Public Listings Enrichment
+- `GET /api/v1/listings` and `GET /api/v1/listings/:idOrSlug` return `favorites_count` (integer) and `is_favorited` (boolean, computed when a valid Seeker Bearer token is sent).
+
+

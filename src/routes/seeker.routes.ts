@@ -1,6 +1,12 @@
 import { zValidator } from '@hono/zod-validator'
 import { factory } from '../config/env'
 import {
+  addSeekerFavoriteHandler,
+  listSeekerFavoritesHandler,
+  removeSeekerFavoriteHandler,
+  toggleSeekerFavoriteHandler,
+} from '../controllers/favorite.controller'
+import {
   changeSeekerPasswordHandler,
   forgotSeekerPasswordHandler,
   getSeekerMeHandler,
@@ -14,11 +20,13 @@ import {
 import { authenticateSeeker } from '../middleware/auth.middleware'
 import {
   changePasswordSchema,
+  favoritesQuerySchema,
   forgotPasswordSchema,
   loginSchema,
   registerSeekerSchema,
   resendVerificationCodeSchema,
   resetPasswordSchema,
+  saveFavoriteSchema,
   updateSeekerSchema,
   validationHook,
   verifyEmailSchema,
@@ -76,6 +84,34 @@ seekerRoutes.patch(
   authenticateSeeker,
   zValidator('json', updateSeekerSchema, validationHook),
   updateSeekerMeHandler
+)
+
+// Seeker Favorites & Saved Properties
+seekerRoutes.get(
+  '/favorites',
+  authenticateSeeker,
+  zValidator('query', favoritesQuerySchema, validationHook),
+  listSeekerFavoritesHandler
+)
+
+seekerRoutes.post(
+  '/favorites',
+  authenticateSeeker,
+  zValidator('json', saveFavoriteSchema, validationHook),
+  addSeekerFavoriteHandler
+)
+
+seekerRoutes.post(
+  '/favorites/toggle',
+  authenticateSeeker,
+  zValidator('json', saveFavoriteSchema, validationHook),
+  toggleSeekerFavoriteHandler
+)
+
+seekerRoutes.delete(
+  '/favorites/:listingId',
+  authenticateSeeker,
+  removeSeekerFavoriteHandler
 )
 
 export default seekerRoutes

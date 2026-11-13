@@ -79,7 +79,8 @@ export async function uploadListingMediaHandler(c: Context<AppEnv>) {
  */
 export async function searchPublicListingsHandler(c: Context<AppEnv>) {
   const query = c.req.valid('query' as never) as ListingSearchQueryInput
-  const result = await searchPublicListings(c.get('db'), query)
+  const seekerId = c.get('user')?.id
+  const result = await searchPublicListings(c.get('db'), query, seekerId)
   return sendPaginated(c, result.items, {
     page: result.page,
     per_page: result.perPage,
@@ -92,7 +93,8 @@ export async function searchPublicListingsHandler(c: Context<AppEnv>) {
  */
 export async function getPublicListingHandler(c: Context<AppEnv>) {
   const idOrSlug = (c.req.param('idOrSlug') || '') as string
-  const result = await getPublicPropertyListing(c.get('db'), idOrSlug)
+  const seekerId = c.get('user')?.id
+  const result = await getPublicPropertyListing(c.get('db'), idOrSlug, seekerId)
   return sendSuccess(c, result)
 }
 

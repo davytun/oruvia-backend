@@ -1017,3 +1017,25 @@ export type AdminInspectionQueryInput = z.infer<
 export type InspectionSlotsQueryInput = z.infer<
   typeof inspectionSlotsQuerySchema
 >
+
+// ============================================================================
+// FAVORITES & SAVED PROPERTIES VALIDATION
+// ============================================================================
+
+export const saveFavoriteSchema = z.object({
+  listing_id: z.string().uuid('Listing ID must be a valid UUID.'),
+})
+
+export const favoritesQuerySchema = paginationQuerySchema.extend({
+  availability_status: z
+    .enum([
+      AVAILABILITY_STATUSES.AVAILABLE,
+      AVAILABILITY_STATUSES.RENTED,
+      AVAILABILITY_STATUSES.SOLD,
+      AVAILABILITY_STATUSES.UNAVAILABLE,
+    ])
+    .optional(),
+})
+
+export type SaveFavoriteInput = z.infer<typeof saveFavoriteSchema>
+export type FavoritesQueryInput = z.infer<typeof favoritesQuerySchema>

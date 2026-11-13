@@ -1156,4 +1156,30 @@ INSERT OR REPLACE INTO inspection_booking_events (
   '2026-11-10T11:00:00.000Z'
 );
 
+-- 11. Demo Seeker Favorites / Saved Properties
+INSERT OR REPLACE INTO seeker_favorites (
+  id,
+  seeker_id,
+  listing_id,
+  created_at
+) VALUES (
+  '00000000-0000-4000-f100-000000000001',
+  '00000000-0000-4000-c000-000000000101',
+  '00000000-0000-4000-1000-000000000001',
+  '2026-11-11T09:00:00.000Z'
+);
+
+INSERT OR REPLACE INTO seeker_favorites (
+  id,
+  seeker_id,
+  listing_id,
+  created_at
+) VALUES (
+  '00000000-0000-4000-f100-000000000002',
+  '00000000-0000-4000-c000-000000000101',
+  '00000000-0000-4000-1000-000000000002',
+  '2026-11-11T10:30:00.000Z'
+);
+
+
 

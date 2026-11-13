@@ -37,6 +37,7 @@ import type {
   UpdateListingAvailabilityInput,
   UpdateListingInput,
 } from '../utils/validators'
+import { getFavoriteMetadataForListings } from './favorite.service'
 
 function slugify(text: string): string {
   return text
@@ -580,7 +581,8 @@ export async function deleteMyPropertyListing(
  */
 export async function searchPublicListings(
   db: Database,
-  query: ListingSearchQueryInput
+  query: ListingSearchQueryInput,
+  seekerId?: string
 ) {
   const offset = (query.page - 1) * query.per_page
 
@@ -698,8 +700,16 @@ export async function searchPublicListings(
     .innerJoin(propertyTypes, eq(propertyListings.propertyTypeId, propertyTypes.id))
     .where(whereClause)
 
+  const listingIds = rows.map((r) => r.listing.id)
+  const { countsByListingId, favoritedSet } =
+    await getFavoriteMetadataForListings(db, listingIds, seekerId)
+
   return {
-    items: rows.map(formatListingResponse),
+    items: rows.map((row) => ({
+      ...formatListingResponse(row),
+      favorites_count: countsByListingId.get(row.listing.id) ?? 0,
+      is_favorited: favoritedSet.has(row.listing.id),
+    })),
     page: query.page,
     perPage: query.per_page,
     total: Number(countResult?.count ?? 0),
@@ -711,7 +721,8 @@ export async function searchPublicListings(
  */
 export async function getPublicPropertyListing(
   db: Database,
-  idOrSlug: string
+  idOrSlug: string,
+  seekerId?: string
 ) {
   const isUuid =
     /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
@@ -774,6 +785,13 @@ export async function getPublicPropertyListing(
     throw new NotFoundError('Property listing not found or not currently available.')
   }
 
-  return formatListingResponse(row)
+  const { countsByListingId, favoritedSet } =
+    await getFavoriteMetadataForListings(db, [row.listing.id], seekerId)
+
+  return {
+    ...formatListingResponse(row),
+    favorites_count: countsByListingId.get(row.listing.id) ?? 0,
+    is_favorited: favoritedSet.has(row.listing.id),
+  }
 }
 

@@ -7,6 +7,7 @@ import { agentPaths } from './auth/agents.docs'
 import { landlordPaths } from './auth/landlords.docs'
 import { seekerPaths } from './auth/seekers.docs'
 import { publicCatalogPaths } from './marketplace/catalog.docs'
+import { favoritePaths } from './marketplace/favorites.docs'
 import {
   agentInspectionPaths,
   inspectionPaths,
@@ -68,6 +69,11 @@ export function buildOpenApiSpec(serverUrl = 'https://api.oruvia.workers.dev') {
         name: 'Listings Discovery',
         description:
           'Public property search and details with full Nigerian pricing package breakdown (`/api/v1/listings/*`)',
+      },
+      {
+        name: 'Favorites',
+        description:
+          'Save, toggle, list, and remove favorite property listings for Seekers (`/api/v1/seekers/favorites/*`)',
       },
       {
         name: 'Agent Listings',
@@ -139,6 +145,7 @@ export function buildOpenApiSpec(serverUrl = 'https://api.oruvia.workers.dev') {
         tags: [
           'Catalog & Discovery',
           'Listings Discovery',
+          'Favorites',
           'Agent Listings',
           'Landlord Listings',
         ],
@@ -182,6 +189,7 @@ export function buildOpenApiSpec(serverUrl = 'https://api.oruvia.workers.dev') {
       ...landlordPaths,
       ...publicCatalogPaths,
       ...publicListingPaths,
+      ...favoritePaths,
       ...agentListingPaths,
       ...landlordListingPaths,
       ...inspectionPaths,
