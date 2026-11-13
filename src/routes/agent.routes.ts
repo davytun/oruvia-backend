@@ -1,6 +1,15 @@
 import { zValidator } from '@hono/zod-validator'
 import { factory } from '../config/env'
 import {
+  deleteReviewReplyHandler,
+  listListerReviewsHandler,
+  replyToReviewHandler,
+} from '../controllers/review.controller'
+import {
+  listerReviewListQuerySchema,
+  replyToReviewSchema,
+} from '../utils/validators'
+import {
   changeAgentPasswordHandler,
   forgotAgentPasswordHandler,
   getAgentKycHandler,
@@ -372,6 +381,27 @@ agentRoutes.post(
   '/inquiries/:id/close',
   authenticateAgent,
   listerCloseInquiryHandler
+)
+
+// Agent Reviews & Replies
+agentRoutes.get(
+  '/reviews',
+  authenticateAgent,
+  zValidator('query', listerReviewListQuerySchema, validationHook),
+  listListerReviewsHandler
+)
+
+agentRoutes.post(
+  '/reviews/:id/reply',
+  authenticateAgent,
+  zValidator('json', replyToReviewSchema, validationHook),
+  replyToReviewHandler
+)
+
+agentRoutes.delete(
+  '/reviews/:id/reply',
+  authenticateAgent,
+  deleteReviewReplyHandler
 )
 
 export default agentRoutes

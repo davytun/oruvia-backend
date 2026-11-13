@@ -314,3 +314,19 @@ export const PROPERTY_VERIFICATION_BADGES = {
 
 export type PropertyVerificationBadge =
   (typeof PROPERTY_VERIFICATION_BADGES)[keyof typeof PROPERTY_VERIFICATION_BADGES]
+
+export const REVIEW_TARGET_TYPES = {
+  LISTING: 'listing',
+  LISTER: 'lister',
+} as const
+
+export type ReviewTargetType =
+  (typeof REVIEW_TARGET_TYPES)[keyof typeof REVIEW_TARGET_TYPES]
+
+export const REVIEW_STATUSES = {
+  PUBLISHED: 'published',
+  HIDDEN: 'hidden',
+} as const
+
+export type ReviewStatus =
+  (typeof REVIEW_STATUSES)[keyof typeof REVIEW_STATUSES]

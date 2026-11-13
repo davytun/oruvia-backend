@@ -171,6 +171,10 @@ export function formatListingResponse(row: {
       badge: listing.propertyVerificationBadge,
       verified_at: listing.propertyVerifiedAt,
     },
+    rating: {
+      average_rating: listing.averageRating,
+      review_count: listing.reviewCount,
+    },
     created_at: listing.createdAt,
     updated_at: listing.updatedAt,
   }
@@ -647,11 +651,17 @@ export async function searchPublicListings(
 
   const whereClause = and(...conditions)
 
-  let orderByClause = desc(propertyListings.createdAt)
+  let orderByClause = [desc(propertyListings.createdAt)]
   if (query.sort === 'price_asc') {
-    orderByClause = asc(propertyListings.basePrice)
+    orderByClause = [asc(propertyListings.basePrice)]
   } else if (query.sort === 'price_desc') {
-    orderByClause = desc(propertyListings.basePrice)
+    orderByClause = [desc(propertyListings.basePrice)]
+  } else if (query.sort === 'rating_desc') {
+    orderByClause = [
+      desc(propertyListings.averageRating),
+      desc(propertyListings.reviewCount),
+      desc(propertyListings.createdAt),
+    ]
   }
 
   const rows = await db
@@ -697,7 +707,7 @@ export async function searchPublicListings(
     .leftJoin(agentUsers, eq(propertyListings.agentId, agentUsers.id))
     .leftJoin(landlordUsers, eq(propertyListings.landlordId, landlordUsers.id))
     .where(whereClause)
-    .orderBy(orderByClause)
+    .orderBy(...orderByClause)
     .limit(query.per_page)
     .offset(offset)
 

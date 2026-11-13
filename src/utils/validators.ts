@@ -18,6 +18,8 @@ import {
   PROPERTY_VERIFICATION_BADGES,
   PROPERTY_VERIFICATION_DOC_TYPES,
   PROPERTY_VERIFICATION_METHODS,
+  REVIEW_STATUSES,
+  REVIEW_TARGET_TYPES,
   VERIFICATION_STATUSES,
   VIRTUAL_INSPECTION_METHODS,
 } from '../config/constants'
@@ -715,7 +717,9 @@ export const listingSearchQuerySchema = paginationQuerySchema.extend({
     .enum(['true', 'false'])
     .transform((v) => v === 'true')
     .optional(),
-  sort: z.enum(['newest', 'price_asc', 'price_desc']).default('newest'),
+  sort: z
+    .enum(['newest', 'price_asc', 'price_desc', 'rating_desc'])
+    .default('newest'),
 })
 
 export const adminListingListQuerySchema = paginationQuerySchema.extend({
@@ -1240,3 +1244,110 @@ export type AdminPropertyVerificationQueryInput = z.infer<
 export type AdminReviewPropertyVerificationInput = z.infer<
   typeof adminReviewPropertyVerificationSchema
 >
+
+export const createReviewSchema = z
+  .object({
+    target_type: z.enum([
+      REVIEW_TARGET_TYPES.LISTING,
+      REVIEW_TARGET_TYPES.LISTER,
+    ]),
+    listing_id: z.string().trim().min(1).optional(),
+    lister_type: z
+      .enum([LISTER_ROLES.AGENT, LISTER_ROLES.LANDLORD])
+      .optional(),
+    lister_id: z.string().trim().min(1).optional(),
+    rating: z.number().int().min(1).max(5),
+    comment: z.string().trim().min(1).max(1000).optional(),
+  })
+  .superRefine((data, ctx) => {
+    if (data.target_type === REVIEW_TARGET_TYPES.LISTING && !data.listing_id) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['listing_id'],
+        message: 'listing_id is required when target_type is listing.',
+      })
+    }
+    if (data.target_type === REVIEW_TARGET_TYPES.LISTER) {
+      if (!data.lister_type) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['lister_type'],
+          message: 'lister_type is required when target_type is lister.',
+        })
+      }
+      if (!data.lister_id) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['lister_id'],
+          message: 'lister_id is required when target_type is lister.',
+        })
+      }
+    }
+  })
+
+export const updateReviewSchema = z
+  .object({
+    rating: z.number().int().min(1).max(5).optional(),
+    comment: z.string().trim().min(1).max(1000).nullable().optional(),
+  })
+  .refine(
+    (data) => data.rating !== undefined || data.comment !== undefined,
+    'Provide at least one field (rating or comment) to update.'
+  )
+
+export const replyToReviewSchema = z.object({
+  reply_text: z.string().trim().min(1).max(1000),
+})
+
+export const publicReviewListQuerySchema = paginationQuerySchema.extend({
+  rating: z.coerce.number().int().min(1).max(5).optional(),
+  verified_only: z
+    .enum(['true', 'false'])
+    .transform((v) => v === 'true')
+    .optional(),
+  sort: z.enum(['newest', 'highest', 'lowest']).default('newest'),
+})
+
+export const listerReviewListQuerySchema = paginationQuerySchema.extend({
+  target_type: z
+    .enum([REVIEW_TARGET_TYPES.LISTING, REVIEW_TARGET_TYPES.LISTER])
+    .optional(),
+  has_reply: z
+    .enum(['true', 'false'])
+    .transform((v) => v === 'true')
+    .optional(),
+})
+
+export const adminReviewListQuerySchema = paginationQuerySchema.extend({
+  status: z
+    .enum([REVIEW_STATUSES.PUBLISHED, REVIEW_STATUSES.HIDDEN])
+    .optional(),
+  target_type: z
+    .enum([REVIEW_TARGET_TYPES.LISTING, REVIEW_TARGET_TYPES.LISTER])
+    .optional(),
+  rating: z.coerce.number().int().min(1).max(5).optional(),
+  is_verified_inspection: z
+    .enum(['true', 'false'])
+    .transform((v) => v === 'true')
+    .optional(),
+  search: z.string().trim().optional(),
+})
+
+export const adminModerateReviewSchema = z.object({
+  action: z.enum(['hide', 'restore']),
+  reason: z.string().trim().min(3).max(500).optional(),
+})
+
+export type CreateReviewInput = z.infer<typeof createReviewSchema>
+export type UpdateReviewInput = z.infer<typeof updateReviewSchema>
+export type ReplyToReviewInput = z.infer<typeof replyToReviewSchema>
+export type PublicReviewListQueryInput = z.infer<
+  typeof publicReviewListQuerySchema
+>
+export type ListerReviewListQueryInput = z.infer<
+  typeof listerReviewListQuerySchema
+>
+export type AdminReviewListQueryInput = z.infer<
+  typeof adminReviewListQuerySchema
+>
+export type AdminModerateReviewInput = z.infer<typeof adminModerateReviewSchema>

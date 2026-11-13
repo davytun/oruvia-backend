@@ -285,3 +285,25 @@ Oruvia provides a full-lifecycle inspection scheduling system supporting:
 
 
 
+
+## Reviews & Ratings
+
+### Public
+- `GET /api/v1/listings/:id/reviews` — Paginated published reviews + rating summary (`average_rating`, `review_count`, `breakdown`) for a property listing
+- `GET /api/v1/listers/:listerType/:listerId/reviews` — Paginated published reviews + rating summary for an `agent` or `landlord`
+
+### Seeker (requires Seeker JWT + prior inquiry or inspection with target)
+- `GET /api/v1/seekers/reviews` — List Seeker's own reviews
+- `POST /api/v1/seekers/reviews` — Submit a review (`target_type: 'listing' | 'lister'`, `rating: 1..5`, optional `comment`; sets `is_verified_inspection = true` if Seeker has a `completed` inspection)
+- `PATCH /api/v1/seekers/reviews/:id` — Update own review
+- `DELETE /api/v1/seekers/reviews/:id` — Delete own review
+
+### Agent & Landlord (requires Agent or Landlord JWT)
+- `GET /api/v1/agents/reviews` / `GET /api/v1/landlords/reviews` — List published reviews on own profile & listings
+- `POST /api/v1/agents/reviews/:id/reply` / `POST /api/v1/landlords/reviews/:id/reply` — Post or update a reply to a review on own profile or listing
+- `DELETE /api/v1/agents/reviews/:id/reply` / `DELETE /api/v1/landlords/reviews/:id/reply` — Delete own reply
+
+### Admin (requires Admin JWT)
+- `GET /api/v1/admins/reviews` — List all platform reviews (filters: `status`, `target_type`, `rating`, `is_verified_inspection`, `search`)
+- `PATCH /api/v1/admins/reviews/:id/moderate` — Hide or restore a review (`action: 'hide' | 'restore'`, optional `reason`) and recompute target rating
+- `DELETE /api/v1/admins/reviews/:id` — Permanently delete a review and recompute target rating

@@ -1,6 +1,15 @@
 import { zValidator } from '@hono/zod-validator'
 import { factory } from '../config/env'
 import {
+  deleteReviewReplyHandler,
+  listListerReviewsHandler,
+  replyToReviewHandler,
+} from '../controllers/review.controller'
+import {
+  listerReviewListQuerySchema,
+  replyToReviewSchema,
+} from '../utils/validators'
+import {
   changeLandlordPasswordHandler,
   forgotLandlordPasswordHandler,
   getLandlordKycHandler,
@@ -376,6 +385,27 @@ landlordRoutes.post(
   '/inquiries/:id/close',
   authenticateLandlord,
   listerCloseInquiryHandler
+)
+
+// Landlord Reviews & Replies
+landlordRoutes.get(
+  '/reviews',
+  authenticateLandlord,
+  zValidator('query', listerReviewListQuerySchema, validationHook),
+  listListerReviewsHandler
+)
+
+landlordRoutes.post(
+  '/reviews/:id/reply',
+  authenticateLandlord,
+  zValidator('json', replyToReviewSchema, validationHook),
+  replyToReviewHandler
+)
+
+landlordRoutes.delete(
+  '/reviews/:id/reply',
+  authenticateLandlord,
+  deleteReviewReplyHandler
 )
 
 export default landlordRoutes

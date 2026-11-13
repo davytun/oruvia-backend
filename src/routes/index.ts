@@ -10,6 +10,7 @@ import {
 } from './inspection.routes'
 import landlordRoutes from './landlord.routes'
 import publicListingRoutes from './listing.routes'
+import publicReviewRoutes from './review.routes'
 import seekerRoutes from './seeker.routes'
 
 const apiRoutes = factory.createApp()
@@ -17,6 +18,7 @@ const apiRoutes = factory.createApp()
 apiRoutes.get('/health', healthCheck)
 apiRoutes.route('/', catalogRoutes)
 apiRoutes.route('/', publicInspectionRoutes)
+apiRoutes.route('/', publicReviewRoutes)
 apiRoutes.route('/listings', publicListingRoutes)
 apiRoutes.route('/seekers/inspections', seekerInspectionRoutes)
 apiRoutes.get('/inquiries/:id/ws', inquiryWebSocketHandler)

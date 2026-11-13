@@ -175,6 +175,10 @@ export const propertyListings = sqliteTable(
     propertyVerificationBadge: text('property_verification_badge'), // 'verified_property' | 'oruvia_inspected'
     propertyVerifiedAt: text('property_verified_at'),
 
+    // Aggregate Reviews & Ratings
+    averageRating: real('average_rating').notNull().default(0),
+    reviewCount: integer('review_count').notNull().default(0),
+
     ...timestamps,
   },
   (table) => [

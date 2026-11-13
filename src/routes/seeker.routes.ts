@@ -25,20 +25,29 @@ import {
   updateSeekerMeHandler,
   verifySeekerEmailHandler,
 } from '../controllers/seeker.controller'
+import {
+  createSeekerReviewHandler,
+  deleteSeekerReviewHandler,
+  listSeekerReviewsHandler,
+  updateSeekerReviewHandler,
+} from '../controllers/review.controller'
 import { authenticateSeeker } from '../middleware/auth.middleware'
 import {
   changePasswordSchema,
   createInquirySchema,
+  createReviewSchema,
   favoritesQuerySchema,
   forgotPasswordSchema,
   inquiryDetailQuerySchema,
   inquiryListQuerySchema,
   loginSchema,
+  paginationQuerySchema,
   registerSeekerSchema,
   resendVerificationCodeSchema,
   resetPasswordSchema,
   saveFavoriteSchema,
   sendInquiryMessageSchema,
+  updateReviewSchema,
   updateSeekerSchema,
   validationHook,
   verifyEmailSchema,
@@ -165,6 +174,34 @@ seekerRoutes.post(
   '/inquiries/:id/close',
   authenticateSeeker,
   seekerCloseInquiryHandler
+)
+
+// Seeker Reviews & Ratings
+seekerRoutes.get(
+  '/reviews',
+  authenticateSeeker,
+  zValidator('query', paginationQuerySchema, validationHook),
+  listSeekerReviewsHandler
+)
+
+seekerRoutes.post(
+  '/reviews',
+  authenticateSeeker,
+  zValidator('json', createReviewSchema, validationHook),
+  createSeekerReviewHandler
+)
+
+seekerRoutes.patch(
+  '/reviews/:id',
+  authenticateSeeker,
+  zValidator('json', updateReviewSchema, validationHook),
+  updateSeekerReviewHandler
+)
+
+seekerRoutes.delete(
+  '/reviews/:id',
+  authenticateSeeker,
+  deleteSeekerReviewHandler
 )
 
 export default seekerRoutes

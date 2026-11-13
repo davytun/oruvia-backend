@@ -1310,8 +1310,75 @@ SET
   is_property_verified = 1,
   property_verification_status = 'approved',
   property_verification_badge = 'oruvia_inspected',
-  property_verified_at = '2026-11-11T14:00:00.000Z'
+  property_verified_at = '2026-11-11T14:00:00.000Z',
+  average_rating = 5.0,
+  review_count = 1
 WHERE id = '00000000-0000-4000-1000-000000000001';
+
+-- 14. Demo Reviews & Ratings
+INSERT OR REPLACE INTO reviews (
+  id,
+  seeker_id,
+  target_type,
+  listing_id,
+  lister_type,
+  lister_id,
+  rating,
+  comment,
+  is_verified_inspection,
+  status,
+  reply_text,
+  replied_at,
+  hidden_reason,
+  moderated_by,
+  moderated_at,
+  created_at,
+  updated_at
+) VALUES
+(
+  '00000000-0000-4000-f100-000000000001',
+  '00000000-0000-4000-c000-000000000101',
+  'listing',
+  '00000000-0000-4000-1000-000000000001',
+  NULL,
+  NULL,
+  5,
+  'Very spacious duplex in Ibara Housing Estate. The water supply, security, and finishing matched the photos.',
+  1,
+  'published',
+  'Thank you for visiting! Glad the property met your expectations.',
+  '2026-11-12T10:30:00.000Z',
+  NULL,
+  NULL,
+  NULL,
+  '2026-11-12T09:00:00.000Z',
+  '2026-11-12T10:30:00.000Z'
+),
+(
+  '00000000-0000-4000-f100-000000000002',
+  '00000000-0000-4000-c000-000000000101',
+  'lister',
+  NULL,
+  'agent',
+  '00000000-0000-4000-a000-000000000101',
+  5,
+  'Punctual, transparent about all fees, and very knowledgeable about the Abeokuta market.',
+  1,
+  'published',
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  '2026-11-12T09:15:00.000Z',
+  '2026-11-12T09:15:00.000Z'
+);
+
+UPDATE agent_users
+SET
+  average_rating = 5.0,
+  review_count = 1
+WHERE id = '00000000-0000-4000-a000-000000000101';
 
 
 

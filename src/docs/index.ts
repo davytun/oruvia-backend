@@ -5,6 +5,7 @@ import { adminInspectionPaths } from './admin/inspections.docs'
 import { adminKycPaths } from './admin/kyc.docs'
 import { adminListingPaths } from './admin/listings.docs'
 import { adminPropertyVerificationPaths } from './admin/property-verification.docs'
+import { adminReviewPaths } from './admin/reviews.docs'
 import { agentPaths } from './auth/agents.docs'
 import { landlordPaths } from './auth/landlords.docs'
 import { seekerPaths } from './auth/seekers.docs'
@@ -29,6 +30,12 @@ import {
   agentPropertyVerificationPaths,
   landlordPropertyVerificationPaths,
 } from './marketplace/property-verification.docs'
+import {
+  agentReviewPaths,
+  landlordReviewPaths,
+  publicReviewPaths,
+  seekerReviewPaths,
+} from './marketplace/reviews.docs'
 import { openApiSchemas } from './schemas'
 import { healthPaths } from './system/health.docs'
 
@@ -171,6 +178,31 @@ export function buildOpenApiSpec(serverUrl = 'https://api.oruvia.workers.dev') {
         description:
           'Admin review and approval of listing-level property ownership documents and physical site inspection requests (`/api/v1/admins/property-verifications/*`)',
       },
+      {
+        name: 'Reviews - Public',
+        description:
+          'Publicly visible property listing and lister (Agent/Landlord) reviews and rating breakdowns',
+      },
+      {
+        name: 'Reviews - Seekers',
+        description:
+          'Seeker review submission, editing, and deletion (`/api/v1/seekers/reviews/*`)',
+      },
+      {
+        name: 'Reviews - Agents',
+        description:
+          'Agent review inbox and reply management (`/api/v1/agents/reviews/*`)',
+      },
+      {
+        name: 'Reviews - Landlords',
+        description:
+          'Landlord review inbox and reply management (`/api/v1/landlords/reviews/*`)',
+      },
+      {
+        name: 'Admin - Reviews',
+        description:
+          'Platform-wide review moderation (hide, restore, delete) (`/api/v1/admins/reviews/*`)',
+      },
     ],
     'x-tagGroups': [
       {
@@ -210,6 +242,15 @@ export function buildOpenApiSpec(serverUrl = 'https://api.oruvia.workers.dev') {
         ],
       },
       {
+        name: 'Reviews & Ratings',
+        tags: [
+          'Reviews - Public',
+          'Reviews - Seekers',
+          'Reviews - Agents',
+          'Reviews - Landlords',
+        ],
+      },
+      {
         name: 'Admin',
         tags: [
           'Admin Auth & Management',
@@ -219,6 +260,7 @@ export function buildOpenApiSpec(serverUrl = 'https://api.oruvia.workers.dev') {
           'Admin - Property Verification',
           'Admin - Inspection Moderation',
           'Admin - Inquiry Oversight',
+          'Admin - Reviews',
         ],
       },
     ],
@@ -252,6 +294,10 @@ export function buildOpenApiSpec(serverUrl = 'https://api.oruvia.workers.dev') {
       ...seekerInquiryPaths,
       ...agentInquiryPaths,
       ...landlordInquiryPaths,
+      ...publicReviewPaths,
+      ...seekerReviewPaths,
+      ...agentReviewPaths,
+      ...landlordReviewPaths,
       ...adminAuthPaths,
       ...adminKycPaths,
       ...adminCatalogPaths,
@@ -259,6 +305,7 @@ export function buildOpenApiSpec(serverUrl = 'https://api.oruvia.workers.dev') {
       ...adminPropertyVerificationPaths,
       ...adminInspectionPaths,
       ...adminInquiryPaths,
+      ...adminReviewPaths,
     },
   }
 }

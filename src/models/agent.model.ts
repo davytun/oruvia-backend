@@ -1,4 +1,10 @@
-import { index, integer, sqliteTable, text } from 'drizzle-orm/sqlite-core'
+import {
+  index,
+  integer,
+  real,
+  sqliteTable,
+  text,
+} from 'drizzle-orm/sqlite-core'
 import { VERIFICATION_STATUSES } from '../config/constants'
 import { idColumn, timestamps } from './common'
 
@@ -24,6 +30,8 @@ export const agentUsers = sqliteTable('agent_users', {
     .notNull()
     .default(VERIFICATION_STATUSES.UNVERIFIED),
   verificationBadge: text('verification_badge'), // 'verified_agent' | 'licensed_agent' | null
+  averageRating: real('average_rating').notNull().default(0),
+  reviewCount: integer('review_count').notNull().default(0),
   tokenVersion: integer('token_version').notNull().default(0),
   isSuspended: integer('is_suspended', { mode: 'boolean' })
     .notNull()
