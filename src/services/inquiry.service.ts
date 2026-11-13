@@ -6,6 +6,7 @@ import {
   INQUIRY_STATUSES,
   LISTER_ROLES,
   MODERATION_STATUSES,
+  NOTIFICATION_TYPES,
   type ListerRole,
 } from '../config/constants'
 import type { AppBindings } from '../config/env'
@@ -27,6 +28,7 @@ import type {
   InquiryListQueryInput,
 } from '../utils/validators'
 import { sendEmail } from './email.service'
+import { safeCreateNotification } from './notification.service'
 
 /**
  * Generate a human-friendly unique inquiry reference (e.g. ORV-INQ-8M4P2K)
@@ -320,6 +322,21 @@ export async function createOrContinueInquiry(
     inquiry_id: inquiryId,
     status,
     message: formattedMessage,
+  })
+
+  await safeCreateNotification(db, {
+    recipientRole: listing.listerRole as 'agent' | 'landlord',
+    recipientId: listerId,
+    type: created
+      ? NOTIFICATION_TYPES.NEW_INQUIRY
+      : NOTIFICATION_TYPES.NEW_MESSAGE,
+    title: created
+      ? `New Inquiry: ${listing.title}`
+      : `New Message: ${listing.title}`,
+    message: `${seeker.fullName}: ${preview}`,
+    entityType: 'inquiry',
+    entityId: inquiryId,
+    metadata: { listing_id: listing.id, reference },
   })
 
   if (lister?.email) {
@@ -692,6 +709,20 @@ export async function seekerSendMessage(
     inquiry_id: inquiryId,
     status: nextStatus,
     message: formattedMessage,
+  })
+
+  await safeCreateNotification(db, {
+    recipientRole: row.inquiry.listerRole as 'agent' | 'landlord',
+    recipientId: row.inquiry.listerId,
+    type: NOTIFICATION_TYPES.NEW_MESSAGE,
+    title: `New Message: ${row.listingTitle}`,
+    message: `${row.seekerName}: ${preview}`,
+    entityType: 'inquiry',
+    entityId: inquiryId,
+    metadata: {
+      listing_id: row.inquiry.listingId,
+      reference: row.inquiry.reference,
+    },
   })
 
   const lister = await getListerDetails(
@@ -1122,6 +1153,20 @@ export async function listerSendMessage(
   })
 
   const lister = await getListerDetails(db, listerRole, listerId)
+
+  await safeCreateNotification(db, {
+    recipientRole: 'seeker',
+    recipientId: row.inquiry.seekerId,
+    type: NOTIFICATION_TYPES.NEW_MESSAGE,
+    title: `Reply on ${row.listingTitle}`,
+    message: `${lister?.name || 'Lister'}: ${preview}`,
+    entityType: 'inquiry',
+    entityId: inquiryId,
+    metadata: {
+      listing_id: row.inquiry.listingId,
+      reference: row.inquiry.reference,
+    },
+  })
   if (row.seekerEmail && lister) {
     try {
       await sendEmail(env, {

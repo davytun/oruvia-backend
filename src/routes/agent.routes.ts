@@ -1,5 +1,6 @@
 import { zValidator } from '@hono/zod-validator'
 import { factory } from '../config/env'
+import { createNotificationRouter } from './notification.routes'
 import {
   createReportHandler,
   listMyReportsHandler,
@@ -423,6 +424,12 @@ agentRoutes.post(
   authenticateAgent,
   zValidator('json', createReportSchema, validationHook),
   createReportHandler
+)
+
+// Agent Notifications
+agentRoutes.route(
+  '/notifications',
+  createNotificationRouter(authenticateAgent)
 )
 
 export default agentRoutes

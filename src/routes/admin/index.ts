@@ -1,4 +1,6 @@
 import { factory } from '../../config/env'
+import { authenticateAdmin } from '../../middleware/auth.middleware'
+import { createNotificationRouter } from '../notification.routes'
 import adminAuthRoutes from './auth.routes'
 import adminCatalogRoutes from './catalog.routes'
 import adminInquiryRoutes from './inquiry.routes'
@@ -24,5 +26,9 @@ adminRoutes.route('/inspections', adminInspectionRoutes)
 adminRoutes.route('/inquiries', adminInquiryRoutes)
 adminRoutes.route('/reviews', adminReviewRoutes)
 adminRoutes.route('/reports', adminReportRoutes)
+adminRoutes.route(
+  '/notifications',
+  createNotificationRouter(authenticateAdmin)
+)
 
 export default adminRoutes

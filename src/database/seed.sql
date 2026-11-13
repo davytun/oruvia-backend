@@ -1424,3 +1424,61 @@ INSERT OR REPLACE INTO reports (
   '2026-11-13T10:00:00.000Z',
   '2026-11-13T10:00:00.000Z'
 );
+
+-- 16. Demo In-App Notifications
+INSERT OR REPLACE INTO notifications (
+  id,
+  recipient_role,
+  recipient_id,
+  type,
+  title,
+  message,
+  entity_type,
+  entity_id,
+  metadata,
+  is_read,
+  read_at,
+  created_at
+) VALUES
+(
+  '00000000-0000-4000-f300-000000000001',
+  'seeker',
+  '00000000-0000-4000-c000-000000000101',
+  'inspection_confirmed',
+  'Inspection Confirmed: Executive Room & Parlour Self-Contain at Ibara Housing Estate',
+  'Tunde Adeyemi confirmed your inspection booking.',
+  'inspection',
+  '00000000-0000-4000-d200-000000000001',
+  '{"listing_id":"00000000-0000-4000-1000-000000000001"}',
+  0,
+  NULL,
+  '2026-11-13T11:00:00.000Z'
+),
+(
+  '00000000-0000-4000-f300-000000000002',
+  'agent',
+  '00000000-0000-4000-a000-000000000101',
+  'verification_update',
+  'Property Verified: Executive Room & Parlour Self-Contain at Ibara Housing Estate',
+  'Your property listing has been verified and awarded the "oruvia_inspected" badge.',
+  'property_verification',
+  '00000000-0000-4000-e300-000000000001',
+  '{"listing_id":"00000000-0000-4000-1000-000000000001","badge":"oruvia_inspected"}',
+  0,
+  NULL,
+  '2026-11-11T14:00:00.000Z'
+),
+(
+  '00000000-0000-4000-f300-000000000003',
+  'admin',
+  '00000000-0000-4000-d000-000000000101',
+  'admin_alert',
+  'New Listing Report',
+  'A seeker submitted a report (misleading_info).',
+  'report',
+  '00000000-0000-4000-f200-000000000001',
+  '{"target_type":"listing","reason":"misleading_info"}',
+  0,
+  NULL,
+  '2026-11-13T10:00:00.000Z'
+);

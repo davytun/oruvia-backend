@@ -16,6 +16,7 @@ import {
 } from '../models'
 import { InspectionEmail } from '../templates'
 import { sendEmail } from './email.service'
+import { safeCreateNotification } from './notification.service'
 import { createBookingEvent, formatWatDateTime } from './inspection.service'
 
 /**
@@ -98,6 +99,30 @@ export async function processScheduledInspectionTasks(
     }
 
     const formattedWat = formatWatDateTime(booking.scheduledAt)
+
+    await safeCreateNotification(db, {
+      recipientRole: 'seeker',
+      recipientId: seeker.id,
+      type: 'inspection_reminder',
+      title: `Inspection Reminder: ${listing.title}`,
+      message: `Your inspection is scheduled for tomorrow (${formattedWat}).`,
+      entityType: 'inspection',
+      entityId: booking.id,
+      metadata: { listing_id: listing.id, reference: booking.reference },
+    })
+
+    if (booking.listerId) {
+      await safeCreateNotification(db, {
+        recipientRole: booking.listerRole as 'agent' | 'landlord',
+        recipientId: booking.listerId,
+        type: 'inspection_reminder',
+        title: `Inspection Reminder: ${listing.title}`,
+        message: `Inspection with ${seeker.fullName} is scheduled for tomorrow (${formattedWat}).`,
+        entityType: 'inspection',
+        entityId: booking.id,
+        metadata: { listing_id: listing.id, reference: booking.reference },
+      })
+    }
 
     // Notify Seeker
     try {

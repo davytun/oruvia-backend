@@ -23,6 +23,7 @@ import type {
   AdminReviewPropertyVerificationInput,
 } from '../../utils/validators'
 import { sendEmail } from '../email.service'
+import { safeCreateNotification } from '../notification.service'
 
 async function getListerContact(
   db: Database,
@@ -278,6 +279,25 @@ export async function adminReviewPropertyVerification(
       updatedAt: now,
     })
     .where(eq(propertyListings.id, row.submission.listingId))
+
+  await safeCreateNotification(db, {
+    recipientRole: row.submission.listerRole as 'agent' | 'landlord',
+    recipientId: row.submission.listerId,
+    type: 'verification_update',
+    title: isApproved
+      ? `Property Verified: ${row.listingTitle}`
+      : `Property Verification Update: ${row.listingTitle}`,
+    message: isApproved
+      ? `Your property listing "${row.listingTitle}" has been verified and awarded the "${grantedBadge}" badge.`
+      : `Your property verification for "${row.listingTitle}" was not approved. Reason: ${input.rejection_reason}`,
+    entityType: 'property_verification',
+    entityId: submissionId,
+    metadata: {
+      listing_id: row.submission.listingId,
+      status: input.decision,
+      badge: grantedBadge,
+    },
+  })
 
   const lister = await getListerContact(
     db,

@@ -22,6 +22,7 @@ import type {
   ReviewListingInput,
 } from '../../utils/validators'
 import { sendEmail } from '../email.service'
+import { safeCreateNotification } from '../notification.service'
 import { formatListingResponse } from '../listing.service'
 
 /**
@@ -267,6 +268,26 @@ export async function adminReviewListing(
             : []),
         ],
       }),
+    })
+  }
+
+  const ownerRole = existing.listerRole as 'agent' | 'landlord'
+  const ownerId =
+    ownerRole === LISTER_ROLES.AGENT ? existing.agentId : existing.landlordId
+  if (ownerId) {
+    await safeCreateNotification(db, {
+      recipientRole: ownerRole,
+      recipientId: ownerId,
+      type: 'listing_update',
+      title: isApproved
+        ? `Listing Approved: ${existing.title}`
+        : `Listing Update: ${existing.title}`,
+      message: isApproved
+        ? `Your property listing "${existing.title}" has been approved and is now live.`
+        : `Your property listing "${existing.title}" status is now "${input.status}".`,
+      entityType: 'listing',
+      entityId: existing.id,
+      metadata: { moderation_status: input.status },
     })
   }
 

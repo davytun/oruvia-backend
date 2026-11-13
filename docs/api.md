@@ -318,3 +318,13 @@ Oruvia provides a full-lifecycle inspection scheduling system supporting:
 - `GET /api/v1/admins/reports` — List all listing and user reports platform-wide (filters: `status`, `target_type`, `reason`, `search`)
 - `GET /api/v1/admins/reports/:id` — Get full report details including reporter and target info
 - `PATCH /api/v1/admins/reports/:id/review` — Update status (`under_review`, `resolved`, `dismissed`) and optionally execute enforcement (`none`, `suspend_listing`, `suspend_user`, `suspend_user_and_listings`) with email notification to suspended users/listers
+
+## Notifications
+
+### Role-Scoped Inbox (`/api/v1/{seekers|agents|landlords|admins}/notifications`)
+- `GET /api/v1/{role}/notifications` — Paginated notifications (filter by `unread_only`, `type`) + `unread_count`
+- `GET /api/v1/{role}/notifications/unread-count` — Unread notification count
+- `PATCH /api/v1/{role}/notifications/:id/read` — Mark single notification as read
+- `POST /api/v1/{role}/notifications/read-all` — Mark all unread notifications as read
+- `DELETE /api/v1/{role}/notifications/read` — Clear all read notifications
+- `DELETE /api/v1/{role}/notifications/:id` — Delete a single notification

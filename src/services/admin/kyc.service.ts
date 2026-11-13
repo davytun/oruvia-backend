@@ -13,6 +13,7 @@ import { NotificationEmail } from '../../templates'
 import { NotFoundError } from '../../utils/errors'
 import type { KycListQueryInput, ReviewKycInput } from '../../utils/validators'
 import { sendEmail } from '../email.service'
+import { safeCreateNotification } from '../notification.service'
 
 /**
  * List Agent KYC submissions (filterable by `status`)
@@ -214,6 +215,21 @@ export async function reviewAgentKycSubmission(
 
   const badgeLabel =
     activeBadge === 'licensed_agent' ? 'Licensed Agent' : 'Verified Agent'
+
+  await safeCreateNotification(db, {
+    recipientRole: 'agent',
+    recipientId: agent.id,
+    type: 'verification_update',
+    title: isApproved
+      ? `Agent KYC Approved (${badgeLabel})`
+      : 'Agent KYC Needs Attention',
+    message: isApproved
+      ? `Your agent verification documents were approved and your "${badgeLabel}" badge is now active.`
+      : `Your agent KYC submission was not approved. Reason: ${input.rejection_reason}`,
+    entityType: 'kyc',
+    entityId: submission.id,
+    metadata: { status: input.status, badge: activeBadge },
+  })
 
   await sendEmail(env, {
     to: agent.email,
@@ -456,6 +472,21 @@ export async function reviewLandlordKycSubmission(
     activeBadge === 'verified_owner'
       ? 'Verified Property Owner'
       : 'Verified Landlord'
+
+  await safeCreateNotification(db, {
+    recipientRole: 'landlord',
+    recipientId: landlord.id,
+    type: 'verification_update',
+    title: isApproved
+      ? `Landlord KYC Approved (${badgeLabel})`
+      : 'Landlord KYC Needs Attention',
+    message: isApproved
+      ? `Your landlord verification documents were approved and your "${badgeLabel}" badge is now active.`
+      : `Your landlord KYC submission was not approved. Reason: ${input.rejection_reason}`,
+    entityType: 'kyc',
+    entityId: submission.id,
+    metadata: { status: input.status, badge: activeBadge },
+  })
 
   await sendEmail(env, {
     to: landlord.email,

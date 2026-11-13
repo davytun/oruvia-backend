@@ -32,6 +32,7 @@ import {
   seekerUsers,
 } from '../models'
 import { InspectionEmail } from '../templates'
+import { safeCreateNotification } from './notification.service'
 import {
   BadRequestError,
   ConflictError,
@@ -334,7 +335,17 @@ export async function createInspectionBooking(
     },
   })
 
-  // 8. Notify Lister via Email
+  // 8. Notify Lister via Email & In-App Notification
+  await safeCreateNotification(db, {
+    recipientRole: listerRole,
+    recipientId: listerId,
+    type: 'inspection_request',
+    title: `New Inspection Request: ${listing.title}`,
+    message: `${seeker.fullName} requested an inspection (${reference}).`,
+    entityType: 'inspection',
+    entityId: booking.id,
+    metadata: { listing_id: listing.id, reference },
+  })
   const lister = await getListerContact(db, listerRole, listerId)
   if (lister) {
     const formattedWat = formatWatDateTime(booking.scheduledAt)
@@ -580,6 +591,16 @@ export async function seekerProposeReschedule(
     booking.listerId
   )
   if (lister && listing) {
+    await safeCreateNotification(db, {
+      recipientRole: booking.listerRole as 'agent' | 'landlord',
+      recipientId: booking.listerId,
+      type: 'inspection_rescheduled',
+      title: `Reschedule Proposed: ${listing.title}`,
+      message: `Seeker proposed a new inspection time (${booking.reference}).`,
+      entityType: 'inspection',
+      entityId: booking.id,
+      metadata: { listing_id: listing.id, reference: booking.reference },
+    })
     try {
       await sendEmail(env, {
         to: lister.email,
@@ -677,6 +698,16 @@ export async function seekerAcceptReschedule(
     booking.listerId
   )
   if (lister && listing) {
+    await safeCreateNotification(db, {
+      recipientRole: booking.listerRole as 'agent' | 'landlord',
+      recipientId: booking.listerId,
+      type: 'inspection_confirmed',
+      title: `Reschedule Accepted: ${listing.title}`,
+      message: `Seeker accepted the proposed inspection time (${booking.reference}).`,
+      entityType: 'inspection',
+      entityId: booking.id,
+      metadata: { listing_id: listing.id, reference: booking.reference },
+    })
     try {
       await sendEmail(env, {
         to: lister.email,
@@ -1096,6 +1127,16 @@ export async function listerConfirmBooking(
   const lister = await getListerContact(db, listerRole, listerId)
 
   if (seeker && listing && lister) {
+    await safeCreateNotification(db, {
+      recipientRole: 'seeker',
+      recipientId: booking.seekerId,
+      type: 'inspection_confirmed',
+      title: `Inspection Confirmed: ${listing.title}`,
+      message: `${lister.name} confirmed your inspection booking (${booking.reference}).`,
+      entityType: 'inspection',
+      entityId: booking.id,
+      metadata: { listing_id: listing.id, reference: booking.reference },
+    })
     try {
       await sendEmail(env, {
         to: seeker.email,
@@ -1196,6 +1237,16 @@ export async function listerDeclineBooking(
     .limit(1)
 
   if (seeker && listing) {
+    await safeCreateNotification(db, {
+      recipientRole: 'seeker',
+      recipientId: booking.seekerId,
+      type: 'inspection_declined',
+      title: `Inspection Declined: ${listing.title}`,
+      message: `Your inspection request (${booking.reference}) was declined. Reason: ${input.reason}`,
+      entityType: 'inspection',
+      entityId: booking.id,
+      metadata: { listing_id: listing.id, reference: booking.reference },
+    })
     try {
       await sendEmail(env, {
         to: seeker.email,
@@ -1574,6 +1625,16 @@ export async function listerCancelBooking(
     .limit(1)
 
   if (seeker && listing) {
+    await safeCreateNotification(db, {
+      recipientRole: 'seeker',
+      recipientId: booking.seekerId,
+      type: 'inspection_cancelled',
+      title: `Inspection Cancelled: ${listing.title}`,
+      message: `The lister cancelled your inspection booking (${booking.reference}).`,
+      entityType: 'inspection',
+      entityId: booking.id,
+      metadata: { listing_id: listing.id, reference: booking.reference },
+    })
     try {
       await sendEmail(env, {
         to: seeker.email,

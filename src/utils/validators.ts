@@ -1475,3 +1475,15 @@ export type AdminReportListQueryInput = z.infer<
   typeof adminReportListQuerySchema
 >
 export type AdminReviewReportInput = z.infer<typeof adminReviewReportSchema>
+
+export const notificationListQuerySchema = paginationQuerySchema.extend({
+  unread_only: z
+    .enum(['true', 'false'])
+    .transform((v) => v === 'true')
+    .optional(),
+  type: z.string().trim().optional(),
+})
+
+export type NotificationListQueryInput = z.infer<
+  typeof notificationListQuerySchema
+>

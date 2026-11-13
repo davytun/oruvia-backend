@@ -23,6 +23,12 @@ import {
   landlordInspectionPaths,
 } from './marketplace/inspections.docs'
 import {
+  adminNotificationPaths,
+  agentNotificationPaths,
+  landlordNotificationPaths,
+  seekerNotificationPaths,
+} from './marketplace/notifications.docs'
+import {
   agentListingPaths,
   landlordListingPaths,
   publicListingPaths,
@@ -229,6 +235,26 @@ export function buildOpenApiSpec(serverUrl = 'https://api.oruvia.workers.dev') {
         description:
           'Admin review of listing and user reports and fraud enforcement actions (`/api/v1/admins/reports/*`)',
       },
+      {
+        name: 'Notifications - Seekers',
+        description:
+          'In-app notification inbox for Seekers (`/api/v1/seekers/notifications/*`)',
+      },
+      {
+        name: 'Notifications - Agents',
+        description:
+          'In-app notification inbox for Agents (`/api/v1/agents/notifications/*`)',
+      },
+      {
+        name: 'Notifications - Landlords',
+        description:
+          'In-app notification inbox for Landlords (`/api/v1/landlords/notifications/*`)',
+      },
+      {
+        name: 'Admin - Notifications',
+        description:
+          'In-app operational notification inbox for Admins (`/api/v1/admins/notifications/*`)',
+      },
     ],
     'x-tagGroups': [
       {
@@ -285,6 +311,14 @@ export function buildOpenApiSpec(serverUrl = 'https://api.oruvia.workers.dev') {
         ],
       },
       {
+        name: 'Notifications',
+        tags: [
+          'Notifications - Seekers',
+          'Notifications - Agents',
+          'Notifications - Landlords',
+        ],
+      },
+      {
         name: 'Admin',
         tags: [
           'Admin Auth & Management',
@@ -296,6 +330,7 @@ export function buildOpenApiSpec(serverUrl = 'https://api.oruvia.workers.dev') {
           'Admin - Inquiry Oversight',
           'Admin - Reviews',
           'Admin - Reports & Moderation',
+          'Admin - Notifications',
         ],
       },
     ],
@@ -336,6 +371,9 @@ export function buildOpenApiSpec(serverUrl = 'https://api.oruvia.workers.dev') {
       ...seekerReportPaths,
       ...agentReportPaths,
       ...landlordReportPaths,
+      ...seekerNotificationPaths,
+      ...agentNotificationPaths,
+      ...landlordNotificationPaths,
       ...adminAuthPaths,
       ...adminKycPaths,
       ...adminCatalogPaths,
@@ -345,6 +383,7 @@ export function buildOpenApiSpec(serverUrl = 'https://api.oruvia.workers.dev') {
       ...adminInquiryPaths,
       ...adminReviewPaths,
       ...adminReportPaths,
+      ...adminNotificationPaths,
     },
   }
 }

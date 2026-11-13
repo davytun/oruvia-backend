@@ -36,6 +36,7 @@ import {
   updateSeekerReviewHandler,
 } from '../controllers/review.controller'
 import { authenticateSeeker } from '../middleware/auth.middleware'
+import { createNotificationRouter } from './notification.routes'
 import {
   changePasswordSchema,
   createInquirySchema,
@@ -223,6 +224,12 @@ seekerRoutes.post(
   authenticateSeeker,
   zValidator('json', createReportSchema, validationHook),
   createReportHandler
+)
+
+// Seeker Notifications
+seekerRoutes.route(
+  '/notifications',
+  createNotificationRouter(authenticateSeeker)
 )
 
 export default seekerRoutes

@@ -243,6 +243,7 @@ export const REPORT_STATUSES = {
 
 export const NOTIFICATION_TYPES = {
   NEW_INQUIRY: 'new_inquiry',
+  NEW_MESSAGE: 'new_message',
   INSPECTION_REQUEST: 'inspection_request',
   INSPECTION_CONFIRMED: 'inspection_confirmed',
   INSPECTION_DECLINED: 'inspection_declined',
@@ -251,7 +252,11 @@ export const NOTIFICATION_TYPES = {
   INSPECTION_REMINDER: 'inspection_reminder',
   VERIFICATION_UPDATE: 'verification_update',
   LISTING_UPDATE: 'listing_update',
+  ADMIN_ALERT: 'admin_alert',
 } as const
+
+export type NotificationType =
+  (typeof NOTIFICATION_TYPES)[keyof typeof NOTIFICATION_TYPES]
 
 export const AUTH_CONFIG = {
   ACCESS_TOKEN_TTL_SECONDS: 60 * 60 * 24, // 24 hours (1d)

@@ -19,6 +19,7 @@ import {
   NotFoundError,
 } from '../utils/errors'
 import { buildPaginationMeta, getPaginationOffset } from '../utils/response'
+import { notifyAllActiveAdmins } from './notification.service'
 import type {
   CreateReportInput,
   MyReportListQueryInput,
@@ -217,6 +218,18 @@ export async function createReport(
     .from(reports)
     .where(eq(reports.id, reportId))
     .limit(1)
+
+  await notifyAllActiveAdmins(db, {
+    type: 'admin_alert',
+    title: `New ${input.target_type === REPORT_TARGET_TYPES.LISTING ? 'Listing' : 'User'} Report`,
+    message: `A ${reporterRole} submitted a report (${input.reason}).`,
+    entityType: 'report',
+    entityId: reportId,
+    metadata: {
+      target_type: input.target_type,
+      reason: input.reason,
+    },
+  })
 
   return formatReportResponse(created)
 }

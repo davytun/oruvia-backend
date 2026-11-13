@@ -1,5 +1,6 @@
 import { zValidator } from '@hono/zod-validator'
 import { factory } from '../config/env'
+import { createNotificationRouter } from './notification.routes'
 import {
   createReportHandler,
   listMyReportsHandler,
@@ -427,6 +428,12 @@ landlordRoutes.post(
   authenticateLandlord,
   zValidator('json', createReportSchema, validationHook),
   createReportHandler
+)
+
+// Landlord Notifications
+landlordRoutes.route(
+  '/notifications',
+  createNotificationRouter(authenticateLandlord)
 )
 
 export default landlordRoutes
