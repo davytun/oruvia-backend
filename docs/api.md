@@ -237,4 +237,32 @@ Oruvia provides a full-lifecycle inspection scheduling system supporting:
 #### Public Listings Enrichment
 - `GET /api/v1/listings` and `GET /api/v1/listings/:idOrSlug` return `favorites_count` (integer) and `is_favorited` (boolean, computed when a valid Seeker Bearer token is sent).
 
+---
+
+## 13. Inquiries & Messaging (with Real-Time WebSockets)
+
+#### Seeker (`/api/v1/seekers/inquiries`)
+- `POST /api/v1/seekers/inquiries` — Start or continue a property inquiry (`listing_id`, `subject?`, `message`). Re-opens if closed, broadcasts over WebSocket, and emails lister.
+- `GET /api/v1/seekers/inquiries` — List conversations (`?status=&listing_id=&unread_only=&page=&per_page=`).
+- `GET /api/v1/seekers/inquiries/unread-count` — Total unread message count.
+- `GET /api/v1/seekers/inquiries/:id` — Get conversation & messages (`?after=` optional; auto-marks lister messages read & broadcasts `messages_read`). Includes `whatsapp_url` & `ws_path`.
+- `POST /api/v1/seekers/inquiries/:id/messages` — Send follow-up message.
+- `POST /api/v1/seekers/inquiries/:id/close` — Close conversation.
+
+#### Lister (`/api/v1/{agents|landlords}/inquiries`)
+- `GET /api/v1/{role}/inquiries` — List incoming conversations (`?status=&listing_id=&unread_only=&page=&per_page=`).
+- `GET /api/v1/{role}/inquiries/unread-count` — Total unread message count.
+- `GET /api/v1/{role}/inquiries/:id` — Get conversation & messages (`?after=` optional; auto-marks seeker messages read). Includes `whatsapp_url` & `ws_path`.
+- `POST /api/v1/{role}/inquiries/:id/messages` — Reply to seeker (auto-transitions `open` -> `responded`, pushes WS event, emails seeker).
+- `POST /api/v1/{role}/inquiries/:id/close` — Close conversation.
+
+#### Real-Time WebSocket (`/api/v1/inquiries/:id/ws`)
+- Upgrades to Cloudflare Durable Object WebSocket room (`InquiryRoom`) using `?token=<jwt>` or `Authorization: Bearer <jwt>`.
+- Pushes `connected`, `new_message`, `typing`, `messages_read`, `presence`, and `inquiry_closed` events.
+
+#### Admin Read-Only Oversight (`/api/v1/admins/inquiries`)
+- `GET /api/v1/admins/inquiries` — List platform-wide inquiries (`?status=&listing_id=&lister_role=`).
+- `GET /api/v1/admins/inquiries/:id` — Read-only view of full conversation & messages.
+
+
 

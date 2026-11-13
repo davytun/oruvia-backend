@@ -44,6 +44,13 @@ import {
   updateListingInspectionOptionsHandler,
   updateListerSettingsHandler,
 } from '../controllers/inspection.controller'
+import {
+  getListerInquiryByIdHandler,
+  getListerUnreadCountHandler,
+  listListerInquiriesHandler,
+  listerCloseInquiryHandler,
+  listerSendMessageHandler,
+} from '../controllers/inquiry.controller'
 import { authenticateAgent } from '../middleware/auth.middleware'
 import {
   cancelInspectionBookingSchema,
@@ -53,6 +60,8 @@ import {
   createListingSchema,
   declineInspectionBookingSchema,
   forgotPasswordSchema,
+  inquiryDetailQuerySchema,
+  inquiryListQuerySchema,
   inspectionBookingQuerySchema,
   loginSchema,
   paginationQuerySchema,
@@ -61,6 +70,7 @@ import {
   rejectRescheduleSchema,
   resendVerificationCodeSchema,
   resetPasswordSchema,
+  sendInquiryMessageSchema,
   setAvailabilityWindowsSchema,
   updateAgentSchema,
   updateInspectionFeeStatusSchema,
@@ -302,6 +312,40 @@ agentRoutes.patch(
   authenticateAgent,
   zValidator('json', updateInspectionFeeStatusSchema, validationHook),
   listerUpdateFeeStatusHandler
+)
+
+// Agent Inquiries & Messaging
+agentRoutes.get(
+  '/inquiries',
+  authenticateAgent,
+  zValidator('query', inquiryListQuerySchema, validationHook),
+  listListerInquiriesHandler
+)
+
+agentRoutes.get(
+  '/inquiries/unread-count',
+  authenticateAgent,
+  getListerUnreadCountHandler
+)
+
+agentRoutes.get(
+  '/inquiries/:id',
+  authenticateAgent,
+  zValidator('query', inquiryDetailQuerySchema, validationHook),
+  getListerInquiryByIdHandler
+)
+
+agentRoutes.post(
+  '/inquiries/:id/messages',
+  authenticateAgent,
+  zValidator('json', sendInquiryMessageSchema, validationHook),
+  listerSendMessageHandler
+)
+
+agentRoutes.post(
+  '/inquiries/:id/close',
+  authenticateAgent,
+  listerCloseInquiryHandler
 )
 
 export default agentRoutes

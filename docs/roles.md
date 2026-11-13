@@ -125,6 +125,7 @@ Within `admin_users`, each account has a `role` field (`'super_admin' | 'admin'`
 - Moderate listings.
 - Review reports.
 - Moderate and manage inspection bookings (view platform-wide, direct reschedule, cancel, and override status/fee with audit timeline).
+- View platform-wide property inquiry conversations (read-only) for moderation oversight.
 - Take appropriate administrative action.
 - Manage platform users where authorized.
 

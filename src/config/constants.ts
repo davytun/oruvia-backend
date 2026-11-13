@@ -267,3 +267,21 @@ export const PAGINATION_DEFAULTS = {
   PER_PAGE: 20,
   MAX_PER_PAGE: 100,
 } as const
+
+export const INQUIRY_STATUSES = {
+  OPEN: 'open',
+  RESPONDED: 'responded',
+  CLOSED: 'closed',
+} as const
+
+export type InquiryStatus =
+  (typeof INQUIRY_STATUSES)[keyof typeof INQUIRY_STATUSES]
+
+export const INQUIRY_SENDER_ROLES = {
+  SEEKER: 'seeker',
+  AGENT: 'agent',
+  LANDLORD: 'landlord',
+} as const
+
+export type InquirySenderRole =
+  (typeof INQUIRY_SENDER_ROLES)[keyof typeof INQUIRY_SENDER_ROLES]

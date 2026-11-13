@@ -1181,5 +1181,85 @@ INSERT OR REPLACE INTO seeker_favorites (
   '2026-11-11T10:30:00.000Z'
 );
 
+-- 12. Demo Property Inquiry & Messages
+INSERT OR REPLACE INTO property_inquiries (
+  id,
+  reference,
+  listing_id,
+  seeker_id,
+  lister_role,
+  lister_id,
+  subject,
+  status,
+  last_message_preview,
+  last_message_at,
+  last_sender_role,
+  seeker_unread_count,
+  lister_unread_count,
+  closed_by,
+  closed_at,
+  created_at,
+  updated_at
+) VALUES (
+  '00000000-0000-4000-e100-000000000001',
+  'ORV-INQ-DEMO01',
+  '00000000-0000-4000-1000-000000000001',
+  '00000000-0000-4000-c000-000000000101',
+  'agent',
+  '00000000-0000-4000-a000-000000000101',
+  'Water & Prepaid Meter Inquiry',
+  'responded',
+  'Yes! The apartment has a dedicated prepaid meter and 24/7 borehole water supply.',
+  '2026-11-11T11:15:00.000Z',
+  'agent',
+  1,
+  0,
+  NULL,
+  NULL,
+  '2026-11-11T11:00:00.000Z',
+  '2026-11-11T11:15:00.000Z'
+);
+
+INSERT OR REPLACE INTO inquiry_messages (
+  id,
+  inquiry_id,
+  sender_role,
+  sender_id,
+  body,
+  is_read,
+  read_at,
+  created_at
+) VALUES (
+  '00000000-0000-4000-e200-000000000001',
+  '00000000-0000-4000-e100-000000000001',
+  'seeker',
+  '00000000-0000-4000-c000-000000000101',
+  'Good morning! Please does this Ibara Housing Estate mini-flat have its own prepaid meter and steady borehole water?',
+  1,
+  '2026-11-11T11:10:00.000Z',
+  '2026-11-11T11:00:00.000Z'
+);
+
+INSERT OR REPLACE INTO inquiry_messages (
+  id,
+  inquiry_id,
+  sender_role,
+  sender_id,
+  body,
+  is_read,
+  read_at,
+  created_at
+) VALUES (
+  '00000000-0000-4000-e200-000000000002',
+  '00000000-0000-4000-e100-000000000001',
+  'agent',
+  '00000000-0000-4000-a000-000000000101',
+  'Yes! The apartment has a dedicated prepaid meter and 24/7 borehole water supply.',
+  0,
+  NULL,
+  '2026-11-11T11:15:00.000Z'
+);
+
+
 
 

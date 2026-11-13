@@ -7,6 +7,14 @@ import {
   toggleSeekerFavoriteHandler,
 } from '../controllers/favorite.controller'
 import {
+  createSeekerInquiryHandler,
+  getSeekerInquiryByIdHandler,
+  getSeekerUnreadCountHandler,
+  listSeekerInquiriesHandler,
+  seekerCloseInquiryHandler,
+  seekerSendMessageHandler,
+} from '../controllers/inquiry.controller'
+import {
   changeSeekerPasswordHandler,
   forgotSeekerPasswordHandler,
   getSeekerMeHandler,
@@ -20,13 +28,17 @@ import {
 import { authenticateSeeker } from '../middleware/auth.middleware'
 import {
   changePasswordSchema,
+  createInquirySchema,
   favoritesQuerySchema,
   forgotPasswordSchema,
+  inquiryDetailQuerySchema,
+  inquiryListQuerySchema,
   loginSchema,
   registerSeekerSchema,
   resendVerificationCodeSchema,
   resetPasswordSchema,
   saveFavoriteSchema,
+  sendInquiryMessageSchema,
   updateSeekerSchema,
   validationHook,
   verifyEmailSchema,
@@ -112,6 +124,47 @@ seekerRoutes.delete(
   '/favorites/:listingId',
   authenticateSeeker,
   removeSeekerFavoriteHandler
+)
+
+// Seeker Inquiries & Messaging
+seekerRoutes.post(
+  '/inquiries',
+  authenticateSeeker,
+  zValidator('json', createInquirySchema, validationHook),
+  createSeekerInquiryHandler
+)
+
+seekerRoutes.get(
+  '/inquiries',
+  authenticateSeeker,
+  zValidator('query', inquiryListQuerySchema, validationHook),
+  listSeekerInquiriesHandler
+)
+
+seekerRoutes.get(
+  '/inquiries/unread-count',
+  authenticateSeeker,
+  getSeekerUnreadCountHandler
+)
+
+seekerRoutes.get(
+  '/inquiries/:id',
+  authenticateSeeker,
+  zValidator('query', inquiryDetailQuerySchema, validationHook),
+  getSeekerInquiryByIdHandler
+)
+
+seekerRoutes.post(
+  '/inquiries/:id/messages',
+  authenticateSeeker,
+  zValidator('json', sendInquiryMessageSchema, validationHook),
+  seekerSendMessageHandler
+)
+
+seekerRoutes.post(
+  '/inquiries/:id/close',
+  authenticateSeeker,
+  seekerCloseInquiryHandler
 )
 
 export default seekerRoutes

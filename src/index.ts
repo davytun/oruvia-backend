@@ -121,4 +121,5 @@ const worker = Object.assign(app, {
   },
 })
 
+export { InquiryRoom } from './durable-objects/InquiryRoom'
 export default worker

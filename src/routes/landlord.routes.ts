@@ -44,6 +44,13 @@ import {
   updateListingInspectionOptionsHandler,
   updateListerSettingsHandler,
 } from '../controllers/inspection.controller'
+import {
+  getListerInquiryByIdHandler,
+  getListerUnreadCountHandler,
+  listListerInquiriesHandler,
+  listerCloseInquiryHandler,
+  listerSendMessageHandler,
+} from '../controllers/inquiry.controller'
 import { authenticateLandlord } from '../middleware/auth.middleware'
 import {
   cancelInspectionBookingSchema,
@@ -53,6 +60,8 @@ import {
   createListingSchema,
   declineInspectionBookingSchema,
   forgotPasswordSchema,
+  inquiryDetailQuerySchema,
+  inquiryListQuerySchema,
   inspectionBookingQuerySchema,
   loginSchema,
   paginationQuerySchema,
@@ -61,6 +70,7 @@ import {
   rejectRescheduleSchema,
   resendVerificationCodeSchema,
   resetPasswordSchema,
+  sendInquiryMessageSchema,
   setAvailabilityWindowsSchema,
   updateInspectionFeeStatusSchema,
   updateInspectionSettingsSchema,
@@ -306,6 +316,40 @@ landlordRoutes.patch(
   authenticateLandlord,
   zValidator('json', updateInspectionFeeStatusSchema, validationHook),
   listerUpdateFeeStatusHandler
+)
+
+// Landlord Inquiries & Messaging
+landlordRoutes.get(
+  '/inquiries',
+  authenticateLandlord,
+  zValidator('query', inquiryListQuerySchema, validationHook),
+  listListerInquiriesHandler
+)
+
+landlordRoutes.get(
+  '/inquiries/unread-count',
+  authenticateLandlord,
+  getListerUnreadCountHandler
+)
+
+landlordRoutes.get(
+  '/inquiries/:id',
+  authenticateLandlord,
+  zValidator('query', inquiryDetailQuerySchema, validationHook),
+  getListerInquiryByIdHandler
+)
+
+landlordRoutes.post(
+  '/inquiries/:id/messages',
+  authenticateLandlord,
+  zValidator('json', sendInquiryMessageSchema, validationHook),
+  listerSendMessageHandler
+)
+
+landlordRoutes.post(
+  '/inquiries/:id/close',
+  authenticateLandlord,
+  listerCloseInquiryHandler
 )
 
 export default landlordRoutes

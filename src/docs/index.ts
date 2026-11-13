@@ -1,5 +1,6 @@
 import { adminAuthPaths } from './admin/auth.docs'
 import { adminCatalogPaths } from './admin/catalog.docs'
+import { adminInquiryPaths } from './admin/inquiries.docs'
 import { adminInspectionPaths } from './admin/inspections.docs'
 import { adminKycPaths } from './admin/kyc.docs'
 import { adminListingPaths } from './admin/listings.docs'
@@ -8,6 +9,11 @@ import { landlordPaths } from './auth/landlords.docs'
 import { seekerPaths } from './auth/seekers.docs'
 import { publicCatalogPaths } from './marketplace/catalog.docs'
 import { favoritePaths } from './marketplace/favorites.docs'
+import {
+  agentInquiryPaths,
+  landlordInquiryPaths,
+  seekerInquiryPaths,
+} from './marketplace/inquiries.docs'
 import {
   agentInspectionPaths,
   inspectionPaths,
@@ -130,6 +136,31 @@ export function buildOpenApiSpec(serverUrl = 'https://api.oruvia.workers.dev') {
         description:
           'Admin oversight, status override, direct reschedule, cancellation, and fee auditing for property inspections (`/api/v1/admins/inspections/*`)',
       },
+      {
+        name: 'Inquiries - Seekers',
+        description:
+          'Start and continue property inquiries, track unread messages, and close conversations (`/api/v1/seekers/inquiries/*`)',
+      },
+      {
+        name: 'Inquiries - Agents',
+        description:
+          'Receive and reply to property inquiries, track unread messages, and close conversations for Agents (`/api/v1/agents/inquiries/*`)',
+      },
+      {
+        name: 'Inquiries - Landlords',
+        description:
+          'Receive and reply to property inquiries, track unread messages, and close conversations for Landlords (`/api/v1/landlords/inquiries/*`)',
+      },
+      {
+        name: 'Inquiries - Real-Time WebSocket',
+        description:
+          'Cloudflare Durable Object WebSocket room (`/api/v1/inquiries/:id/ws`) for instant message push, typing indicators, live read receipts, and presence.',
+      },
+      {
+        name: 'Admin - Inquiry Oversight',
+        description:
+          'Read-only Admin oversight of platform-wide property inquiry conversations (`/api/v1/admins/inquiries/*`)',
+      },
     ],
     'x-tagGroups': [
       {
@@ -160,6 +191,15 @@ export function buildOpenApiSpec(serverUrl = 'https://api.oruvia.workers.dev') {
         ],
       },
       {
+        name: 'Inquiries & Messaging',
+        tags: [
+          'Inquiries - Seekers',
+          'Inquiries - Agents',
+          'Inquiries - Landlords',
+          'Inquiries - Real-Time WebSocket',
+        ],
+      },
+      {
         name: 'Admin',
         tags: [
           'Admin Auth & Management',
@@ -167,6 +207,7 @@ export function buildOpenApiSpec(serverUrl = 'https://api.oruvia.workers.dev') {
           'Admin Locations & House Types',
           'Admin Listing Moderation',
           'Admin - Inspection Moderation',
+          'Admin - Inquiry Oversight',
         ],
       },
     ],
@@ -195,11 +236,15 @@ export function buildOpenApiSpec(serverUrl = 'https://api.oruvia.workers.dev') {
       ...inspectionPaths,
       ...agentInspectionPaths,
       ...landlordInspectionPaths,
+      ...seekerInquiryPaths,
+      ...agentInquiryPaths,
+      ...landlordInquiryPaths,
       ...adminAuthPaths,
       ...adminKycPaths,
       ...adminCatalogPaths,
       ...adminListingPaths,
       ...adminInspectionPaths,
+      ...adminInquiryPaths,
     },
   }
 }

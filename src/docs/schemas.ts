@@ -649,5 +649,53 @@ export const openApiSchemas = {
       favorited_at: { type: 'string', format: 'date-time' },
     },
   },
+
+  InquiryMessage: {
+    type: 'object',
+    properties: {
+      id: { type: 'string', format: 'uuid' },
+      inquiry_id: { type: 'string', format: 'uuid' },
+      sender_role: {
+        type: 'string',
+        enum: ['seeker', 'agent', 'landlord'],
+        example: 'seeker',
+      },
+      sender_id: { type: 'string', format: 'uuid' },
+      body: {
+        type: 'string',
+        example: 'Hello, is water steady in Ibara Housing Estate and can I inspect tomorrow?',
+      },
+      is_read: { type: 'boolean', example: false },
+      read_at: { type: ['string', 'null'], format: 'date-time' },
+      created_at: { type: 'string', format: 'date-time' },
+    },
+  },
+
+  PropertyInquiry: {
+    type: 'object',
+    properties: {
+      id: { type: 'string', format: 'uuid' },
+      reference: { type: 'string', example: 'ORV-INQ-8M4P2K' },
+      subject: { type: ['string', 'null'], example: 'Availability & Payment Terms' },
+      status: {
+        type: 'string',
+        enum: ['open', 'responded', 'closed'],
+        example: 'open',
+      },
+      last_message_preview: { type: ['string', 'null'] },
+      last_message_at: { type: 'string', format: 'date-time' },
+      unread_count: { type: 'integer', example: 1 },
+      whatsapp_url: {
+        type: ['string', 'null'],
+        example: 'https://wa.me/2348021112233?text=Hello...',
+      },
+      ws_path: {
+        type: 'string',
+        example: '/api/v1/inquiries/{id}/ws',
+      },
+      created_at: { type: 'string', format: 'date-time' },
+      updated_at: { type: 'string', format: 'date-time' },
+    },
+  },
 }
 

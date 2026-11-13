@@ -3,6 +3,7 @@ import { z } from 'zod'
 import {
   AUTH_CONFIG,
   AVAILABILITY_STATUSES,
+  INQUIRY_STATUSES,
   INSPECTION_FEE_STATUSES,
   INSPECTION_MODES,
   INSPECTION_STATUSES,
@@ -1039,3 +1040,71 @@ export const favoritesQuerySchema = paginationQuerySchema.extend({
 
 export type SaveFavoriteInput = z.infer<typeof saveFavoriteSchema>
 export type FavoritesQueryInput = z.infer<typeof favoritesQuerySchema>
+
+// ============================================================================
+// INQUIRIES & MESSAGING VALIDATION
+// ============================================================================
+
+export const createInquirySchema = z.object({
+  listing_id: z.string().uuid('Listing ID must be a valid UUID.'),
+  subject: z
+    .string()
+    .trim()
+    .max(150, 'Subject cannot exceed 150 characters.')
+    .optional(),
+  message: z
+    .string()
+    .trim()
+    .min(1, 'Message cannot be empty.')
+    .max(2000, 'Message cannot exceed 2000 characters.'),
+})
+
+export const sendInquiryMessageSchema = z.object({
+  message: z
+    .string()
+    .trim()
+    .min(1, 'Message cannot be empty.')
+    .max(2000, 'Message cannot exceed 2000 characters.'),
+})
+
+export const inquiryListQuerySchema = paginationQuerySchema.extend({
+  status: z
+    .enum([
+      INQUIRY_STATUSES.OPEN,
+      INQUIRY_STATUSES.RESPONDED,
+      INQUIRY_STATUSES.CLOSED,
+    ])
+    .optional(),
+  listing_id: z.string().uuid('Listing ID must be a valid UUID.').optional(),
+  unread_only: z
+    .enum(['true', 'false'])
+    .transform((v) => v === 'true')
+    .optional(),
+})
+
+export const inquiryDetailQuerySchema = z.object({
+  after: z
+    .string()
+    .refine((val) => !isNaN(Date.parse(val)), {
+      message: 'after must be a valid ISO-8601 timestamp.',
+    })
+    .optional(),
+})
+
+export const adminInquiryQuerySchema = paginationQuerySchema.extend({
+  status: z
+    .enum([
+      INQUIRY_STATUSES.OPEN,
+      INQUIRY_STATUSES.RESPONDED,
+      INQUIRY_STATUSES.CLOSED,
+    ])
+    .optional(),
+  listing_id: z.string().uuid('Listing ID must be a valid UUID.').optional(),
+  lister_role: z.enum([LISTER_ROLES.AGENT, LISTER_ROLES.LANDLORD]).optional(),
+})
+
+export type CreateInquiryInput = z.infer<typeof createInquirySchema>
+export type SendInquiryMessageInput = z.infer<typeof sendInquiryMessageSchema>
+export type InquiryListQueryInput = z.infer<typeof inquiryListQuerySchema>
+export type InquiryDetailQueryInput = z.infer<typeof inquiryDetailQuerySchema>
+export type AdminInquiryQueryInput = z.infer<typeof adminInquiryQuerySchema>

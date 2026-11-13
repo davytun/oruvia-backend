@@ -24,6 +24,20 @@
       "migrations_dir": "src/database/migrations"
     }
   ],
+  "durable_objects": {
+    "bindings": [
+      {
+        "name": "INQUIRY_ROOM",
+        "class_name": "InquiryRoom"
+      }
+    ]
+  },
+  "migrations": [
+    {
+      "tag": "v1",
+      "new_sqlite_classes": ["InquiryRoom"]
+    }
+  ],
   "triggers": {
     "crons": ["0 * * * *"]
   },

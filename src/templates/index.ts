@@ -2,6 +2,7 @@ import type { ReactElement } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server.browser'
 
 export * from './BaseEmailLayout'
+export * from './InquiryEmail'
 export * from './InspectionEmail'
 export * from './NotificationEmail'
 export * from './PasswordResetEmail'

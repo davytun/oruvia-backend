@@ -1,5 +1,6 @@
 export * from './auth.controller'
 export * from './catalog.controller'
+export * from './inquiry.controller'
 export * from './inspection.controller'
 export * from './kyc.controller'
 export * from './listing.controller'
