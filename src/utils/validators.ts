@@ -18,6 +18,10 @@ import {
   PROPERTY_VERIFICATION_BADGES,
   PROPERTY_VERIFICATION_DOC_TYPES,
   PROPERTY_VERIFICATION_METHODS,
+  REPORT_ACTIONS,
+  REPORT_REASONS,
+  REPORT_STATUSES,
+  REPORT_TARGET_TYPES,
   REVIEW_STATUSES,
   REVIEW_TARGET_TYPES,
   VERIFICATION_STATUSES,
@@ -1351,3 +1355,123 @@ export type AdminReviewListQueryInput = z.infer<
   typeof adminReviewListQuerySchema
 >
 export type AdminModerateReviewInput = z.infer<typeof adminModerateReviewSchema>
+
+const reportReasonValues = [
+  REPORT_REASONS.SCAM_OR_FRAUD,
+  REPORT_REASONS.MISLEADING_INFO,
+  REPORT_REASONS.ALREADY_RENTED_OR_SOLD,
+  REPORT_REASONS.DUPLICATE_LISTING,
+  REPORT_REASONS.INAPPROPRIATE_CONTENT,
+  REPORT_REASONS.HARASSMENT,
+  REPORT_REASONS.IMPERSONATION,
+  REPORT_REASONS.OTHER,
+] as const
+
+export const createReportSchema = z
+  .object({
+    target_type: z.enum([
+      REPORT_TARGET_TYPES.LISTING,
+      REPORT_TARGET_TYPES.USER,
+    ]),
+    listing_id: z.string().trim().min(1).optional(),
+    target_user_role: z
+      .enum(['seeker', LISTER_ROLES.AGENT, LISTER_ROLES.LANDLORD])
+      .optional(),
+    target_user_id: z.string().trim().min(1).optional(),
+    reason: z.enum(reportReasonValues),
+    description: z.string().trim().min(5).max(1500).optional(),
+    evidence_urls: z.array(z.string().url()).max(5).optional(),
+  })
+  .superRefine((data, ctx) => {
+    if (data.target_type === REPORT_TARGET_TYPES.LISTING && !data.listing_id) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['listing_id'],
+        message: 'listing_id is required when target_type is listing.',
+      })
+    }
+    if (data.target_type === REPORT_TARGET_TYPES.USER) {
+      if (!data.target_user_role) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['target_user_role'],
+          message: 'target_user_role is required when target_type is user.',
+        })
+      }
+      if (!data.target_user_id) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['target_user_id'],
+          message: 'target_user_id is required when target_type is user.',
+        })
+      }
+    }
+  })
+
+export const myReportListQuerySchema = paginationQuerySchema.extend({
+  status: z
+    .enum([
+      REPORT_STATUSES.PENDING,
+      REPORT_STATUSES.UNDER_REVIEW,
+      REPORT_STATUSES.RESOLVED,
+      REPORT_STATUSES.DISMISSED,
+    ])
+    .optional(),
+  target_type: z
+    .enum([REPORT_TARGET_TYPES.LISTING, REPORT_TARGET_TYPES.USER])
+    .optional(),
+})
+
+export const adminReportListQuerySchema = paginationQuerySchema.extend({
+  status: z
+    .enum([
+      REPORT_STATUSES.PENDING,
+      REPORT_STATUSES.UNDER_REVIEW,
+      REPORT_STATUSES.RESOLVED,
+      REPORT_STATUSES.DISMISSED,
+    ])
+    .optional(),
+  target_type: z
+    .enum([REPORT_TARGET_TYPES.LISTING, REPORT_TARGET_TYPES.USER])
+    .optional(),
+  reason: z.enum(reportReasonValues).optional(),
+  search: z.string().trim().optional(),
+})
+
+export const adminReviewReportSchema = z
+  .object({
+    status: z.enum([
+      REPORT_STATUSES.UNDER_REVIEW,
+      REPORT_STATUSES.RESOLVED,
+      REPORT_STATUSES.DISMISSED,
+    ]),
+    action: z
+      .enum([
+        REPORT_ACTIONS.NONE,
+        REPORT_ACTIONS.SUSPEND_LISTING,
+        REPORT_ACTIONS.SUSPEND_USER,
+        REPORT_ACTIONS.SUSPEND_USER_AND_LISTINGS,
+      ])
+      .optional(),
+    admin_notes: z.string().trim().min(3).max(1000).optional(),
+  })
+  .superRefine((data, ctx) => {
+    if (
+      data.action &&
+      data.action !== REPORT_ACTIONS.NONE &&
+      data.status !== REPORT_STATUSES.RESOLVED
+    ) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['action'],
+        message: 'Enforcement actions can only be applied when status is resolved.',
+      })
+    }
+  })
+
+export type CreateReportInput = z.infer<typeof createReportSchema>
+export type MyReportListQueryInput = z.infer<typeof myReportListQuerySchema>
+export type AdminReportListQueryInput = z.infer<
+  typeof adminReportListQuerySchema
+>
+export type AdminReviewReportInput = z.infer<typeof adminReviewReportSchema>

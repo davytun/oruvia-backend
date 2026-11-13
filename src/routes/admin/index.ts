@@ -6,6 +6,7 @@ import adminInspectionRoutes from './inspection.routes'
 import adminKycRoutes from './kyc.routes'
 import adminListingRoutes from './listing.routes'
 import adminPropertyVerificationRoutes from './property-verification.routes'
+import adminReportRoutes from './report.routes'
 import adminReviewRoutes from './review.routes'
 
 /**
@@ -22,5 +23,6 @@ adminRoutes.route('/property-verifications', adminPropertyVerificationRoutes)
 adminRoutes.route('/inspections', adminInspectionRoutes)
 adminRoutes.route('/inquiries', adminInquiryRoutes)
 adminRoutes.route('/reviews', adminReviewRoutes)
+adminRoutes.route('/reports', adminReportRoutes)
 
 export default adminRoutes

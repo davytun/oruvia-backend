@@ -330,3 +330,31 @@ export const REVIEW_STATUSES = {
 
 export type ReviewStatus =
   (typeof REVIEW_STATUSES)[keyof typeof REVIEW_STATUSES]
+
+export type ReportTargetType =
+  (typeof REPORT_TARGET_TYPES)[keyof typeof REPORT_TARGET_TYPES]
+
+export const REPORT_REASONS = {
+  SCAM_OR_FRAUD: 'scam_or_fraud',
+  MISLEADING_INFO: 'misleading_info',
+  ALREADY_RENTED_OR_SOLD: 'already_rented_or_sold',
+  DUPLICATE_LISTING: 'duplicate_listing',
+  INAPPROPRIATE_CONTENT: 'inappropriate_content',
+  HARASSMENT: 'harassment',
+  IMPERSONATION: 'impersonation',
+  OTHER: 'other',
+} as const
+
+export type ReportReason = (typeof REPORT_REASONS)[keyof typeof REPORT_REASONS]
+
+export type ReportStatus =
+  (typeof REPORT_STATUSES)[keyof typeof REPORT_STATUSES]
+
+export const REPORT_ACTIONS = {
+  NONE: 'none',
+  SUSPEND_LISTING: 'suspend_listing',
+  SUSPEND_USER: 'suspend_user',
+  SUSPEND_USER_AND_LISTINGS: 'suspend_user_and_listings',
+} as const
+
+export type ReportAction = (typeof REPORT_ACTIONS)[keyof typeof REPORT_ACTIONS]

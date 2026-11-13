@@ -307,3 +307,14 @@ Oruvia provides a full-lifecycle inspection scheduling system supporting:
 - `GET /api/v1/admins/reviews` — List all platform reviews (filters: `status`, `target_type`, `rating`, `is_verified_inspection`, `search`)
 - `PATCH /api/v1/admins/reviews/:id/moderate` — Hide or restore a review (`action: 'hide' | 'restore'`, optional `reason`) and recompute target rating
 - `DELETE /api/v1/admins/reviews/:id` — Permanently delete a review and recompute target rating
+
+## Listing Moderation & Reports
+
+### Reporters (Seekers, Agents, Landlords)
+- `GET /api/v1/{seekers|agents|landlords}/reports` — List reports submitted by the authenticated user
+- `POST /api/v1/{seekers|agents|landlords}/reports` — Submit a report against a `listing` or `user` (`reason`, optional `description`, optional `evidence_urls`); prevents self-reporting and duplicate open reports
+
+### Admin Report Review & Enforcement
+- `GET /api/v1/admins/reports` — List all listing and user reports platform-wide (filters: `status`, `target_type`, `reason`, `search`)
+- `GET /api/v1/admins/reports/:id` — Get full report details including reporter and target info
+- `PATCH /api/v1/admins/reports/:id/review` — Update status (`under_review`, `resolved`, `dismissed`) and optionally execute enforcement (`none`, `suspend_listing`, `suspend_user`, `suspend_user_and_listings`) with email notification to suspended users/listers

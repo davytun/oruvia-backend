@@ -26,6 +26,10 @@ import {
   verifySeekerEmailHandler,
 } from '../controllers/seeker.controller'
 import {
+  createReportHandler,
+  listMyReportsHandler,
+} from '../controllers/report.controller'
+import {
   createSeekerReviewHandler,
   deleteSeekerReviewHandler,
   listSeekerReviewsHandler,
@@ -35,12 +39,14 @@ import { authenticateSeeker } from '../middleware/auth.middleware'
 import {
   changePasswordSchema,
   createInquirySchema,
+  createReportSchema,
   createReviewSchema,
   favoritesQuerySchema,
   forgotPasswordSchema,
   inquiryDetailQuerySchema,
   inquiryListQuerySchema,
   loginSchema,
+  myReportListQuerySchema,
   paginationQuerySchema,
   registerSeekerSchema,
   resendVerificationCodeSchema,
@@ -202,6 +208,21 @@ seekerRoutes.delete(
   '/reviews/:id',
   authenticateSeeker,
   deleteSeekerReviewHandler
+)
+
+// Seeker Reports
+seekerRoutes.get(
+  '/reports',
+  authenticateSeeker,
+  zValidator('query', myReportListQuerySchema, validationHook),
+  listMyReportsHandler
+)
+
+seekerRoutes.post(
+  '/reports',
+  authenticateSeeker,
+  zValidator('json', createReportSchema, validationHook),
+  createReportHandler
 )
 
 export default seekerRoutes

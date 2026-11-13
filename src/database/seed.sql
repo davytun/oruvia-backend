@@ -1384,3 +1384,43 @@ WHERE id = '00000000-0000-4000-a000-000000000101';
 
 
 
+
+-- 15. Demo Listing & User Reports
+INSERT OR REPLACE INTO reports (
+  id,
+  reporter_role,
+  reporter_id,
+  target_type,
+  listing_id,
+  target_user_role,
+  target_user_id,
+  reason,
+  description,
+  evidence_urls,
+  status,
+  action_taken,
+  admin_notes,
+  reviewed_by_admin_id,
+  reviewed_at,
+  created_at,
+  updated_at
+) VALUES
+(
+  '00000000-0000-4000-f200-000000000001',
+  'seeker',
+  '00000000-0000-4000-c000-000000000101',
+  'listing',
+  '00000000-0000-4000-1000-000000000002',
+  NULL,
+  NULL,
+  'misleading_info',
+  'Service charge mentioned in person differed slightly from listing description; please verify.',
+  NULL,
+  'pending',
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  '2026-11-13T10:00:00.000Z',
+  '2026-11-13T10:00:00.000Z'
+);

@@ -1,12 +1,18 @@
 import { zValidator } from '@hono/zod-validator'
 import { factory } from '../config/env'
 import {
+  createReportHandler,
+  listMyReportsHandler,
+} from '../controllers/report.controller'
+import {
   deleteReviewReplyHandler,
   listListerReviewsHandler,
   replyToReviewHandler,
 } from '../controllers/review.controller'
 import {
+  createReportSchema,
   listerReviewListQuerySchema,
+  myReportListQuerySchema,
   replyToReviewSchema,
 } from '../utils/validators'
 import {
@@ -402,6 +408,21 @@ agentRoutes.delete(
   '/reviews/:id/reply',
   authenticateAgent,
   deleteReviewReplyHandler
+)
+
+// Agent Reports
+agentRoutes.get(
+  '/reports',
+  authenticateAgent,
+  zValidator('query', myReportListQuerySchema, validationHook),
+  listMyReportsHandler
+)
+
+agentRoutes.post(
+  '/reports',
+  authenticateAgent,
+  zValidator('json', createReportSchema, validationHook),
+  createReportHandler
 )
 
 export default agentRoutes

@@ -5,6 +5,7 @@ import { adminInspectionPaths } from './admin/inspections.docs'
 import { adminKycPaths } from './admin/kyc.docs'
 import { adminListingPaths } from './admin/listings.docs'
 import { adminPropertyVerificationPaths } from './admin/property-verification.docs'
+import { adminReportPaths } from './admin/reports.docs'
 import { adminReviewPaths } from './admin/reviews.docs'
 import { agentPaths } from './auth/agents.docs'
 import { landlordPaths } from './auth/landlords.docs'
@@ -30,6 +31,11 @@ import {
   agentPropertyVerificationPaths,
   landlordPropertyVerificationPaths,
 } from './marketplace/property-verification.docs'
+import {
+  agentReportPaths,
+  landlordReportPaths,
+  seekerReportPaths,
+} from './marketplace/reports.docs'
 import {
   agentReviewPaths,
   landlordReviewPaths,
@@ -203,6 +209,26 @@ export function buildOpenApiSpec(serverUrl = 'https://api.oruvia.workers.dev') {
         description:
           'Platform-wide review moderation (hide, restore, delete) (`/api/v1/admins/reviews/*`)',
       },
+      {
+        name: 'Reports - Seekers',
+        description:
+          'Seeker submission and tracking of listing and user reports (`/api/v1/seekers/reports/*`)',
+      },
+      {
+        name: 'Reports - Agents',
+        description:
+          'Agent submission and tracking of listing and user reports (`/api/v1/agents/reports/*`)',
+      },
+      {
+        name: 'Reports - Landlords',
+        description:
+          'Landlord submission and tracking of listing and user reports (`/api/v1/landlords/reports/*`)',
+      },
+      {
+        name: 'Admin - Reports & Moderation',
+        description:
+          'Admin review of listing and user reports and fraud enforcement actions (`/api/v1/admins/reports/*`)',
+      },
     ],
     'x-tagGroups': [
       {
@@ -251,6 +277,14 @@ export function buildOpenApiSpec(serverUrl = 'https://api.oruvia.workers.dev') {
         ],
       },
       {
+        name: 'Reports & Safety',
+        tags: [
+          'Reports - Seekers',
+          'Reports - Agents',
+          'Reports - Landlords',
+        ],
+      },
+      {
         name: 'Admin',
         tags: [
           'Admin Auth & Management',
@@ -261,6 +295,7 @@ export function buildOpenApiSpec(serverUrl = 'https://api.oruvia.workers.dev') {
           'Admin - Inspection Moderation',
           'Admin - Inquiry Oversight',
           'Admin - Reviews',
+          'Admin - Reports & Moderation',
         ],
       },
     ],
@@ -298,6 +333,9 @@ export function buildOpenApiSpec(serverUrl = 'https://api.oruvia.workers.dev') {
       ...seekerReviewPaths,
       ...agentReviewPaths,
       ...landlordReviewPaths,
+      ...seekerReportPaths,
+      ...agentReportPaths,
+      ...landlordReportPaths,
       ...adminAuthPaths,
       ...adminKycPaths,
       ...adminCatalogPaths,
@@ -306,6 +344,7 @@ export function buildOpenApiSpec(serverUrl = 'https://api.oruvia.workers.dev') {
       ...adminInspectionPaths,
       ...adminInquiryPaths,
       ...adminReviewPaths,
+      ...adminReportPaths,
     },
   }
 }
