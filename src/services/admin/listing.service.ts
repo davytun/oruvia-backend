@@ -107,7 +107,9 @@ export async function adminListListings(
     .where(whereClause)
 
   return {
-    items: rows.map(formatListingResponse),
+    items: rows.map((row) =>
+      formatListingResponse(row, { includeListerEmail: true })
+    ),
     page: query.page,
     perPage: query.per_page,
     total: Number(countResult?.count ?? 0),

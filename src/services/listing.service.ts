@@ -88,8 +88,9 @@ export function formatListingResponse(row: {
     verification_status: string
     verification_badge: string | null
   } | null
-}) {
+}, options?: { includeListerEmail?: boolean }) {
   const { listing, state, city, propertyType, agent, landlord } = row
+  const includeEmail = options?.includeListerEmail ?? false
 
   const lister =
     listing.listerRole === LISTER_ROLES.AGENT && agent
@@ -97,7 +98,7 @@ export function formatListingResponse(row: {
           role: 'agent' as const,
           id: agent.id,
           name: agent.full_name,
-          email: agent.email,
+          ...(includeEmail ? { email: agent.email } : {}),
           phone: agent.phone,
           whatsapp_number: agent.whatsapp_number,
           business_name: agent.agency_name,
@@ -111,7 +112,7 @@ export function formatListingResponse(row: {
             role: 'landlord' as const,
             id: landlord.id,
             name: landlord.full_name,
-            email: landlord.email,
+            ...(includeEmail ? { email: landlord.email } : {}),
             phone: landlord.phone,
             whatsapp_number: landlord.whatsapp_number,
             business_name: landlord.company_name,
@@ -384,7 +385,7 @@ export async function listMyPropertyListings(
     .where(whereClause)
 
   return {
-    items: rows.map(formatListingResponse),
+    items: rows.map((row) => formatListingResponse(row)),
     page: query.page,
     perPage: query.per_page,
     total: Number(countResult?.count ?? 0),
@@ -599,6 +600,16 @@ export async function searchPublicListings(
   const conditions = [
     eq(propertyListings.moderationStatus, MODERATION_STATUSES.APPROVED),
     eq(propertyListings.availabilityStatus, AVAILABILITY_STATUSES.AVAILABLE),
+    or(
+      and(
+        eq(propertyListings.listerRole, LISTER_ROLES.AGENT),
+        eq(agentUsers.isSuspended, false)
+      ),
+      and(
+        eq(propertyListings.listerRole, LISTER_ROLES.LANDLORD),
+        eq(landlordUsers.isSuspended, false)
+      )
+    )!,
   ]
 
   if (query.state_id) {
@@ -717,6 +728,8 @@ export async function searchPublicListings(
     .innerJoin(states, eq(propertyListings.stateId, states.id))
     .innerJoin(cities, eq(propertyListings.cityId, cities.id))
     .innerJoin(propertyTypes, eq(propertyListings.propertyTypeId, propertyTypes.id))
+    .leftJoin(agentUsers, eq(propertyListings.agentId, agentUsers.id))
+    .leftJoin(landlordUsers, eq(propertyListings.landlordId, landlordUsers.id))
     .where(whereClause)
 
   const listingIds = rows.map((r) => r.listing.id)
@@ -795,7 +808,17 @@ export async function getPublicPropertyListing(
         isUuid
           ? eq(propertyListings.id, idOrSlug)
           : eq(propertyListings.slug, idOrSlug),
-        eq(propertyListings.moderationStatus, MODERATION_STATUSES.APPROVED)
+        eq(propertyListings.moderationStatus, MODERATION_STATUSES.APPROVED),
+        or(
+          and(
+            eq(propertyListings.listerRole, LISTER_ROLES.AGENT),
+            eq(agentUsers.isSuspended, false)
+          ),
+          and(
+            eq(propertyListings.listerRole, LISTER_ROLES.LANDLORD),
+            eq(landlordUsers.isSuspended, false)
+          )
+        )!
       )
     )
     .limit(1)
