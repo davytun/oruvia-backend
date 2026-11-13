@@ -51,6 +51,11 @@ import {
   listerCloseInquiryHandler,
   listerSendMessageHandler,
 } from '../controllers/inquiry.controller'
+import {
+  getMyListingVerificationHandler,
+  submitPropertyVerificationHandler,
+  uploadPropertyVerificationDocsHandler,
+} from '../controllers/property-verification.controller'
 import { authenticateAgent } from '../middleware/auth.middleware'
 import {
   cancelInspectionBookingSchema,
@@ -72,6 +77,7 @@ import {
   resetPasswordSchema,
   sendInquiryMessageSchema,
   setAvailabilityWindowsSchema,
+  submitPropertyVerificationSchema,
   updateAgentSchema,
   updateInspectionFeeStatusSchema,
   updateInspectionSettingsSchema,
@@ -182,6 +188,26 @@ agentRoutes.delete(
   '/listings/:id',
   authenticateAgent,
   deleteAgentListingHandler
+)
+
+// Agent Listing-Level Property Verification
+agentRoutes.post(
+  '/listings/:id/verification/upload',
+  authenticateAgent,
+  uploadPropertyVerificationDocsHandler
+)
+
+agentRoutes.post(
+  '/listings/:id/verification',
+  authenticateAgent,
+  zValidator('json', submitPropertyVerificationSchema, validationHook),
+  submitPropertyVerificationHandler
+)
+
+agentRoutes.get(
+  '/listings/:id/verification',
+  authenticateAgent,
+  getMyListingVerificationHandler
 )
 
 // Agent Inspection Settings & Schedule Management

@@ -285,3 +285,32 @@ export const INQUIRY_SENDER_ROLES = {
 
 export type InquirySenderRole =
   (typeof INQUIRY_SENDER_ROLES)[keyof typeof INQUIRY_SENDER_ROLES]
+
+export const PROPERTY_VERIFICATION_METHODS = {
+  DOCUMENT: 'document',
+  PHYSICAL_INSPECTION: 'physical_inspection',
+  BOTH: 'both',
+} as const
+
+export type PropertyVerificationMethod =
+  (typeof PROPERTY_VERIFICATION_METHODS)[keyof typeof PROPERTY_VERIFICATION_METHODS]
+
+export const PROPERTY_VERIFICATION_DOC_TYPES = {
+  C_OF_O: 'c_of_o',
+  DEED_OF_ASSIGNMENT: 'deed_of_assignment',
+  SURVEY_PLAN: 'survey_plan',
+  GOVERNORS_CONSENT: 'governors_consent',
+  TENANCY_AUTHORITY: 'tenancy_authority',
+  UTILITY_BILL: 'utility_bill',
+} as const
+
+export type PropertyVerificationDocType =
+  (typeof PROPERTY_VERIFICATION_DOC_TYPES)[keyof typeof PROPERTY_VERIFICATION_DOC_TYPES]
+
+export const PROPERTY_VERIFICATION_BADGES = {
+  VERIFIED_PROPERTY: 'verified_property',
+  ORUVIA_INSPECTED: 'oruvia_inspected',
+} as const
+
+export type PropertyVerificationBadge =
+  (typeof PROPERTY_VERIFICATION_BADGES)[keyof typeof PROPERTY_VERIFICATION_BADGES]

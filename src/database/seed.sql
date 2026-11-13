@@ -1260,6 +1260,60 @@ INSERT OR REPLACE INTO inquiry_messages (
   '2026-11-11T11:15:00.000Z'
 );
 
+-- 13. Demo Listing-Level Property Verification
+INSERT OR REPLACE INTO property_verification_submissions (
+  id,
+  listing_id,
+  lister_role,
+  lister_id,
+  verification_method,
+  document_type,
+  document_urls,
+  site_contact_name,
+  site_contact_phone,
+  preferred_inspection_date,
+  notes,
+  status,
+  qualified_badge,
+  rejection_reason,
+  admin_notes,
+  reviewed_by_admin_id,
+  submitted_at,
+  reviewed_at,
+  created_at,
+  updated_at
+) VALUES (
+  '00000000-0000-4000-e300-000000000001',
+  '00000000-0000-4000-1000-000000000001',
+  'agent',
+  '00000000-0000-4000-a000-000000000101',
+  'both',
+  'c_of_o',
+  '["https://res.cloudinary.com/oruvia-demo/image/upload/v1/oruvia/property-verifications/ibara_c_of_o.pdf"]',
+  'Tunde Adeyemi',
+  '+2348021112233',
+  '2026-11-11',
+  'Caretaker is available for physical inspection.',
+  'approved',
+  'oruvia_inspected',
+  NULL,
+  'Verified C of O and physical property inspection at Ibara Housing Estate.',
+  '00000000-0000-4000-d000-000000000101',
+  '2026-11-11T09:00:00.000Z',
+  '2026-11-11T14:00:00.000Z',
+  '2026-11-11T09:00:00.000Z',
+  '2026-11-11T14:00:00.000Z'
+);
+
+UPDATE property_listings
+SET
+  is_property_verified = 1,
+  property_verification_status = 'approved',
+  property_verification_badge = 'oruvia_inspected',
+  property_verified_at = '2026-11-11T14:00:00.000Z'
+WHERE id = '00000000-0000-4000-1000-000000000001';
+
+
 
 
 

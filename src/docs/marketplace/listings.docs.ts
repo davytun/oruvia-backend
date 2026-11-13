@@ -58,6 +58,12 @@ export const publicListingPaths = {
           description: 'Search keyword (title, description, area, address)',
         },
         {
+          name: 'verified_only',
+          in: 'query',
+          schema: { type: 'boolean' },
+          description: 'Filter to only property-verified listings (`verified_property` / `oruvia_inspected`)',
+        },
+        {
           name: 'sort',
           in: 'query',
           schema: {

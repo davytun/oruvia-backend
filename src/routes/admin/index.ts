@@ -5,6 +5,7 @@ import adminInquiryRoutes from './inquiry.routes'
 import adminInspectionRoutes from './inspection.routes'
 import adminKycRoutes from './kyc.routes'
 import adminListingRoutes from './listing.routes'
+import adminPropertyVerificationRoutes from './property-verification.routes'
 
 /**
  * Root Admin Router (`/api/v1/admins`)
@@ -16,6 +17,7 @@ adminRoutes.route('/', adminAuthRoutes)
 adminRoutes.route('/kyc', adminKycRoutes)
 adminRoutes.route('/', adminCatalogRoutes)
 adminRoutes.route('/listings', adminListingRoutes)
+adminRoutes.route('/property-verifications', adminPropertyVerificationRoutes)
 adminRoutes.route('/inspections', adminInspectionRoutes)
 adminRoutes.route('/inquiries', adminInquiryRoutes)
 

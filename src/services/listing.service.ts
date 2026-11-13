@@ -165,6 +165,12 @@ export function formatListingResponse(row: {
       reviewed_at: listing.reviewedAt,
       published_at: listing.publishedAt,
     },
+    property_verification: {
+      is_verified: listing.isPropertyVerified,
+      status: listing.propertyVerificationStatus,
+      badge: listing.propertyVerificationBadge,
+      verified_at: listing.propertyVerifiedAt,
+    },
     created_at: listing.createdAt,
     updated_at: listing.updatedAt,
   }
@@ -623,6 +629,9 @@ export async function searchPublicListings(
   }
   if (query.bathrooms !== undefined) {
     conditions.push(gte(propertyListings.bathrooms, query.bathrooms))
+  }
+  if (query.verified_only) {
+    conditions.push(eq(propertyListings.isPropertyVerified, true))
   }
   if (query.q) {
     const term = `%${query.q}%`

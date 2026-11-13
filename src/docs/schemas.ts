@@ -514,6 +514,23 @@ export const openApiSchemas = {
       },
       favorites_count: { type: 'integer', example: 4 },
       is_favorited: { type: 'boolean', example: false },
+      property_verification: {
+        type: 'object',
+        properties: {
+          is_verified: { type: 'boolean', example: true },
+          status: {
+            type: 'string',
+            enum: ['unverified', 'pending', 'approved', 'rejected'],
+            example: 'approved',
+          },
+          badge: {
+            type: ['string', 'null'],
+            enum: ['verified_property', 'oruvia_inspected', null],
+            example: 'verified_property',
+          },
+          verified_at: { type: ['string', 'null'], format: 'date-time' },
+        },
+      },
       created_at: { type: 'string', format: 'date-time' },
       updated_at: { type: 'string', format: 'date-time' },
     },

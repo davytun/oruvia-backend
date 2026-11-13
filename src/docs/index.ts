@@ -4,6 +4,7 @@ import { adminInquiryPaths } from './admin/inquiries.docs'
 import { adminInspectionPaths } from './admin/inspections.docs'
 import { adminKycPaths } from './admin/kyc.docs'
 import { adminListingPaths } from './admin/listings.docs'
+import { adminPropertyVerificationPaths } from './admin/property-verification.docs'
 import { agentPaths } from './auth/agents.docs'
 import { landlordPaths } from './auth/landlords.docs'
 import { seekerPaths } from './auth/seekers.docs'
@@ -24,6 +25,10 @@ import {
   landlordListingPaths,
   publicListingPaths,
 } from './marketplace/listings.docs'
+import {
+  agentPropertyVerificationPaths,
+  landlordPropertyVerificationPaths,
+} from './marketplace/property-verification.docs'
 import { openApiSchemas } from './schemas'
 import { healthPaths } from './system/health.docs'
 
@@ -161,6 +166,11 @@ export function buildOpenApiSpec(serverUrl = 'https://api.oruvia.workers.dev') {
         description:
           'Read-only Admin oversight of platform-wide property inquiry conversations (`/api/v1/admins/inquiries/*`)',
       },
+      {
+        name: 'Admin - Property Verification',
+        description:
+          'Admin review and approval of listing-level property ownership documents and physical site inspection requests (`/api/v1/admins/property-verifications/*`)',
+      },
     ],
     'x-tagGroups': [
       {
@@ -206,6 +216,7 @@ export function buildOpenApiSpec(serverUrl = 'https://api.oruvia.workers.dev') {
           'Admin KYC Verification',
           'Admin Locations & House Types',
           'Admin Listing Moderation',
+          'Admin - Property Verification',
           'Admin - Inspection Moderation',
           'Admin - Inquiry Oversight',
         ],
@@ -232,7 +243,9 @@ export function buildOpenApiSpec(serverUrl = 'https://api.oruvia.workers.dev') {
       ...publicListingPaths,
       ...favoritePaths,
       ...agentListingPaths,
+      ...agentPropertyVerificationPaths,
       ...landlordListingPaths,
+      ...landlordPropertyVerificationPaths,
       ...inspectionPaths,
       ...agentInspectionPaths,
       ...landlordInspectionPaths,
@@ -243,6 +256,7 @@ export function buildOpenApiSpec(serverUrl = 'https://api.oruvia.workers.dev') {
       ...adminKycPaths,
       ...adminCatalogPaths,
       ...adminListingPaths,
+      ...adminPropertyVerificationPaths,
       ...adminInspectionPaths,
       ...adminInquiryPaths,
     },

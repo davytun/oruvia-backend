@@ -264,5 +264,24 @@ Oruvia provides a full-lifecycle inspection scheduling system supporting:
 - `GET /api/v1/admins/inquiries` — List platform-wide inquiries (`?status=&listing_id=&lister_role=`).
 - `GET /api/v1/admins/inquiries/:id` — Read-only view of full conversation & messages.
 
+---
+
+## 14. Listing-Level Property Verification
+
+#### Agent & Landlord (`/api/v1/{agents|landlords}/listings/:id/verification`)
+- `POST /api/v1/{role}/listings/:id/verification/upload` — Upload property title/ownership documents (`multipart/form-data` field `documents`) to Cloudinary.
+- `POST /api/v1/{role}/listings/:id/verification` — Submit document (`c_of_o`, `deed_of_assignment`, `survey_plan`, `governors_consent`, `tenancy_authority`, `utility_bill`) and/or physical site inspection verification request. Independent of listing `moderation_status`.
+- `GET /api/v1/{role}/listings/:id/verification` — Get current verification badge/status and submission history.
+
+#### Admin Review (`/api/v1/admins/property-verifications`)
+- `GET /api/v1/admins/property-verifications` — List submissions (`?status=pending|approved|rejected&verification_method=`).
+- `GET /api/v1/admins/property-verifications/:id` — View submission details and uploaded documents.
+- `PATCH /api/v1/admins/property-verifications/:id/review` — Approve (`verified_property` / `oruvia_inspected`) or reject with reason; notifies lister by email.
+
+#### Public Discovery Filter
+- `GET /api/v1/listings?verified_only=true` — Filter to only property-verified listings.
+- Every listing object includes `property_verification: { is_verified, status, badge, verified_at }`.
+
+
 
 

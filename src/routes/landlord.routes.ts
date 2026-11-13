@@ -51,6 +51,11 @@ import {
   listerCloseInquiryHandler,
   listerSendMessageHandler,
 } from '../controllers/inquiry.controller'
+import {
+  getMyListingVerificationHandler,
+  submitPropertyVerificationHandler,
+  uploadPropertyVerificationDocsHandler,
+} from '../controllers/property-verification.controller'
 import { authenticateLandlord } from '../middleware/auth.middleware'
 import {
   cancelInspectionBookingSchema,
@@ -72,6 +77,7 @@ import {
   resetPasswordSchema,
   sendInquiryMessageSchema,
   setAvailabilityWindowsSchema,
+  submitPropertyVerificationSchema,
   updateInspectionFeeStatusSchema,
   updateInspectionSettingsSchema,
   updateLandlordSchema,
@@ -182,6 +188,26 @@ landlordRoutes.delete(
   '/listings/:id',
   authenticateLandlord,
   deleteLandlordListingHandler
+)
+
+// Landlord Listing-Level Property Verification
+landlordRoutes.post(
+  '/listings/:id/verification/upload',
+  authenticateLandlord,
+  uploadPropertyVerificationDocsHandler
+)
+
+landlordRoutes.post(
+  '/listings/:id/verification',
+  authenticateLandlord,
+  zValidator('json', submitPropertyVerificationSchema, validationHook),
+  submitPropertyVerificationHandler
+)
+
+landlordRoutes.get(
+  '/listings/:id/verification',
+  authenticateLandlord,
+  getMyListingVerificationHandler
 )
 
 // Landlord Inspection Settings & Schedule Management

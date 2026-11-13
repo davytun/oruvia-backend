@@ -15,6 +15,9 @@ import {
   PAGINATION_DEFAULTS,
   PAYMENT_FREQUENCIES,
   PROPERTY_CATEGORIES,
+  PROPERTY_VERIFICATION_BADGES,
+  PROPERTY_VERIFICATION_DOC_TYPES,
+  PROPERTY_VERIFICATION_METHODS,
   VERIFICATION_STATUSES,
   VIRTUAL_INSPECTION_METHODS,
 } from '../config/constants'
@@ -708,6 +711,10 @@ export const listingSearchQuerySchema = paginationQuerySchema.extend({
   bedrooms: z.coerce.number().int().min(0).optional(),
   bathrooms: z.coerce.number().int().min(0).optional(),
   q: z.string().trim().optional(),
+  verified_only: z
+    .enum(['true', 'false'])
+    .transform((v) => v === 'true')
+    .optional(),
   sort: z.enum(['newest', 'price_asc', 'price_desc']).default('newest'),
 })
 
@@ -1108,3 +1115,128 @@ export type SendInquiryMessageInput = z.infer<typeof sendInquiryMessageSchema>
 export type InquiryListQueryInput = z.infer<typeof inquiryListQuerySchema>
 export type InquiryDetailQueryInput = z.infer<typeof inquiryDetailQuerySchema>
 export type AdminInquiryQueryInput = z.infer<typeof adminInquiryQuerySchema>
+
+// ============================================================================
+// LISTING-LEVEL PROPERTY VERIFICATION VALIDATION
+// ============================================================================
+
+export const submitPropertyVerificationSchema = z
+  .object({
+    verification_method: z.enum([
+      PROPERTY_VERIFICATION_METHODS.DOCUMENT,
+      PROPERTY_VERIFICATION_METHODS.PHYSICAL_INSPECTION,
+      PROPERTY_VERIFICATION_METHODS.BOTH,
+    ]),
+    document_type: z
+      .enum([
+        PROPERTY_VERIFICATION_DOC_TYPES.C_OF_O,
+        PROPERTY_VERIFICATION_DOC_TYPES.DEED_OF_ASSIGNMENT,
+        PROPERTY_VERIFICATION_DOC_TYPES.SURVEY_PLAN,
+        PROPERTY_VERIFICATION_DOC_TYPES.GOVERNORS_CONSENT,
+        PROPERTY_VERIFICATION_DOC_TYPES.TENANCY_AUTHORITY,
+        PROPERTY_VERIFICATION_DOC_TYPES.UTILITY_BILL,
+      ])
+      .optional(),
+    document_urls: z
+      .array(z.string().url('Each document_url must be a valid URL.'))
+      .max(10, 'Maximum 10 documents allowed per submission.')
+      .optional(),
+    site_contact_name: z.string().trim().min(2).max(100).optional(),
+    site_contact_phone: z.string().trim().min(7).max(20).optional(),
+    preferred_inspection_date: z
+      .string()
+      .regex(/^\d{4}-\d{2}-\d{2}$/, 'preferred_inspection_date must be YYYY-MM-DD.')
+      .optional(),
+    notes: z.string().trim().max(1000).optional(),
+  })
+  .superRefine((data, ctx) => {
+    const needsDoc =
+      data.verification_method === PROPERTY_VERIFICATION_METHODS.DOCUMENT ||
+      data.verification_method === PROPERTY_VERIFICATION_METHODS.BOTH
+    const needsPhysical =
+      data.verification_method ===
+        PROPERTY_VERIFICATION_METHODS.PHYSICAL_INSPECTION ||
+      data.verification_method === PROPERTY_VERIFICATION_METHODS.BOTH
+
+    if (needsDoc) {
+      if (!data.document_type) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['document_type'],
+          message: 'document_type is required for document verification.',
+        })
+      }
+      if (!data.document_urls || data.document_urls.length === 0) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['document_urls'],
+          message:
+            'At least one uploaded document URL is required for document verification.',
+        })
+      }
+    }
+
+    if (needsPhysical && !data.site_contact_phone) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['site_contact_phone'],
+        message:
+          'site_contact_phone is required for physical site inspection verification.',
+      })
+    }
+  })
+
+export const adminPropertyVerificationQuerySchema = paginationQuerySchema.extend({
+  status: z
+    .enum([
+      VERIFICATION_STATUSES.PENDING,
+      VERIFICATION_STATUSES.APPROVED,
+      VERIFICATION_STATUSES.REJECTED,
+    ])
+    .optional(),
+  verification_method: z
+    .enum([
+      PROPERTY_VERIFICATION_METHODS.DOCUMENT,
+      PROPERTY_VERIFICATION_METHODS.PHYSICAL_INSPECTION,
+      PROPERTY_VERIFICATION_METHODS.BOTH,
+    ])
+    .optional(),
+})
+
+export const adminReviewPropertyVerificationSchema = z
+  .object({
+    decision: z.enum([
+      VERIFICATION_STATUSES.APPROVED,
+      VERIFICATION_STATUSES.REJECTED,
+    ]),
+    badge: z
+      .enum([
+        PROPERTY_VERIFICATION_BADGES.VERIFIED_PROPERTY,
+        PROPERTY_VERIFICATION_BADGES.ORUVIA_INSPECTED,
+      ])
+      .optional(),
+    rejection_reason: z.string().trim().min(5).max(500).optional(),
+    admin_notes: z.string().trim().max(1000).optional(),
+  })
+  .superRefine((data, ctx) => {
+    if (
+      data.decision === VERIFICATION_STATUSES.REJECTED &&
+      !data.rejection_reason
+    ) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['rejection_reason'],
+        message: 'rejection_reason is required when rejecting a submission.',
+      })
+    }
+  })
+
+export type SubmitPropertyVerificationInput = z.infer<
+  typeof submitPropertyVerificationSchema
+>
+export type AdminPropertyVerificationQueryInput = z.infer<
+  typeof adminPropertyVerificationQuerySchema
+>
+export type AdminReviewPropertyVerificationInput = z.infer<
+  typeof adminReviewPropertyVerificationSchema
+>

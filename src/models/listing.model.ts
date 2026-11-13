@@ -13,6 +13,7 @@ import {
   MODERATION_STATUSES,
   PAYMENT_FREQUENCIES,
   PROPERTY_CATEGORIES,
+  VERIFICATION_STATUSES,
 } from '../config/constants'
 import { adminUsers } from './admin.model'
 import { agentUsers } from './agent.model'
@@ -164,6 +165,16 @@ export const propertyListings = sqliteTable(
     reviewedAt: text('reviewed_at'),
     publishedAt: text('published_at'),
 
+    // Listing-Level Property Verification
+    isPropertyVerified: integer('is_property_verified', { mode: 'boolean' })
+      .notNull()
+      .default(false),
+    propertyVerificationStatus: text('property_verification_status')
+      .notNull()
+      .default(VERIFICATION_STATUSES.UNVERIFIED), // 'unverified' | 'pending' | 'approved' | 'rejected'
+    propertyVerificationBadge: text('property_verification_badge'), // 'verified_property' | 'oruvia_inspected'
+    propertyVerifiedAt: text('property_verified_at'),
+
     ...timestamps,
   },
   (table) => [
@@ -176,6 +187,7 @@ export const propertyListings = sqliteTable(
       table.availabilityStatus
     ),
     index('idx_listings_base_price').on(table.basePrice),
+    index('idx_listings_property_verified').on(table.isPropertyVerified),
   ]
 )
 
